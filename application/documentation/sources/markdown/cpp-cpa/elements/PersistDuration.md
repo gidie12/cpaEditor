@@ -1,0 +1,4 @@
+# PersistDuration
+
+## Type
+- `duration`

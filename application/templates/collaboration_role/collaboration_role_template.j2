@@ -1,0 +1,55 @@
+<tns:CollaborationRole>
+    <tns:ProcessSpecification
+        tns:name="{{ process_name }}"
+        tns:version="{{ process_version }}"
+        xlink:type="simple"
+        xlink:href="{{ process_href }}"
+        tns:uuid="{{ process_uuid }}" />
+    <tns:Role
+        tns:name="{{ role_name }}"
+        xlink:href="{{ role_href }}" />
+    <tns:ServiceBinding>
+        <tns:Service tns:type="{{ service_type }}">{{ service_name }}</tns:Service>
+        {% for can_send in can_sends %}
+        <tns:CanSend>
+            <tns:ThisPartyActionBinding
+                tns:id="{{ can_send.action_binding_id }}"
+                tns:action="{{ can_send.action }}"
+                tns:packageId="{{ can_send.package_id }}">
+                <tns:BusinessTransactionCharacteristics
+                    tns:isAuthenticated="{{ can_send.transaction_characteristics.is_authenticated }}"
+                    tns:isAuthorizationRequired="{{ can_send.transaction_characteristics.is_authorization_required }}"
+                    tns:isIntelligibleCheckRequired="{{ can_send.transaction_characteristics.is_intelligible_check_required }}"
+                    tns:isNonRepudiationReceiptRequired="{{ can_send.transaction_characteristics.is_non_repudiation_receipt_required }}"
+                    tns:isNonRepudiationRequired="{{ can_send.transaction_characteristics.is_non_repudiation_required }}"
+                    tns:isConfidential="{{ can_send.transaction_characteristics.is_confidential }}"
+                    tns:isTamperProof="{{ can_send.transaction_characteristics.is_tamper_proof }}"
+                    tns:timeToPerform="{{ can_send.transaction_characteristics.time_to_perform }}" />
+                <tns:ChannelId>{{ can_send.channel_id }}</tns:ChannelId>
+            </tns:ThisPartyActionBinding>
+            <tns:OtherPartyActionBinding>{{ can_send.other_party_action_binding }}</tns:OtherPartyActionBinding>
+        </tns:CanSend>
+        {% endfor %}
+        {% for can_receive in can_receives %}
+        <tns:CanReceive>
+            <tns:ThisPartyActionBinding
+                tns:id="{{ can_receive.action_binding_id }}"
+                tns:action="{{ can_receive.action }}"
+                tns:packageId="{{ can_receive.package_id }}">
+                <tns:BusinessTransactionCharacteristics
+                    tns:isAuthenticated="{{ can_receive.transaction_characteristics.is_authenticated }}"
+                    tns:isAuthorizationRequired="{{ can_receive.transaction_characteristics.is_authorization_required }}"
+                    tns:isIntelligibleCheckRequired="{{ can_receive.transaction_characteristics.is_intelligible_check_required }}"
+                    tns:isNonRepudiationReceiptRequired="{{ can_receive.transaction_characteristics.is_non_repudiation_receipt_required }}"
+                    tns:isNonRepudiationRequired="{{ can_receive.transaction_characteristics.is_non_repudiation_required }}"
+                    tns:isConfidential="{{ can_receive.transaction_characteristics.is_confidential }}"
+                    tns:isTamperProof="{{ can_receive.transaction_characteristics.is_tamper_proof }}"
+                    tns:timeToPerform="{{ can_receive.transaction_characteristics.time_to_perform }}" />
+                <tns:ChannelId>{{ can_receive.channel_id }}</tns:ChannelId>
+            </tns:ThisPartyActionBinding>
+            <tns:OtherPartyActionBinding>{{ can_receive.other_party_action_binding }}</tns:OtherPartyActionBinding>
+        </tns:CanReceive>
+        {% endfor %}
+    </tns:ServiceBinding>
+</tns:CollaborationRole>
+"""

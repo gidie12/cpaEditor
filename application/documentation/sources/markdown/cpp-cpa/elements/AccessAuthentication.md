@@ -1,0 +1,4 @@
+# AccessAuthentication
+
+## Type
+- `accessAuthentication.type`

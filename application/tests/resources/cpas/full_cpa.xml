@@ -1,0 +1,148 @@
+<tp:CollaborationProtocolAgreement xmlns:tp="http://www.ebxml.org/namespaces/tradePartner"
+                                   xmlns:xsi="http://www.w3.org/2000/10/XMLSchema-instance"
+                                   xmlns:xlink="http://www.w3.org/1999/xlink"
+                                   xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+                                   xsi:schemaLocation="http://www.ebxml.org/namespaces/tradePartner http://ebxml.org/project_teams/trade_partner/cpp-cpa-v1_0.xsd"
+                                   tp:cpaid="uri:yoursandmycpa" tp:version="1.2">
+    <tp:Status tp:value="accepted"/>
+    <tp:Start>2001-05-20T07:21:00Z</tp:Start>
+    <tp:End>2002-05-20T07:21:00Z</tp:End>
+    <tp:ConversationConstraints tp:invocationLimit="100" tp:concurrentConversations="100"/>
+    <tp:PartyInfo>
+        <tp:PartyId tp:type="DUNS">123456789</tp:PartyId>
+        <tp:PartyRef xlink:href="http://example.com/about.html"/>
+        <tp:CollaborationRole tp:id="N00">
+            <tp:ProcessSpecification tp:version="1.0" tp:name="buySell" xlink:type="simple"
+                                     xlink:href="http://www.ebxml.org/processes/buySell.xml"/>
+            <tp:Role tp:name="buyer" xlink:type="simple" xlink:href="http://ebxml.org/processes/buySell.xml#buyer"/>
+            <tp:CertificateRef tp:certId="N03"/>
+            <tp:ServiceBinding tp:channelId="N04" tp:packageId="N0402">
+                <tp:Service tp:type="uriReference">uri:example.com/services/buyerService</tp:Service>
+                <tp:Override tp:action="orderConfirm" tp:channelId="N08" tp:packageId="N0402"
+                             xlink:href="http://ebxml.org/processes/buySell.xml#orderConfirm" xlink:type="simple"/>
+            </tp:ServiceBinding>
+        </tp:CollaborationRole>
+        <tp:Certificate tp:certId="N03">
+            <ds:KeyInfo/>
+        </tp:Certificate>
+        <tp:DeliveryChannel tp:channelId="N04" tp:transportId="N05" tp:docExchangeId="N06">
+            <tp:Characteristics tp:syncReplyMode="none" tp:nonrepudiationOfOrigin="true"
+                                tp:nonrepudiationOfReceipt="false" tp:secureTransport="true" tp:confidentiality="true"
+                                tp:authenticated="true" tp:authorized="false"/>
+        </tp:DeliveryChannel>
+        <tp:DeliveryChannel tp:channelId="N07" tp:transportId="N08" tp:docExchangeId="N06">
+            <tp:Characteristics tp:syncReplyMode="none" tp:nonrepudiationOfOrigin="true"
+                                tp:nonrepudiationOfReceipt="false" tp:secureTransport="false" tp:confidentiality="true"
+                                tp:authenticated="true" tp:authorized="false"/>
+        </tp:DeliveryChannel>
+        <tp:Transport tp:transportId="N05">
+            <tp:SendingProtocol tp:version="1.1">HTTP</tp:SendingProtocol>
+            <tp:ReceivingProtocol tp:version="1.1">HTTP</tp:ReceivingProtocol>
+            <tp:Endpoint tp:uri="https://www.example.com/servlets/ebxmlhandler" tp:type="allPurpose"/>
+            <tp:TransportSecurity>
+                <tp:Protocol tp:version="3.0">SSL</tp:Protocol>
+                <tp:CertificateRef tp:certId="N03"/>
+            </tp:TransportSecurity>
+        </tp:Transport>
+        <tp:Transport tp:transportId="N18">
+            <tp:SendingProtocol tp:version="1.1">HTTP</tp:SendingProtocol>
+            <tp:ReceivingProtocol tp:version="1.1">SMTP</tp:ReceivingProtocol>
+            <tp:Endpoint tp:uri="mailto:ebxmlhandler@example.com" tp:type="allPurpose"/>
+        </tp:Transport>
+        <tp:DocExchange tp:docExchangeId="N06">
+            <tp:ebXMLBinding tp:version="0.98b">
+                <tp:ReliableMessaging tp:deliverySemantics="OnceAndOnlyOnce" tp:idempotency="true"
+                                      tp:messageOrderSemantics="Guaranteed">
+                    <tp:Retries>5</tp:Retries>
+                    <tp:RetryInterval>30</tp:RetryInterval>
+                    <tp:PersistDuration>P1D</tp:PersistDuration>
+                </tp:ReliableMessaging>
+                <tp:NonRepudiation>
+                    <tp:Protocol>http://www.w3.org/2000/09/xmldsig#</tp:Protocol>
+                    <tp:HashFunction>http://www.w3.org/2000/09/xmldsig#sha1</tp:HashFunction>
+                    <tp:SignatureAlgorithm>http://www.w3.org/2000/09/xmldsig#dsa-sha1</tp:SignatureAlgorithm>
+                    <tp:CertificateRef tp:certId="N03"/>
+                </tp:NonRepudiation>
+                <tp:DigitalEnvelope>
+                    <tp:Protocol tp:version="2.0">S/MIME</tp:Protocol>
+                    <tp:EncryptionAlgorithm>DES-CBC</tp:EncryptionAlgorithm>
+                    <tp:CertificateRef tp:certId="N03"/>
+                </tp:DigitalEnvelope>
+            </tp:ebXMLBinding>
+        </tp:DocExchange>
+    </tp:PartyInfo>
+    <tp:PartyInfo>
+        <tp:PartyId tp:type="DUNS">987654321</tp:PartyId>
+        <tp:PartyRef xlink:type="simple" xlink:href="http://contrived-example.com/about.html"/>
+        <tp:CollaborationRole tp:id="N30">
+            <tp:ProcessSpecification tp:version="1.0" tp:name="buySell" xlink:type="simple"
+                                     xlink:href="http://www.ebxml.org/processes/buySell.xml"/>
+            <tp:Role tp:name="seller" xlink:type="simple" xlink:href="http://ebxml.org/processes/buySell.xml#seller"/>
+            <tp:CertificateRef tp:certId="N33"/>
+            <tp:ServiceBinding tp:channelId="N34" tp:packageId="N0402">
+                <tp:Service tp:type="uriReference">uri:example.com/services/sellerService</tp:Service>
+            </tp:ServiceBinding>
+        </tp:CollaborationRole>
+        <tp:Certificate tp:certId="N33">
+            <ds:KeyInfo/>
+        </tp:Certificate>
+        <tp:DeliveryChannel tp:channelId="N34" tp:transportId="N35" tp:docExchangeId="N36">
+            <tp:Characteristics tp:nonrepudiationOfOrigin="true" tp:nonrepudiationOfReceipt="false"
+                                tp:secureTransport="true" tp:confidentiality="true" tp:authenticated="true"
+                                tp:authorized="false"/>
+        </tp:DeliveryChannel>
+        <tp:Transport tp:transportId="N35">
+            <tp:SendingProtocol tp:version="1.1">HTTP</tp:SendingProtocol>
+            <tp:ReceivingProtocol tp:version="1.1">HTTP</tp:ReceivingProtocol>
+            <tp:Endpoint tp:uri="https://www.contrived-example.com/servlets/ebxmlhandler" tp:type="allPurpose"/>
+            <tp:TransportSecurity>
+                <tp:Protocol tp:version="3.0">SSL</tp:Protocol>
+                <tp:CertificateRef tp:certId="N33"/>
+            </tp:TransportSecurity>
+        </tp:Transport>
+        <tp:DocExchange tp:docExchangeId="N36">
+            <tp:ebXMLBinding tp:version="0.98b">
+                <tp:ReliableMessaging tp:deliverySemantics="OnceAndOnlyOnce" tp:idempotency="true"
+                                      tp:messageOrderSemantics="Guaranteed">
+                    <tp:Retries>5</tp:Retries>
+                    <tp:RetryInterval>30</tp:RetryInterval>
+                    <tp:PersistDuration>P1D</tp:PersistDuration>
+                </tp:ReliableMessaging>
+                <tp:NonRepudiation>
+                    <tp:Protocol>http://www.w3.org/2000/09/xmldsig#</tp:Protocol>
+                    <tp:HashFunction>http://www.w3.org/2000/09/xmldsig#sha1</tp:HashFunction>
+                    <tp:SignatureAlgorithm>http://www.w3.org/2000/09/xmldsig#dsa-sha1</tp:SignatureAlgorithm>
+                    <tp:CertificateRef tp:certId="N33"/>
+                </tp:NonRepudiation>
+                <tp:DigitalEnvelope>
+                    <tp:Protocol tp:version="2.0">S/MIME</tp:Protocol>
+                    <tp:EncryptionAlgorithm>DES-CBC</tp:EncryptionAlgorithm>
+                    <tp:CertificateRef tp:certId="N33"/>
+                </tp:DigitalEnvelope>
+            </tp:ebXMLBinding>
+        </tp:DocExchange>
+    </tp:PartyInfo>
+    <tp:Packaging tp:id="N0402">
+        <tp:ProcessingCapabilities tp:parse="true" tp:generate="true"/>
+        <tp:SimplePart tp:id="N40" tp:mimetype="text/xml">
+            <tp:NamespaceSupported tp:location="http://ebxml.org/project_teams/transport/messageService.xsd"
+                                   tp:version="0.98b">http://www.ebxml.org/namespaces/messageService
+            </tp:NamespaceSupported>
+            <tp:NamespaceSupported tp:location="http://ebxml.org/project_teams/transport/xmldsig-core-schema.xsd"
+                                   tp:version="1.0">http://www.w3.org/2000/09/xmldsig
+            </tp:NamespaceSupported>
+        </tp:SimplePart>
+        <tp:SimplePart tp:id="N41" tp:mimetype="text/xml">
+            <tp:NamespaceSupported tp:location="http://ebxml.org/processes/buysell.xsd" tp:version="1.0">
+                http://ebxml.org/processes/buysell.xsd
+            </tp:NamespaceSupported>
+        </tp:SimplePart>
+        <tp:CompositeList>
+            <tp:Composite tp:id="N42" tp:mimetype="multipart/related" tp:mimeparameters="type=text/xml;">
+                <tp:Constituent tp:idref="N40"/>
+                <tp:Constituent tp:idref="N41"/>
+            </tp:Composite>
+        </tp:CompositeList>
+    </tp:Packaging>
+    <tp:Comment xml:lang="en-us">buy/sell agreement between example.com and contrived-example.com</tp:Comment>
+</tp:CollaborationProtocolAgreement>

@@ -1,0 +1,16 @@
+<h1>ProcessSpecification</h1>
+<h2>Attributes</h2>
+<ul>
+<li><code>name</code>: The name of the process specification.</li>
+<li><code>version</code>: The version of the process specification.</li>
+<li><code>uuid</code>: A unique identifier (optional).</li>
+</ul>
+<h2>Sub-elements</h2>
+<ul>
+<li><code>ds:Reference</code> (optional, unbounded)</li>
+</ul>
+<h2>Example</h2>
+<pre><code class="language-xml">&lt;ProcessSpecification name=&quot;OrderProcess&quot; version=&quot;1.0&quot; uuid=&quot;uuid-1234&quot;&gt;
+    &lt;ds:Reference URI=&quot;#ref1&quot;/&gt;
+&lt;/ProcessSpecification&gt;
+</code></pre>

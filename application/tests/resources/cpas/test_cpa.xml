@@ -1,0 +1,275 @@
+<tns:CollaborationProtocolAgreement xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:tns="http://www.oasis-open.org/committees/ebxml-cppa/schema/cpp-cpa-2_0.xsd" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.oasis-open.org/committees/ebxml-cppa/schema/cpp-cpa-2_0.xsd                  http://www.oasis-open.org/committees/ebxml-cppa/schema/cpp-cpa-2_0.xsd" tns:cpaid="template_cpa_v01" tns:version="1.0">
+   <tns:Status tns:value="agreed" />
+   <tns:Start>2023-10-12T00:00:00Z</tns:Start>
+   <tns:End>2026-10-06T00:00:00Z</tns:End>
+   <tns:ConversationConstraints tns:concurrentConversations="0" tns:invocationLimit="0" />
+   <tns:PartyInfo tns:partyName="Broker" tns:defaultMshChannelId="BROKER_DC_T_Besteffort_S_Transport_R_" tns:defaultMshPackageId="defaultPackage_Profile">
+      <tns:PartyId tns:type="urn:example:partyid">PARTNER_A</tns:PartyId>
+      <tns:PartyRef xlink:href="https://broker.example.com" xlink:type="simple" />
+      <tns:CollaborationRole>
+         <tns:ProcessSpecification tns:name="Process" tns:version="0.1" xlink:type="simple" xlink:href="http://www.example.com/docs/process-specification.doc" tns:uuid="urn:example:system:Broker:process$0.1" />
+         <tns:Role tns:name="Broker" xlink:href="http://www.example.com/docs/process-specification.doc" />
+         <tns:ServiceBinding>
+            <tns:Service tns:type="urn:example:system">Verzoek</tns:Service>
+            <tns:CanSend>
+               <tns:ThisPartyActionBinding tns:id="BROKER_S1_BrokerX_Ketenpartner_S_ProcessAntwoord_PV_0.1" tns:action="ProcessAntwoord" tns:packageId="defaultPackage_Profile">
+                  <tns:BusinessTransactionCharacteristics tns:isAuthenticated="transient" tns:isAuthorizationRequired="true" tns:isIntelligibleCheckRequired="false" tns:isNonRepudiationReceiptRequired="false" tns:isNonRepudiationRequired="false" tns:isConfidential="transient" tns:isTamperProof="transient" tns:timeToPerform="PT1H" />
+                  <tns:ChannelId>BROKER_DC_T_Reliable_S_Transport_R_3PT10M</tns:ChannelId>
+               </tns:ThisPartyActionBinding>
+               <tns:OtherPartyActionBinding>Ketenpartner_S1_BrokerX_Ketenpartner_R_ProcessAntwoord_PV_0.1</tns:OtherPartyActionBinding>
+            </tns:CanSend>
+            <tns:CanReceive>
+               <tns:ThisPartyActionBinding tns:id="BROKER_S1_Ketenpartner_BrokerX_R_ProcessVerzoek_PV_0.1" tns:action="ProcessVerzoek" tns:packageId="defaultPackage_Profile">
+                  <tns:BusinessTransactionCharacteristics tns:isAuthenticated="transient" tns:isAuthorizationRequired="true" tns:isIntelligibleCheckRequired="false" tns:isNonRepudiationReceiptRequired="false" tns:isNonRepudiationRequired="false" tns:isConfidential="transient" tns:isTamperProof="transient" tns:timeToPerform="PT1H" />
+                  <tns:ChannelId>BROKER_DC_T_Reliable_S_Transport_R_3PT10M</tns:ChannelId>
+               </tns:ThisPartyActionBinding>
+               <tns:OtherPartyActionBinding>Ketenpartner_S1_Ketenpartner_BrokerX_S_ProcessVerzoek_PV_0.1</tns:OtherPartyActionBinding>
+            </tns:CanReceive>
+         </tns:ServiceBinding>
+      </tns:CollaborationRole>
+	  <tns:CollaborationRole>
+         <tns:ProcessSpecification tns:name="Process" tns:version="0.1" xlink:type="simple" xlink:href="http://www.example.com/docs/process-specification.doc" tns:uuid="urn:example:system:Broker:process$0.1" />
+         <tns:Role tns:name="Broker-" xlink:href="http://www.example.com/docs/process-specification.doc" />
+         <tns:ServiceBinding>
+            <tns:Service tns:type="urn:example:system">Mutatie</tns:Service>
+            <tns:CanSend>
+               <tns:ThisPartyActionBinding tns:id="BROKER_S2_BrokerX_Ketenpartner_S_ProcessAntwoord_PV_0.1" tns:action="ProcessAntwoord" tns:packageId="defaultPackage_Profile">
+                  <tns:BusinessTransactionCharacteristics tns:isAuthenticated="transient" tns:isAuthorizationRequired="true" tns:isIntelligibleCheckRequired="false" tns:isNonRepudiationReceiptRequired="false" tns:isNonRepudiationRequired="false" tns:isConfidential="transient" tns:isTamperProof="transient" tns:timeToPerform="PT1H" />
+                  <tns:ChannelId>BROKER_DC_T_Reliable_S_Transport_R_3PT10M</tns:ChannelId>
+               </tns:ThisPartyActionBinding>
+               <tns:OtherPartyActionBinding>Ketenpartner_S2_BrokerX_Ketenpartner_R_ProcessAntwoord_PV_0.1</tns:OtherPartyActionBinding>
+            </tns:CanSend>
+            <tns:CanReceive>
+               <tns:ThisPartyActionBinding tns:id="BROKER_S2_Ketenpartner_BrokerX_R_ProcessMutatie_PV_0.1" tns:action="ProcessMutatie" tns:packageId="defaultPackage_Profile">
+                  <tns:BusinessTransactionCharacteristics tns:isAuthenticated="transient" tns:isAuthorizationRequired="true" tns:isIntelligibleCheckRequired="false" tns:isNonRepudiationReceiptRequired="false" tns:isNonRepudiationRequired="false" tns:isConfidential="transient" tns:isTamperProof="transient" tns:timeToPerform="PT1H" />
+                  <tns:ChannelId>BROKER_DC_T_Reliable_S_Transport_R_3PT10M</tns:ChannelId>
+               </tns:ThisPartyActionBinding>
+               <tns:OtherPartyActionBinding>Ketenpartner_S2_Ketenpartner_BrokerX_S_ProcessMutatie_PV_0.1</tns:OtherPartyActionBinding>
+            </tns:CanReceive>
+         </tns:ServiceBinding>
+      </tns:CollaborationRole>
+      <tns:Certificate tns:certId="BROKER_ServerCert">
+         <ds:KeyInfo>
+           <ds:KeyValue>
+             <ds:RSAKeyValue>
+               <ds:Modulus>scYVzcOazzoi9hWe5BP7PrpG/CfYjNjBhSh1v2hmmst4gcaQSf4hMPVRRolzYEtMQaX2a2kvU8tSCZHOQULqPjlzJzvvlSvUld0KSffL/5sk/YBWz7bo+loHo3+WJiFhj6I6FHV4K8WaIeeAFbwiPKgvsGXa6JafZDY8xW8/mf9dwjAt+9O8Lf/Op7bkTXWWJd+eVKjIPm1ctZmcvR97PU3T7az3jURy93V60XTz2RIq4s3h/I2PYw9W3ugOWAiween9ojcgD64AEQqbOk1uFBnF92Nn4plm4fO3ENq+5XLsKGABR1mIUN0mdyicfeCj5VjK1AoTQN3Blu3klcO5ow==</ds:Modulus>
+               <ds:Exponent>AQAB</ds:Exponent>
+             </ds:RSAKeyValue>
+           </ds:KeyValue>
+           <ds:X509Data>
+             <ds:X509SubjectName>CN=www.google.com</ds:X509SubjectName>
+             <ds:X509Certificate>MIIDaDCCAlCgAwIBAgIQAJIFi9/I9xvI3xijDoufijANBgkqhkiG9w0BAQsFADBoMQswCQYDVQQGEwJDWjEPMA0GA1UECAwGUHJhZ3VlMQ4wDAYDVQQKDAVBVkFTVDEdMBsGA1UECwwUU29mdHdhcmUgRGV2ZWxvcG1lbnQxGTAXBgNVBAMMEEF2YXN0IHRydXN0ZWQgQ0EwHhcNMjQwNTA2MTQ0NDUwWhcNMjQwNzI5MTQ0NDQ5WjAZMRcwFQYDVQQDEw53d3cuZ29vZ2xlLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALHGFc3Dms86IvYVnuQT+z66Rvwn2IzYwYUodb9oZprLeIHGkEn+ITD1UUaJc2BLTEGl9mtpL1PLUgmRzkFC6j45cyc775Ur1JXdCkn3y/+bJP2AVs+26PpaB6N/liYhYY+iOhR1eCvFmiHngBW8IjyoL7Bl2uiWn2Q2PMVvP5n/XcIwLfvTvC3/zqe25E11liXfnlSoyD5tXLWZnL0fez1N0+2s941Ecvd1etF089kSKuLN4fyNj2MPVt7oDlgIsHnp/aI3IA+uABEKmzpNbhQZxfdjZ+KZZuHztxDavuVy7ChgAUdZiFDdJnconH3go+VYytQKE0DdwZbt5JXDuaMCAwEAAaNdMFswHQYDVR0OBBYEFPYHAIho0QfK+e2yFZ+w6/YjelxGMB8GA1UdIwQYMBaAFHY4NDKoJE61+2LaS72dd5CVmatMMBkGA1UdEQQSMBCCDnd3dy5nb29nbGUuY29tMA0GCSqGSIb3DQEBCwUAA4IBAQBtZPiWWgdrEoo11oVdLyCRlw4DqlvG4y6OgkzJg1sKvAqedvtildDmkHmJcCspMNbtcCUG8VyRwtlVbf9o8BrEF2X2I72x/qONogrkILAI2Zlm9sLf5U4YEXog9P3GHbnHLvvTNsYG+Yg05QAj4VpysJ348N0aMG2OP0ic6cAuzvDc4Yk4agXWlAX/JEkz1YT6lt9oC5Rl3M1FbjR+YCzgd+65eD5U3UsHx4H4JRs7s0in714U6P6WSVt03oSpXTpm5ppqHJBuIfR7YsEv22Kh4toqr0/cbwfY7xKnyn79UrM00VpnB21i3zj420DhOF/0FE+tpp092hmKPcj8B7we</ds:X509Certificate>
+             <ds:X509IssuerSerial>
+               <ds:X509IssuerName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509IssuerName>
+               <ds:X509SerialNumber>758187835366801866001047472019578762</ds:X509SerialNumber>
+             </ds:X509IssuerSerial>
+           </ds:X509Data>
+           <ds:X509Data>
+             <ds:X509SubjectName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509SubjectName>
+             <ds:X509Certificate>MIIDsTCCApmgAwIBAgIUFPGN0QKJgvGyrAjpnkS7TM9URq0wDQYJKoZIhvcNAQELBQAwaDELMAkGA1UEBhMCQ1oxDzANBgNVBAgMBlByYWd1ZTEOMAwGA1UECgwFQVZBU1QxHTAbBgNVBAsMFFNvZnR3YXJlIERldmVsb3BtZW50MRkwFwYDVQQDDBBBdmFzdCB0cnVzdGVkIENBMB4XDTI0MDEwNTEyMDI0MloXDTM0MDEwMjEyMDI0MlowaDELMAkGA1UEBhMCQ1oxDzANBgNVBAgMBlByYWd1ZTEOMAwGA1UECgwFQVZBU1QxHTAbBgNVBAsMFFNvZnR3YXJlIERldmVsb3BtZW50MRkwFwYDVQQDDBBBdmFzdCB0cnVzdGVkIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArKi9nOZQEc7NNr9BuSV31v5YBzmHjCja3fslrBwPkod1P1xcdkP8f8IU7mYJf9xgeLkuSaUnPn9i/lQ9ApdktGM+FYtYg4LPejsvu/pLS7IV+rIWWTwJ4A3M7QDZd6QukP1/qzzLC6tf3ErK3cKSgfgcTUx+0EgLlVlBPN9dkgqkdiNjiLD/uC7OQ3C8vgU5vpBzXb2JQGHxKfDyeS7OLpBob0ttYPvLCPPyP3SY2UOTpjX9tDvAAc5m09VirqhhA5toBZBElqOvO9cju8AWM9fEQPVeVoEi1lT8+dqE0kHE9wq8DXWLpcBdnR/Qjf1OTl36bD+aLjY51z4JDjNV7QIDAQABo1MwUTAdBgNVHQ4EFgQUdjg0MqgkTrX7YtpLvZ13kJWZq0wwHwYDVR0jBBgwFoAUdjg0MqgkTrX7YtpLvZ13kJWZq0wwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEADwYOvncKvZmsPOAiexhMr80LA1wdMqJ4bWyyyMKPDW/mqiUtU3EsayiP+O1a5mJum8MFQwBPhoNYikWYp4p5iPh/n6hXSxVK8YBqM27JXjVaQiS1tPJk4UktZ9aXkjTWiSlWNMJsoHhI1JmVRg6ECfX1WTK38O97Ukm2XDTpwQtP0r/xCLFHrbEpSocmEnpco9Reg6+G3aWprdNLsHgznk1sCcG2ZbK58Wke/5VjUrzImRguhgzvHGVShE5MyhqGm4cARvJSz92o6yLLZHYwv4gIp8HVV2wKGrByeEa2Rek7qDMYsSN3+P28B56QpmVg+6wG7fS7ByivfKqFOq4WMg==</ds:X509Certificate>
+             <ds:X509IssuerSerial>
+               <ds:X509IssuerName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509IssuerName>
+               <ds:X509SerialNumber>119566648964026191856410076338168258360427955885</ds:X509SerialNumber>
+             </ds:X509IssuerSerial>
+           </ds:X509Data>
+         </ds:KeyInfo>
+      </tns:Certificate>
+      <tns:Certificate tns:certId="BROKER_ClientCert">
+         <ds:KeyInfo>
+           <ds:KeyValue>
+             <ds:RSAKeyValue>
+               <ds:Modulus>scYVzcOazzoi9hWe5BP7PrpG/CfYjNjBhSh1v2hmmst4gcaQSf4hMPVRRolzYEtMQaX2a2kvU8tSCZHOQULqPjlzJzvvlSvUld0KSffL/5sk/YBWz7bo+loHo3+WJiFhj6I6FHV4K8WaIeeAFbwiPKgvsGXa6JafZDY8xW8/mf9dwjAt+9O8Lf/Op7bkTXWWJd+eVKjIPm1ctZmcvR97PU3T7az3jURy93V60XTz2RIq4s3h/I2PYw9W3ugOWAiween9ojcgD64AEQqbOk1uFBnF92Nn4plm4fO3ENq+5XLsKGABR1mIUN0mdyicfeCj5VjK1AoTQN3Blu3klcO5ow==</ds:Modulus>
+               <ds:Exponent>AQAB</ds:Exponent>
+             </ds:RSAKeyValue>
+           </ds:KeyValue>
+           <ds:X509Data>
+             <ds:X509SubjectName>CN=www.google.com</ds:X509SubjectName>
+             <ds:X509Certificate>MIIDaDCCAlCgAwIBAgIQAJIFi9/I9xvI3xijDoufijANBgkqhkiG9w0BAQsFADBoMQswCQYDVQQGEwJDWjEPMA0GA1UECAwGUHJhZ3VlMQ4wDAYDVQQKDAVBVkFTVDEdMBsGA1UECwwUU29mdHdhcmUgRGV2ZWxvcG1lbnQxGTAXBgNVBAMMEEF2YXN0IHRydXN0ZWQgQ0EwHhcNMjQwNTA2MTQ0NDUwWhcNMjQwNzI5MTQ0NDQ5WjAZMRcwFQYDVQQDEw53d3cuZ29vZ2xlLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALHGFc3Dms86IvYVnuQT+z66Rvwn2IzYwYUodb9oZprLeIHGkEn+ITD1UUaJc2BLTEGl9mtpL1PLUgmRzkFC6j45cyc775Ur1JXdCkn3y/+bJP2AVs+26PpaB6N/liYhYY+iOhR1eCvFmiHngBW8IjyoL7Bl2uiWn2Q2PMVvP5n/XcIwLfvTvC3/zqe25E11liXfnlSoyD5tXLWZnL0fez1N0+2s941Ecvd1etF089kSKuLN4fyNj2MPVt7oDlgIsHnp/aI3IA+uABEKmzpNbhQZxfdjZ+KZZuHztxDavuVy7ChgAUdZiFDdJnconH3go+VYytQKE0DdwZbt5JXDuaMCAwEAAaNdMFswHQYDVR0OBBYEFPYHAIho0QfK+e2yFZ+w6/YjelxGMB8GA1UdIwQYMBaAFHY4NDKoJE61+2LaS72dd5CVmatMMBkGA1UdEQQSMBCCDnd3dy5nb29nbGUuY29tMA0GCSqGSIb3DQEBCwUAA4IBAQBtZPiWWgdrEoo11oVdLyCRlw4DqlvG4y6OgkzJg1sKvAqedvtildDmkHmJcCspMNbtcCUG8VyRwtlVbf9o8BrEF2X2I72x/qONogrkILAI2Zlm9sLf5U4YEXog9P3GHbnHLvvTNsYG+Yg05QAj4VpysJ348N0aMG2OP0ic6cAuzvDc4Yk4agXWlAX/JEkz1YT6lt9oC5Rl3M1FbjR+YCzgd+65eD5U3UsHx4H4JRs7s0in714U6P6WSVt03oSpXTpm5ppqHJBuIfR7YsEv22Kh4toqr0/cbwfY7xKnyn79UrM00VpnB21i3zj420DhOF/0FE+tpp092hmKPcj8B7we</ds:X509Certificate>
+             <ds:X509IssuerSerial>
+               <ds:X509IssuerName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509IssuerName>
+               <ds:X509SerialNumber>758187835366801866001047472019578762</ds:X509SerialNumber>
+             </ds:X509IssuerSerial>
+           </ds:X509Data>
+           <ds:X509Data>
+             <ds:X509SubjectName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509SubjectName>
+             <ds:X509Certificate>MIIDsTCCApmgAwIBAgIUFPGN0QKJgvGyrAjpnkS7TM9URq0wDQYJKoZIhvcNAQELBQAwaDELMAkGA1UEBhMCQ1oxDzANBgNVBAgMBlByYWd1ZTEOMAwGA1UECgwFQVZBU1QxHTAbBgNVBAsMFFNvZnR3YXJlIERldmVsb3BtZW50MRkwFwYDVQQDDBBBdmFzdCB0cnVzdGVkIENBMB4XDTI0MDEwNTEyMDI0MloXDTM0MDEwMjEyMDI0MlowaDELMAkGA1UEBhMCQ1oxDzANBgNVBAgMBlByYWd1ZTEOMAwGA1UECgwFQVZBU1QxHTAbBgNVBAsMFFNvZnR3YXJlIERldmVsb3BtZW50MRkwFwYDVQQDDBBBdmFzdCB0cnVzdGVkIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArKi9nOZQEc7NNr9BuSV31v5YBzmHjCja3fslrBwPkod1P1xcdkP8f8IU7mYJf9xgeLkuSaUnPn9i/lQ9ApdktGM+FYtYg4LPejsvu/pLS7IV+rIWWTwJ4A3M7QDZd6QukP1/qzzLC6tf3ErK3cKSgfgcTUx+0EgLlVlBPN9dkgqkdiNjiLD/uC7OQ3C8vgU5vpBzXb2JQGHxKfDyeS7OLpBob0ttYPvLCPPyP3SY2UOTpjX9tDvAAc5m09VirqhhA5toBZBElqOvO9cju8AWM9fEQPVeVoEi1lT8+dqE0kHE9wq8DXWLpcBdnR/Qjf1OTl36bD+aLjY51z4JDjNV7QIDAQABo1MwUTAdBgNVHQ4EFgQUdjg0MqgkTrX7YtpLvZ13kJWZq0wwHwYDVR0jBBgwFoAUdjg0MqgkTrX7YtpLvZ13kJWZq0wwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEADwYOvncKvZmsPOAiexhMr80LA1wdMqJ4bWyyyMKPDW/mqiUtU3EsayiP+O1a5mJum8MFQwBPhoNYikWYp4p5iPh/n6hXSxVK8YBqM27JXjVaQiS1tPJk4UktZ9aXkjTWiSlWNMJsoHhI1JmVRg6ECfX1WTK38O97Ukm2XDTpwQtP0r/xCLFHrbEpSocmEnpco9Reg6+G3aWprdNLsHgznk1sCcG2ZbK58Wke/5VjUrzImRguhgzvHGVShE5MyhqGm4cARvJSz92o6yLLZHYwv4gIp8HVV2wKGrByeEa2Rek7qDMYsSN3+P28B56QpmVg+6wG7fS7ByivfKqFOq4WMg==</ds:X509Certificate>
+             <ds:X509IssuerSerial>
+               <ds:X509IssuerName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509IssuerName>
+               <ds:X509SerialNumber>119566648964026191856410076338168258360427955885</ds:X509SerialNumber>
+             </ds:X509IssuerSerial>
+           </ds:X509Data>
+         </ds:KeyInfo>
+      </tns:Certificate>
+      <tns:SecurityDetails tns:securityId="BROKER_TransportSecurity">
+         <tns:TrustAnchors>
+            <tns:AnchorCertificateRef tns:certId="BROKER_ServerCert" />
+            <tns:AnchorCertificateRef tns:certId="BROKER_ClientCert" />
+         </tns:TrustAnchors>
+      </tns:SecurityDetails>
+      <tns:DeliveryChannel tns:channelId="BROKER_DC_T_Besteffort_S_Transport_R_" tns:docExchangeId="BROKER_DE_S__R_" tns:transportId="BROKER_T_HTTPS">
+         <tns:MessagingCharacteristics tns:syncReplyMode="none" tns:ackRequested="never" tns:actor="urn:oasis:names:tc:ebxml-msg:actor:toPartyMSH" tns:ackSignatureRequested="never" tns:duplicateElimination="never" />
+      </tns:DeliveryChannel>
+      <tns:DeliveryChannel tns:channelId="BROKER_DC_T_Reliable_S_Transport_R_3PT10M" tns:docExchangeId="BROKER_DE_S__R_3PT10M" tns:transportId="BROKER_T_HTTPS">
+         <tns:MessagingCharacteristics tns:syncReplyMode="none" tns:ackRequested="always" tns:actor="urn:oasis:names:tc:ebxml-msg:actor:toPartyMSH" tns:ackSignatureRequested="never" tns:duplicateElimination="always" />
+      </tns:DeliveryChannel>
+      <tns:Transport tns:transportId="BROKER_T_HTTPS">
+         <tns:TransportSender>
+            <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
+            <tns:TransportClientSecurity>
+               <tns:TransportSecurityProtocol tns:version="3.0">SSL</tns:TransportSecurityProtocol>
+               <tns:ClientCertificateRef tns:certId="BROKER_ClientCert" />
+               <tns:ServerSecurityDetailsRef tns:securityId="BROKER_TransportSecurity" />
+            </tns:TransportClientSecurity>
+         </tns:TransportSender>
+         <tns:TransportReceiver>
+            <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
+            <tns:Endpoint tns:uri="https://PARTY_A.nl/exchange/PARTNER_A" tns:type="allPurpose" />
+            <tns:TransportServerSecurity>
+               <tns:TransportSecurityProtocol tns:version="3.0">SSL</tns:TransportSecurityProtocol>
+               <tns:ServerCertificateRef tns:certId="BROKER_ServerCert" />
+               <tns:ClientSecurityDetailsRef tns:securityId="BROKER_TransportSecurity" />
+            </tns:TransportServerSecurity>
+         </tns:TransportReceiver>
+      </tns:Transport>
+      <tns:DocExchange tns:docExchangeId="BROKER_DE_S__R_">
+         <tns:ebXMLSenderBinding tns:version="2.0" />
+         <tns:ebXMLReceiverBinding tns:version="2.0" />
+      </tns:DocExchange>
+      <tns:DocExchange tns:docExchangeId="BROKER_DE_S__R_3PT10M">
+         <tns:ebXMLSenderBinding tns:version="2.0">
+            <tns:ReliableMessaging>
+               <tns:Retries>3</tns:Retries>
+               <tns:RetryInterval>PT10M</tns:RetryInterval>
+               <tns:MessageOrderSemantics>NotGuaranteed</tns:MessageOrderSemantics>
+            </tns:ReliableMessaging>
+            <tns:PersistDuration>P7D</tns:PersistDuration>
+         </tns:ebXMLSenderBinding>
+         <tns:ebXMLReceiverBinding tns:version="2.0">
+            <tns:ReliableMessaging>
+               <tns:Retries>3</tns:Retries>
+               <tns:RetryInterval>PT10M</tns:RetryInterval>
+               <tns:MessageOrderSemantics>NotGuaranteed</tns:MessageOrderSemantics>
+            </tns:ReliableMessaging>
+            <tns:PersistDuration>P7D</tns:PersistDuration>
+         </tns:ebXMLReceiverBinding>
+      </tns:DocExchange>
+   </tns:PartyInfo>
+   <tns:PartyInfo tns:partyName="KetenPartner" tns:defaultMshChannelId="Ketenpartner_DC_T_Besteffort_S_Transport_R_" tns:defaultMshPackageId="defaultPackage_Profile">
+      <tns:PartyId tns:type="urn:example:system">KETENPARTNER_1</tns:PartyId>
+      <tns:PartyRef xlink:href="" xlink:type="simple" />
+      <tns:CollaborationRole>
+         <tns:ProcessSpecification tns:name="Process" tns:version="0.1" xlink:type="simple" xlink:href="" tns:uuid="522cvs9ax3pfcxuicd4l" />
+         <tns:Role tns:name="Ketenpartner" xlink:href="" />
+         <tns:ServiceBinding>
+            <tns:Service tns:type="urn:example:system">Service</tns:Service>
+            <tns:CanSend>
+               <tns:ThisPartyActionBinding tns:id="Ketenpartner_S1_Ketenpartner_BrokerX_S_ProcessVerzoek_PV_0.1" tns:action="ProcessVerzoek" tns:packageId="defaultPackage_Profile">
+                  <tns:BusinessTransactionCharacteristics tns:isAuthenticated="transient" tns:isAuthorizationRequired="true" tns:isIntelligibleCheckRequired="false" tns:isNonRepudiationReceiptRequired="false" tns:isNonRepudiationRequired="false" tns:isConfidential="transient" tns:isTamperProof="transient" tns:timeToPerform="PT1H" />
+                  <tns:ChannelId>Ketenpartner_DC_T_Reliable_S_Transport_R_3PT10M</tns:ChannelId>
+               </tns:ThisPartyActionBinding>
+               <tns:OtherPartyActionBinding>BROKER_S1_Ketenpartner_BrokerX_R_ProcessVerzoek_PV_0.1</tns:OtherPartyActionBinding>
+            </tns:CanSend>
+            <tns:CanReceive>
+               <tns:ThisPartyActionBinding tns:id="Ketenpartner_S1_BrokerX_Ketenpartner_R_ProcessAntwoord_PV_0.1" tns:action="ProcessAntwoord" tns:packageId="defaultPackage_Profile">
+                  <tns:BusinessTransactionCharacteristics tns:isAuthenticated="transient" tns:isAuthorizationRequired="true" tns:isIntelligibleCheckRequired="false" tns:isNonRepudiationReceiptRequired="false" tns:isNonRepudiationRequired="false" tns:isConfidential="transient" tns:isTamperProof="transient" tns:timeToPerform="PT1H" />
+                  <tns:ChannelId>Ketenpartner_DC_T_Reliable_S_Transport_R_3PT10M</tns:ChannelId>
+               </tns:ThisPartyActionBinding>
+               <tns:OtherPartyActionBinding>BROKER_S1_BrokerX_Ketenpartner_S_ProcessAntwoord_PV_0.1</tns:OtherPartyActionBinding>
+            </tns:CanReceive>
+         </tns:ServiceBinding>
+      </tns:CollaborationRole>
+	  <tns:CollaborationRole>
+         <tns:ProcessSpecification tns:name="Process" tns:version="0.1" xlink:type="simple" xlink:href="http://www.example.com/docs/process-specification.doc" tns:uuid="urn:example:system:Broker:process$0.1" />
+         <tns:Role tns:name="Ketenpartner" xlink:href="http://www.example.com/docs/process-specification.doc" />
+         <tns:ServiceBinding>
+            <tns:Service tns:type="urn:example:system">Mutatie</tns:Service>
+            <tns:CanSend>
+               <tns:ThisPartyActionBinding tns:id="Ketenpartner_S2_Ketenpartner_BrokerX_S_ProcessMutatie_PV_0.1" tns:action="ProcessMutatie" tns:packageId="defaultPackage_Profile">
+                  <tns:BusinessTransactionCharacteristics tns:isAuthenticated="transient" tns:isAuthorizationRequired="true" tns:isIntelligibleCheckRequired="false" tns:isNonRepudiationReceiptRequired="false" tns:isNonRepudiationRequired="false" tns:isConfidential="transient" tns:isTamperProof="transient" tns:timeToPerform="PT1H" />
+                  <tns:ChannelId>Ketenpartner_DC_T_Reliable_S_Transport_R_3PT10M</tns:ChannelId>
+               </tns:ThisPartyActionBinding>
+               <tns:OtherPartyActionBinding>BROKER_S2_Ketenpartner_BrokerX_R_ProcessMutatie_PV_0.1</tns:OtherPartyActionBinding>
+            </tns:CanSend>
+            <tns:CanReceive>
+               <tns:ThisPartyActionBinding tns:id="Ketenpartner_S2_BrokerX_Ketenpartner_R_ProcessAntwoord_PV_0.1" tns:action="ProcessAntwoord" tns:packageId="defaultPackage_Profile">
+                  <tns:BusinessTransactionCharacteristics tns:isAuthenticated="transient" tns:isAuthorizationRequired="true" tns:isIntelligibleCheckRequired="false" tns:isNonRepudiationReceiptRequired="false" tns:isNonRepudiationRequired="false" tns:isConfidential="transient" tns:isTamperProof="transient" tns:timeToPerform="PT1H" />
+                  <tns:ChannelId>Ketenpartner_DC_T_Reliable_S_Transport_R_3PT10M</tns:ChannelId>
+               </tns:ThisPartyActionBinding>
+               <tns:OtherPartyActionBinding>BROKER_S2_BrokerX_Ketenpartner_S_ProcessAntwoord_PV_0.1</tns:OtherPartyActionBinding>
+            </tns:CanReceive>
+         </tns:ServiceBinding>
+      </tns:CollaborationRole>
+      <tns:Certificate tns:certId="Ketenpartner_ServerCert">
+
+      </tns:Certificate>
+      <tns:Certificate tns:certId="Ketenpartner_ClientCert">
+     
+      </tns:Certificate>
+      <tns:SecurityDetails tns:securityId="Ketenpartner_TransportSecurity">
+         <tns:TrustAnchors>
+            <tns:AnchorCertificateRef tns:certId="Ketenpartner_ServerCert" />
+            <tns:AnchorCertificateRef tns:certId="Ketenpartner_ClientCert" />
+         </tns:TrustAnchors>
+      </tns:SecurityDetails>
+      <tns:DeliveryChannel tns:channelId="Ketenpartner_DC_T_Besteffort_S_Transport_R_" tns:docExchangeId="Ketenpartner_DE_S__R_" tns:transportId="Ketenpartner_T_HTTPS">
+         <tns:MessagingCharacteristics tns:syncReplyMode="none" tns:ackRequested="never" tns:actor="urn:oasis:names:tc:ebxml-msg:actor:toPartyMSH" tns:ackSignatureRequested="never" tns:duplicateElimination="never" />
+      </tns:DeliveryChannel>
+      <tns:DeliveryChannel tns:channelId="Ketenpartner_DC_T_Reliable_S_Transport_R_3PT10M" tns:docExchangeId="Ketenpartner_DE_S__R_3PT10M" tns:transportId="Ketenpartner_T_HTTPS">
+         <tns:MessagingCharacteristics tns:syncReplyMode="none" tns:ackRequested="always" tns:actor="urn:oasis:names:tc:ebxml-msg:actor:toPartyMSH" tns:ackSignatureRequested="never" tns:duplicateElimination="always" />
+      </tns:DeliveryChannel>
+      <tns:Transport tns:transportId="Ketenpartner_T_HTTPS">
+         <tns:TransportSender>
+            <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
+            <tns:TransportClientSecurity>
+               <tns:TransportSecurityProtocol tns:version="3.0">SSL</tns:TransportSecurityProtocol>
+               <tns:ClientCertificateRef tns:certId="Ketenpartner_ClientCert" />
+               <tns:ServerSecurityDetailsRef tns:securityId="Ketenpartner_TransportSecurity" />
+            </tns:TransportClientSecurity>
+         </tns:TransportSender>
+         <tns:TransportReceiver>
+            <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
+            <tns:Endpoint tns:uri="https://partner.nu/exchange/TEST" tns:type="allPurpose" />
+            <tns:TransportServerSecurity>
+               <tns:TransportSecurityProtocol tns:version="3.0">SSL</tns:TransportSecurityProtocol>
+               <tns:ServerCertificateRef tns:certId="Ketenpartner_ServerCert" />
+               <tns:ClientSecurityDetailsRef tns:securityId="Ketenpartner_TransportSecurity" />
+            </tns:TransportServerSecurity>
+         </tns:TransportReceiver>
+      </tns:Transport>
+      <tns:DocExchange tns:docExchangeId="Ketenpartner_DE_S__R_">
+         <tns:ebXMLSenderBinding tns:version="2.0" />
+         <tns:ebXMLReceiverBinding tns:version="2.0" />
+      </tns:DocExchange>
+      <tns:DocExchange tns:docExchangeId="Ketenpartner_DE_S__R_3PT10M">
+         <tns:ebXMLSenderBinding tns:version="2.0">
+            <tns:ReliableMessaging>
+               <tns:Retries>3</tns:Retries>
+               <tns:RetryInterval>PT10M</tns:RetryInterval>
+               <tns:MessageOrderSemantics>NotGuaranteed</tns:MessageOrderSemantics>
+            </tns:ReliableMessaging>
+            <tns:PersistDuration>P7D</tns:PersistDuration>
+         </tns:ebXMLSenderBinding>
+         <tns:ebXMLReceiverBinding tns:version="2.0">
+            <tns:ReliableMessaging>
+               <tns:Retries>3</tns:Retries>
+               <tns:RetryInterval>PT10M</tns:RetryInterval>
+               <tns:MessageOrderSemantics>NotGuaranteed</tns:MessageOrderSemantics>
+            </tns:ReliableMessaging>
+            <tns:PersistDuration>P7D</tns:PersistDuration>
+         </tns:ebXMLReceiverBinding>
+      </tns:DocExchange>
+   </tns:PartyInfo>
+   <tns:SimplePart tns:id="DefaultSimplePart" tns:mimetype="application/xml" />
+   <tns:Packaging tns:id="defaultPackage_Profile">
+      <tns:ProcessingCapabilities tns:parse="true" tns:generate="true" />
+      <tns:CompositeList>
+         <tns:Composite tns:id="DefaultComposite" tns:mimetype="type=text/xml">
+            <tns:Constituent tns:idref="DefaultSimplePart" />
+         </tns:Composite>
+      </tns:CompositeList>
+   </tns:Packaging>
+   <tns:Comment xml:lang="nl-NL">Deze CPA is gemaakt met de .</tns:Comment>
+   <tns:Comment xml:lang="nl-NL">Deze CPA mag alleen gebruikt worden door de partijen die genoemd zijn in deze CPA.</tns:Comment>
+   <tns:Comment xml:lang="nl-NL">Creatie datum/tijd: 2021-09-13T06:03:08.113Z</tns:Comment>
+   <tns:Comment xml:lang="nl-NL">Nederland</tns:Comment>
+</tns:CollaborationProtocolAgreement>

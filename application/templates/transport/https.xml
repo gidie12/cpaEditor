@@ -1,0 +1,27 @@
+<tp:Transport tp:transportId="{{transportId}}">
+    <tp:TransportSender> <!-- 0 or 1 time -->
+        <tp:TransportProtocol tp:version="1.1">HTTP</tp:Protocol>
+        <tp:TransportClientSecurity>
+            <tp:TransportSecurityProtocol tp:version="3.0">
+                SSL
+            </tp:TransportSecurityProtocol>
+            <tp:ClientCertificateRef tp:certId="{{ClientCertificateRef.certid}}"/>
+            <tp:ServerSecurityDetailsRef
+                    tp:securityId="ServerSecurityDetailsRef.securityId"/>
+        </tp:TransportClientSecurity>
+    </tp:TransportSender>
+    <tp:TransportReceiver> <!-- 0 or 1 time -->
+        <tp:TransportProtocol tp:version="1.1">HTTP</tp:Protocol>
+        <tp:Endpoint
+                tp:uri="https://www.CompanyA.com/servlets/ebxmlhandler"
+                tp:type="allPurpose"/>
+        <tp:TransportServerSecurity>
+            <tp:TransportSecurityProtocol tp:version="3.0">
+                SSL
+            </tp:TransportSecurityProtocol>
+            <tp:ServerCertificateRef tp:certId="CompanyA_ServerCert"/>
+            <tp:ClientSecurityDetailsRef
+                    tp:securityId="CompanyA_TransportSecurity"/>
+        </tp:TransportServerSecurity>
+    </tp:TransportReceiver>
+</tp:Transport>

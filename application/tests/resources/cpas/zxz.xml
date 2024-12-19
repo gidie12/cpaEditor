@@ -1,0 +1,143 @@
+<tns:CollaborationProtocolAgreement xmlns:ns2="http://www.w3.org/1999/xlink" xmlns:tns="http://www.oasis-open.org/committees/ebxml-cppa/schema/cpp-cpa-2_0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.oasis-open.org/committees/ebxml-cppa/schema/cpp-cpa-2_0.xsd" tns:cpaid="DUMMYBROKER_O-DUMMYPARTNER_O_V001" tns:version="1.0">
+   <tns:Status tns:value="agreed" />
+   <tns:Start>2021-01-01T00:00:00Z</tns:Start>
+   <tns:End>2024-12-31T00:00:00Z</tns:End>
+   <tns:ConversationConstraints tns:concurrentConversations="0" tns:invocationLimit="0" />
+   <tns:PartyInfo tns:partyName="DUMMYBROKER-ONT1" tns:defaultMshChannelId="DC_T_Besteffort_S__R_" tns:defaultMshPackageId="defaultPackage_Profile">
+      <tns:PartyId tns:type="urn:example:partyid">DUMMYBRONT1</tns:PartyId>
+      <tns:PartyRef ns2:href="https://www.example.com" ns2:type="simple" />
+      <tns:CollaborationRole>
+         <tns:ProcessSpecification tns:name="DUMMYBROKER-ONT1" tns:version="1.0" ns2:type="simple" ns2:href="http://www.ean-ucc.org/DUMMYBROKER_O" tns:uuid="urn:ean-ucc:org" />
+         <tns:Role tns:name="DUMMYBROKER-ONT1" ns2:href="http://www.ean-ucc.org/DUMMYBROKER_O" />
+         <tns:ServiceBinding>
+            <tns:Service>DUMMYBROKER_O:0:1</tns:Service>
+            <tns:CanSend>
+               <tns:ThisPartyActionBinding tns:id="PA_DUMMYBROKER_O:0:1_Ontvangen" tns:action="Ontvangen" tns:packageId="defaultPackage_Profile">
+                  <tns:BusinessTransactionCharacteristics tns:isAuthenticated="transient" tns:isAuthorizationRequired="true" tns:isIntelligibleCheckRequired="false" tns:isNonRepudiationReceiptRequired="false" tns:isNonRepudiationRequired="false" tns:isConfidential="transient" tns:isTamperProof="transient" tns:timeToPerform="PT27H" />
+                  <tns:ChannelId>DUMMYBROKER_O_DC_T_Reliable_S__R_8PT3H</tns:ChannelId>
+               </tns:ThisPartyActionBinding>
+               <tns:OtherPartyActionBinding>PA_DUMMYBROKER_O:0:1_Ontvangen</tns:OtherPartyActionBinding>
+            </tns:CanSend>
+            <tns:CanReceive>
+               <tns:ThisPartyActionBinding tns:id="PA_DUMMYBROKER_O:0:1_Verzonden" tns:action="Verzonden" tns:packageId="defaultPackage_Profile">
+                  <tns:BusinessTransactionCharacteristics tns:isAuthenticated="transient" tns:isAuthorizationRequired="true" tns:isIntelligibleCheckRequired="false" tns:isNonRepudiationReceiptRequired="false" tns:isNonRepudiationRequired="false" tns:isConfidential="transient" tns:isTamperProof="transient" tns:timeToPerform="PT27H" />
+                  <tns:ChannelId>DUMMYBROKER_O_DC_T_Reliable_S__R_8PT3H</tns:ChannelId>
+               </tns:ThisPartyActionBinding>
+               <tns:OtherPartyActionBinding>PA_DUMMYBROKER_O:0:1_Verzonden</tns:OtherPartyActionBinding>
+            </tns:CanReceive>
+         </tns:ServiceBinding>
+      </tns:CollaborationRole>
+      <tns:DeliveryChannel tns:channelId="DC_T_Besteffort_S__R_" tns:docExchangeId="DE_S__R_" tns:transportId="TP_ID_1">
+         <tns:MessagingCharacteristics tns:syncReplyMode="none" tns:ackRequested="never" tns:actor="urn:oasis:names:tc:ebxml-msg:actor:toPartyMSH" tns:ackSignatureRequested="never" tns:duplicateElimination="never" />
+     </tns:DeliveryChannel>
+      <tns:DeliveryChannel tns:channelId="DUMMYBROKER_O_DC_T_Reliable_S__R_8PT3H" tns:docExchangeId="DE_S__R_8PT3H" tns:transportId="TP_ID_1">
+         <tns:MessagingCharacteristics tns:syncReplyMode="none" tns:ackRequested="always" tns:actor="urn:oasis:names:tc:ebxml-msg:actor:toPartyMSH" tns:ackSignatureRequested="never" tns:duplicateElimination="always" />
+      </tns:DeliveryChannel>
+      <tns:Transport tns:transportId="TP_ID_1">
+         <tns:TransportSender>
+            <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
+         </tns:TransportSender>
+         <tns:TransportReceiver>
+            <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
+            <tns:Endpoint tns:uri="http://broker.example.com:8080/exchange/test" tns:type="allPurpose" />
+         </tns:TransportReceiver>
+      </tns:Transport>
+      <tns:DocExchange tns:docExchangeId="DE_S__R_">
+         <tns:ebXMLSenderBinding tns:version="2.0" />
+         <tns:ebXMLReceiverBinding tns:version="2.0" />
+      </tns:DocExchange>
+      <tns:DocExchange tns:docExchangeId="DE_S__R_8PT3H">
+         <tns:ebXMLSenderBinding tns:version="2.0">
+            <tns:ReliableMessaging>
+               <tns:Retries>8</tns:Retries>
+               <tns:RetryInterval>PT3H</tns:RetryInterval>
+               <tns:MessageOrderSemantics>NotGuaranteed</tns:MessageOrderSemantics>
+            </tns:ReliableMessaging>
+            <tns:PersistDuration>P8D</tns:PersistDuration>
+         </tns:ebXMLSenderBinding>
+         <tns:ebXMLReceiverBinding tns:version="2.0">
+            <tns:ReliableMessaging>
+               <tns:Retries>8</tns:Retries>
+               <tns:RetryInterval>PT3H</tns:RetryInterval>
+               <tns:MessageOrderSemantics>NotGuaranteed</tns:MessageOrderSemantics>
+            </tns:ReliableMessaging>
+            <tns:PersistDuration>P8D</tns:PersistDuration>
+         </tns:ebXMLReceiverBinding>
+      </tns:DocExchange>
+   </tns:PartyInfo>
+   <tns:PartyInfo tns:partyName="DUMMYPARTNER Testpartners" tns:defaultMshChannelId="DC_T_Besteffort_S__R_" tns:defaultMshPackageId="defaultPackage_Profile">
+      <tns:PartyId tns:type="urn:example:system">DUMMYPARTNER_O</tns:PartyId>
+      <tns:PartyRef ns2:href="https://www.example.com" ns2:type="simple" />
+      <tns:CollaborationRole>
+         <tns:ProcessSpecification tns:name="DUMMYBROKER_O" tns:version="1.0" ns2:type="simple" ns2:href="http://www.ean-ucc.org/DUMMYBROKER_O" tns:uuid="urn:ean-ucc:org" />
+         <tns:Role tns:name="DUMMYPARTNER_O" ns2:href="http://www.ean-ucc.org/DUMMYBROKER_O" />
+         <tns:ServiceBinding>
+            <tns:Service>DUMMYBROKER_O:0:1</tns:Service>
+            <tns:CanSend>
+               <tns:ThisPartyActionBinding tns:id="PA_DUMMYBROKER_O:0:1_Verzonden" tns:action="Verzonden" tns:packageId="defaultPackage_Profile">
+                  <tns:BusinessTransactionCharacteristics tns:isAuthenticated="transient" tns:isAuthorizationRequired="true" tns:isIntelligibleCheckRequired="false" tns:isNonRepudiationReceiptRequired="false" tns:isNonRepudiationRequired="false" tns:isConfidential="transient" tns:isTamperProof="transient" tns:timeToPerform="PT27H" />
+                  <tns:ChannelId>DC_T_Reliable_S__R_8PT3H</tns:ChannelId>
+               </tns:ThisPartyActionBinding>
+               <tns:OtherPartyActionBinding>PA_DUMMYBROKER_O:0:1_Verzonden</tns:OtherPartyActionBinding>
+            </tns:CanSend>
+            <tns:CanReceive>
+               <tns:ThisPartyActionBinding tns:id="PA_DUMMYBROKER_O:0:1_Ontvangen" tns:action="Ontvangen" tns:packageId="defaultPackage_Profile">
+                  <tns:BusinessTransactionCharacteristics tns:isAuthenticated="transient" tns:isAuthorizationRequired="true" tns:isIntelligibleCheckRequired="false" tns:isNonRepudiationReceiptRequired="false" tns:isNonRepudiationRequired="false" tns:isConfidential="transient" tns:isTamperProof="transient" tns:timeToPerform="PT27H" />
+                  <tns:ChannelId>DC_T_Reliable_S__R_8PT3H</tns:ChannelId>
+               </tns:ThisPartyActionBinding>
+               <tns:OtherPartyActionBinding>PA_DUMMYBROKER_O:0:1_Ontvangen</tns:OtherPartyActionBinding>
+            </tns:CanReceive>
+         </tns:ServiceBinding>
+      </tns:CollaborationRole>
+      <tns:DeliveryChannel tns:channelId="DC_T_Besteffort_S__R_" tns:docExchangeId="DE_S__R_" tns:transportId="TP_ID_1">
+         <tns:MessagingCharacteristics tns:syncReplyMode="none" tns:ackRequested="never" tns:actor="urn:oasis:names:tc:ebxml-msg:actor:toPartyMSH" tns:ackSignatureRequested="never" tns:duplicateElimination="never" />
+      </tns:DeliveryChannel>
+      <tns:DeliveryChannel tns:channelId="DC_T_Reliable_S__R_8PT3H" tns:docExchangeId="DE_S__R_8PT3H" tns:transportId="TP_ID_1">
+         <tns:MessagingCharacteristics tns:syncReplyMode="none" tns:ackRequested="always" tns:actor="urn:oasis:names:tc:ebxml-msg:actor:toPartyMSH" tns:ackSignatureRequested="never" tns:duplicateElimination="always" />
+      </tns:DeliveryChannel>
+      <tns:Transport tns:transportId="TP_ID_1">
+         <tns:TransportSender>
+            <tns:TransportProtocol tns:version="1.2">HTTP</tns:TransportProtocol>
+         </tns:TransportSender>
+         <tns:TransportReceiver>
+            <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
+            <tns:Endpoint tns:uri="http://partner.example.com:8080/exchange/partner" tns:type="allPurpose" />
+         </tns:TransportReceiver>
+      </tns:Transport>
+      <tns:DocExchange tns:docExchangeId="DE_S__R_">
+         <tns:ebXMLSenderBinding tns:version="2.0" />
+         <tns:ebXMLReceiverBinding tns:version="2.0" />
+      </tns:DocExchange>
+      <tns:DocExchange tns:docExchangeId="DE_S__R_8PT3H">
+         <tns:ebXMLSenderBinding tns:version="2.0">
+            <tns:ReliableMessaging>
+               <tns:Retries>8</tns:Retries>
+               <tns:RetryInterval>PT3H</tns:RetryInterval>
+               <tns:MessageOrderSemantics>NotGuaranteed</tns:MessageOrderSemantics>
+            </tns:ReliableMessaging>
+            <tns:PersistDuration>P8D</tns:PersistDuration>
+         </tns:ebXMLSenderBinding>
+         <tns:ebXMLReceiverBinding tns:version="2.0">
+            <tns:ReliableMessaging>
+               <tns:Retries>8</tns:Retries>
+               <tns:RetryInterval>PT3H</tns:RetryInterval>
+               <tns:MessageOrderSemantics>NotGuaranteed</tns:MessageOrderSemantics>
+            </tns:ReliableMessaging>
+            <tns:PersistDuration>P8D</tns:PersistDuration>
+         </tns:ebXMLReceiverBinding>
+      </tns:DocExchange>
+   </tns:PartyInfo>
+   <tns:SimplePart tns:id="DefaultSimplePart" tns:mimetype="application/xml" />
+   <tns:Packaging tns:id="defaultPackage_Profile">
+      <tns:ProcessingCapabilities tns:parse="true" tns:generate="true" />
+      <tns:CompositeList>
+         <tns:Composite tns:id="DefaultComposite" tns:mimetype="type=text/xml">
+            <tns:Constituent tns:idref="DefaultSimplePart" />
+         </tns:Composite>
+      </tns:CompositeList>
+   </tns:Packaging>
+   <tns:Comment xml:lang="nl-NL">Deze CPA is gemaakt met de EBV/JustID CPA Creatie Toolkit (SMF 2.0). Website http://www.justid.nl.</tns:Comment>
+   <tns:Comment xml:lang="nl-NL">Deze CPA mag alleen gebruikt worden door de partijen die genoemd zijn in deze CPA.</tns:Comment>
+   <tns:Comment xml:lang="nl-NL">Creatie datum/tijd: 2021-03-29T13:45:02.813Z</tns:Comment>
+   <tns:Comment xml:lang="nl-NL">Nederland</tns:Comment>
+<tns:Comment xml:lang="nl-NL">Test</tns:Comment></tns:CollaborationProtocolAgreement>

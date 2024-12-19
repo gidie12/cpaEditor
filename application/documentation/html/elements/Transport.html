@@ -1,0 +1,33 @@
+<h1>Transport</h1>
+<h2>Attributes</h2>
+<ul>
+<li><code>transportId</code>: A unique identifier for the transport.</li>
+</ul>
+<h2>Sub-elements</h2>
+<ul>
+<li><a href="TransportSender.html">TransportSender</a> (optional)</li>
+<li><a href="TransportReceiver.html">TransportReceiver</a> (optional)</li>
+</ul>
+<h2>Example</h2>
+<pre><code class="language-xml">&lt;tns:Transport tns:transportId=&quot;transportA1&quot;&gt;
+    &lt;tns:TransportSender&gt;
+        &lt;tns:TransportProtocol tns:version=&quot;1.1&quot;&gt;HTTP&lt;/tns:TransportProtocol&gt;
+        &lt;tns:AccessAuthentication&gt;basic&lt;/tns:AccessAuthentication&gt;
+        &lt;tns:TransportClientSecurity&gt;
+            &lt;tns:TransportSecurityProtocol tns:version=&quot;3.0&quot;&gt;SSL&lt;/tns:TransportSecurityProtocol&gt;
+            &lt;tns:ClientCertificateRef tns:certId=&quot;CompanyA_ClientCert&quot; /&gt;
+            &lt;tns:ServerSecurityDetailsRef tns:securityId=&quot;CompanyA_TransportSecurity&quot; /&gt;
+        &lt;/tns:TransportClientSecurity&gt;
+    &lt;/tns:TransportSender&gt;
+    &lt;tns:TransportReceiver&gt;
+        &lt;tns:TransportProtocol tns:version=&quot;1.1&quot;&gt;HTTP&lt;/tns:TransportProtocol&gt;
+        &lt;tns:AccessAuthentication&gt;basic&lt;/tns:AccessAuthentication&gt;
+        &lt;tns:Endpoint tns:uri=&quot;https://www.CompanyA.com/servlets/ebxmlhandler/async&quot; tns:type=&quot;allPurpose&quot; /&gt;
+        &lt;tns:TransportServerSecurity&gt;
+            &lt;tns:TransportSecurityProtocol tns:version=&quot;3.0&quot;&gt;SSL&lt;/tns:TransportSecurityProtocol&gt;
+            &lt;tns:ServerCertificateRef tns:certId=&quot;CompanyA_ServerCert&quot; /&gt;
+            &lt;tns:ClientSecurityDetailsRef tns:securityId=&quot;CompanyA_TransportSecurity&quot; /&gt;
+        &lt;/tns:TransportServerSecurity&gt;
+    &lt;/tns:TransportReceiver&gt;
+&lt;/tns:Transport&gt;
+</code></pre>

@@ -1,0 +1,747 @@
+<tns:CollaborationProtocolAgreement xmlns:ns2="http://www.w3.org/1999/xlink" xmlns:ns3="http://www.w3.org/2000/09/xmldsig#" xmlns:tns="http://www.oasis-open.org/committees/ebxml-cppa/schema/cpp-cpa-2_0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.oasis-open.org/committees/ebxml-cppa/schema/cpp-cpa-2_0.xsd cpp-cpa-2_0b.xsd" tns:cpaid="uri:companyA-and-companyB-cpa" tns:version="2_0b">
+    <tns:Status tns:value="proposed" />
+    <tns:Start>2001-05-20T07:21:00Z</tns:Start>
+    <tns:End>2002-05-20T07:21:00Z</tns:End>
+    <tns:ConversationConstraints tns:invocationLimit="100" tns:concurrentConversations="10" />
+    
+    <tns:PartyInfo tns:partyName="CompanyA" tns:defaultMshChannelId="asyncChannelA1" tns:defaultMshPackageId="CompanyA_MshSignalPackage">
+        <tns:PartyId tns:type="urn:oasis:names:tc:ebxml-cppa:partyid-type:duns">123456789</tns:PartyId>
+        <tns:PartyRef ns2:href="http://CompanyA.com/about.html" />
+        <tns:CollaborationRole>
+            <tns:ProcessSpecification tns:version="2.0" tns:name="PIP3A4RequestPurchaseOrder" ns2:type="simple" ns2:href="http://www.rosettanet.org/processes/3A4.xml" tns:uuid="urn:icann:rosettanet.org:bpid:3A4$2.0" />
+            <tns:Role tns:name="Buyer" ns2:type="simple" ns2:href="http://www.rosettanet.org/processes/3A4.xml#Buyer" />
+            <tns:ApplicationCertificateRef tns:certId="CompanyA_AppCert" />
+            <tns:ServiceBinding>
+                <tns:Service>bpid:icann:rosettanet.org:3A4$2.0</tns:Service>
+                <tns:CanSend>
+                    <tns:ThisPartyActionBinding tns:id="companyA_ABID1" tns:action="Purchase Order Request Action" tns:packageId="CompanyA_RequestPackage">
+                        <tns:BusinessTransactionCharacteristics tns:isNonRepudiationRequired="true" tns:isNonRepudiationReceiptRequired="true" tns:isConfidential="transient" tns:isAuthenticated="persistent" tns:isTamperProof="persistent" tns:isAuthorizationRequired="true" tns:timeToAcknowledgeReceipt="PT2H" tns:timeToPerform="P1D" />
+                        <tns:ActionContext tns:binaryCollaboration="Request Purchase Order" tns:businessTransactionActivity="Request Purchase Order" tns:requestOrResponseAction="Purchase Order Request Action" />
+                        <tns:ChannelId>asyncChannelA1</tns:ChannelId>
+                    </tns:ThisPartyActionBinding>
+                    <tns:OtherPartyActionBinding>companyB_ABID4</tns:OtherPartyActionBinding>
+                </tns:CanSend>
+                <tns:CanSend>
+                    <tns:ThisPartyActionBinding tns:id="companyA_ABID2" tns:action="ReceiptAcknowledgement" tns:packageId="CompanyA_ReceiptAcknowledgmentPackage">
+                        <tns:BusinessTransactionCharacteristics tns:isNonRepudiationRequired="true" tns:isNonRepudiationReceiptRequired="true" tns:isConfidential="transient" tns:isAuthenticated="persistent" tns:isTamperProof="persistent" tns:isAuthorizationRequired="true" />
+                        <tns:ChannelId>asyncChannelA1</tns:ChannelId>
+                    </tns:ThisPartyActionBinding>
+                    <tns:OtherPartyActionBinding>companyB_ABID5</tns:OtherPartyActionBinding>
+                </tns:CanSend>
+                
+                <tns:CanSend>
+                    <tns:ThisPartyActionBinding tns:id="companyA_ABID6" tns:action="Purchase Order Request Action" tns:packageId="CompanyA_RequestPackage">
+                        <tns:BusinessTransactionCharacteristics tns:isNonRepudiationRequired="true" tns:isNonRepudiationReceiptRequired="true" tns:isConfidential="transient" tns:isAuthenticated="persistent" tns:isTamperProof="persistent" tns:isAuthorizationRequired="true" tns:timeToAcknowledgeReceipt="PT5M" tns:timeToPerform="PT5M" />
+                        <tns:ActionContext tns:binaryCollaboration="Request Purchase Order" tns:businessTransactionActivity="Request Purchase Order" tns:requestOrResponseAction="Purchase Order Request Action" />
+                        <tns:ChannelId>syncChannelA1</tns:ChannelId>
+                    </tns:ThisPartyActionBinding>
+                    <tns:OtherPartyActionBinding>companyB_ABID6</tns:OtherPartyActionBinding>
+                    <tns:CanReceive>
+                        <tns:ThisPartyActionBinding tns:id="companyA_ABID7" tns:action="Purchase Order Confirmation Action" tns:packageId="CompanyA_SyncReplyPackage">
+                            <tns:BusinessTransactionCharacteristics tns:isNonRepudiationRequired="true" tns:isNonRepudiationReceiptRequired="true" tns:isConfidential="transient" tns:isAuthenticated="persistent" tns:isTamperProof="persistent" tns:isAuthorizationRequired="true" tns:timeToAcknowledgeReceipt="PT5M" />
+                            <tns:ActionContext tns:binaryCollaboration="Request Purchase Order" tns:businessTransactionActivity="Request Purchase Order" tns:requestOrResponseAction="Purchase Order Confirmation Action" />
+                            <tns:ChannelId>syncChannelA1</tns:ChannelId>
+                        </tns:ThisPartyActionBinding>
+                        <tns:OtherPartyActionBinding>companyB_ABID7</tns:OtherPartyActionBinding>
+                    </tns:CanReceive>
+                    <tns:CanReceive>
+                        <tns:ThisPartyActionBinding tns:id="companyA_ABID8" tns:action="Exception" tns:packageId="CompanyA_ExceptionPackage">
+                            <tns:BusinessTransactionCharacteristics tns:isNonRepudiationRequired="true" tns:isNonRepudiationReceiptRequired="true" tns:isConfidential="transient" tns:isAuthenticated="persistent" tns:isTamperProof="persistent" tns:isAuthorizationRequired="true" />
+                            <tns:ChannelId>syncChannelA1</tns:ChannelId>
+                        </tns:ThisPartyActionBinding>
+                        <tns:OtherPartyActionBinding>companyB_ABID8</tns:OtherPartyActionBinding>
+                    </tns:CanReceive>
+                </tns:CanSend>
+                <tns:CanReceive>
+                    <tns:ThisPartyActionBinding tns:id="companyA_ABID3" tns:action="Purchase Order Confirmation Action" tns:packageId="CompanyA_ResponsePackage">
+                        <tns:BusinessTransactionCharacteristics tns:isNonRepudiationRequired="true" tns:isNonRepudiationReceiptRequired="true" tns:isConfidential="transient" tns:isAuthenticated="persistent" tns:isTamperProof="persistent" tns:isAuthorizationRequired="true" tns:timeToAcknowledgeReceipt="PT2H" />
+                        <tns:ActionContext tns:binaryCollaboration="Request Purchase Order" tns:businessTransactionActivity="Request Purchase Order" tns:requestOrResponseAction="Purchase Order Confirmation Action" />
+                        <tns:ChannelId>asyncChannelA1</tns:ChannelId>
+                    </tns:ThisPartyActionBinding>
+                    <tns:OtherPartyActionBinding>companyB_ABID1</tns:OtherPartyActionBinding>
+                </tns:CanReceive>
+                <tns:CanReceive>
+                    <tns:ThisPartyActionBinding tns:id="companyA_ABID4" tns:action="ReceiptAcknowledgment" tns:packageId="CompanyA_ReceiptAcknowledgmentPackage">
+                        <tns:BusinessTransactionCharacteristics tns:isNonRepudiationRequired="true" tns:isNonRepudiationReceiptRequired="true" tns:isConfidential="transient" tns:isAuthenticated="persistent" tns:isTamperProof="persistent" tns:isAuthorizationRequired="true" />
+                        <tns:ChannelId>asyncChannelA1</tns:ChannelId>
+                    </tns:ThisPartyActionBinding>
+                    <tns:OtherPartyActionBinding>companyB_ABID2</tns:OtherPartyActionBinding>
+                </tns:CanReceive>
+                <tns:CanReceive>
+                    <tns:ThisPartyActionBinding tns:id="companyA_ABID5" tns:action="Exception" tns:packageId="CompanyA_ExceptionPackage">
+                        <tns:BusinessTransactionCharacteristics tns:isNonRepudiationRequired="true" tns:isNonRepudiationReceiptRequired="true" tns:isConfidential="transient" tns:isAuthenticated="persistent" tns:isTamperProof="persistent" tns:isAuthorizationRequired="true" />
+                        <tns:ChannelId>asyncChannelA1</tns:ChannelId>
+                    </tns:ThisPartyActionBinding>
+                    <tns:OtherPartyActionBinding>companyB_ABID3</tns:OtherPartyActionBinding>
+                </tns:CanReceive>
+            </tns:ServiceBinding>
+        </tns:CollaborationRole>
+        
+        <tns:Certificate tns:certId="CompanyA_AppCert">
+            <ns3:KeyInfo>
+                <ns3:KeyName>CompanyA_AppCert_Key</ns3:KeyName>
+            </ns3:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="CompanyA_SigningCert">
+            <ns3:KeyInfo>
+                <ns3:KeyName>CompanyA_SigningCert_Key</ns3:KeyName>
+            </ns3:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="CompanyA_EncryptionCert">
+            <ns3:KeyInfo>
+                <ns3:KeyName>CompanyA_EncryptionCert_Key</ns3:KeyName>
+            </ns3:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="CompanyA_ServerCert">
+            <ns3:KeyInfo>
+                <ns3:KeyName>CompanyA_ServerCert_Key</ns3:KeyName>
+            </ns3:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="CompanyA_ClientCert">
+            <ns3:KeyInfo>
+                <ns3:KeyName>CompanyA_ClientCert_Key</ns3:KeyName>
+            </ns3:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="TrustedRootCertA1">
+            <ns3:KeyInfo>
+                <ns3:KeyName>TrustedRootCertA1_Key</ns3:KeyName>
+            </ns3:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="TrustedRootCertA2">
+            <ns3:KeyInfo>
+                <ns3:KeyName>TrustedRootCertA2_Key</ns3:KeyName>
+            </ns3:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="TrustedRootCertA3">
+            <ns3:KeyInfo>
+                <ns3:KeyName>TrustedRootCertA3_Key</ns3:KeyName>
+            </ns3:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="TrustedRootCertA4">
+            <ns3:KeyInfo>
+                <ns3:KeyName>TrustedRootCertA4_Key</ns3:KeyName>
+            </ns3:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="TrustedRootCertA5">
+            <ns3:KeyInfo>
+                <ns3:KeyName>TrustedRootCertA5_Key</ns3:KeyName>
+            </ns3:KeyInfo>
+        </tns:Certificate>
+        <tns:SecurityDetails tns:securityId="CompanyA_TransportSecurity">
+            <tns:TrustAnchors>
+                <tns:AnchorCertificateRef tns:certId="TrustedRootCertA1" />
+                <tns:AnchorCertificateRef tns:certId="TrustedRootCertA2" />
+                <tns:AnchorCertificateRef tns:certId="TrustedRootCertA4" />
+            </tns:TrustAnchors>
+        </tns:SecurityDetails>
+        <tns:SecurityDetails tns:securityId="CompanyA_MessageSecurity">
+            <tns:TrustAnchors>
+                <tns:AnchorCertificateRef tns:certId="TrustedRootCertA3" />
+                <tns:AnchorCertificateRef tns:certId="TrustedRootCertA5" />
+            </tns:TrustAnchors>
+        </tns:SecurityDetails>
+        <tns:DeliveryChannel tns:channelId="asyncChannelA1" tns:transportId="transportA1" tns:docExchangeId="docExchangeA1">
+            <tns:MessagingCharacteristics tns:syncReplyMode="none" tns:ackRequested="always" tns:ackSignatureRequested="always" tns:duplicateElimination="always" />
+        </tns:DeliveryChannel>
+        <tns:DeliveryChannel tns:channelId="syncChannelA1" tns:transportId="transportA2" tns:docExchangeId="docExchangeA1">
+            <tns:MessagingCharacteristics tns:syncReplyMode="signalsAndResponse" tns:ackRequested="always" tns:ackSignatureRequested="always" tns:duplicateElimination="always" />
+        </tns:DeliveryChannel>
+        <tns:Transport tns:transportId="transportA1">
+            <tns:TransportSender>
+                <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
+                <tns:AccessAuthentication>basic</tns:AccessAuthentication>
+                <tns:TransportClientSecurity>
+                    <tns:TransportSecurityProtocol tns:version="3.0">SSL</tns:TransportSecurityProtocol>
+                    <tns:ClientCertificateRef tns:certId="CompanyA_ClientCert" />
+                    <tns:ServerSecurityDetailsRef tns:securityId="CompanyA_TransportSecurity" />
+                </tns:TransportClientSecurity>
+            </tns:TransportSender>
+            <tns:TransportReceiver>
+                <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
+                <tns:AccessAuthentication>basic</tns:AccessAuthentication>
+                <tns:Endpoint tns:uri="https://www.CompanyA.com/servlets/ebxmlhandler/async" tns:type="allPurpose" />
+                <tns:TransportServerSecurity>
+                    <tns:TransportSecurityProtocol tns:version="3.0">SSL</tns:TransportSecurityProtocol>
+                    <tns:ServerCertificateRef tns:certId="CompanyA_ServerCert" />
+                    <tns:ClientSecurityDetailsRef tns:securityId="CompanyA_TransportSecurity" />
+                </tns:TransportServerSecurity>
+            </tns:TransportReceiver>
+        </tns:Transport>
+        <tns:Transport tns:transportId="transportA2">
+            <tns:TransportSender>
+                <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
+                <tns:AccessAuthentication>basic</tns:AccessAuthentication>
+                <tns:TransportClientSecurity>
+                    <tns:TransportSecurityProtocol tns:version="3.0">SSL</tns:TransportSecurityProtocol>
+                    <tns:ClientCertificateRef tns:certId="CompanyA_ClientCert" />
+                    <tns:ServerSecurityDetailsRef tns:securityId="CompanyA_TransportSecurity" />
+                </tns:TransportClientSecurity>
+            </tns:TransportSender>
+            <tns:TransportReceiver>
+                <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
+                <tns:AccessAuthentication>basic</tns:AccessAuthentication>
+                <tns:Endpoint tns:uri="https://www.CompanyA.com/servlets/ebxmlhandler/sync" tns:type="allPurpose" />
+                <tns:TransportServerSecurity>
+                    <tns:TransportSecurityProtocol tns:version="3.0">SSL</tns:TransportSecurityProtocol>
+                    <tns:ServerCertificateRef tns:certId="CompanyA_ServerCert" />
+                    <tns:ClientSecurityDetailsRef tns:securityId="CompanyA_TransportSecurity" />
+                </tns:TransportServerSecurity>
+            </tns:TransportReceiver>
+        </tns:Transport>
+        <tns:DocExchange tns:docExchangeId="docExchangeA1">
+            <tns:ebXMLSenderBinding tns:version="2.0">
+                <tns:ReliableMessaging>
+                    <tns:Retries>3</tns:Retries>
+                    <tns:RetryInterval>PT2H</tns:RetryInterval>
+                    <tns:MessageOrderSemantics>Guaranteed</tns:MessageOrderSemantics>
+                </tns:ReliableMessaging>
+                <tns:PersistDuration>P1D</tns:PersistDuration>
+                <tns:SenderNonRepudiation>
+                    <tns:NonRepudiationProtocol>http://www.w3.org/2000/09/xmldsig#</tns:NonRepudiationProtocol>
+                    <tns:HashFunction>http://www.w3.org/2000/09/xmldsig#sha1</tns:HashFunction>
+                    <tns:SignatureAlgorithm>http://www.w3.org/2000/09/xmldsig#dsa-sha1</tns:SignatureAlgorithm>
+                    <tns:SigningCertificateRef tns:certId="CompanyA_SigningCert" />
+                </tns:SenderNonRepudiation>
+                <tns:SenderDigitalEnvelope>
+                    <tns:DigitalEnvelopeProtocol tns:version="2.0">S/MIME</tns:DigitalEnvelopeProtocol>
+                    <tns:EncryptionAlgorithm>DES-CBC</tns:EncryptionAlgorithm>
+                    <tns:EncryptionSecurityDetailsRef tns:securityId="CompanyA_MessageSecurity" />
+                </tns:SenderDigitalEnvelope>
+            </tns:ebXMLSenderBinding>
+            <tns:ebXMLReceiverBinding tns:version="2.0">
+                <tns:ReliableMessaging>
+                    <tns:Retries>3</tns:Retries>
+                    <tns:RetryInterval>PT2H</tns:RetryInterval>
+                    <tns:MessageOrderSemantics>Guaranteed</tns:MessageOrderSemantics>
+                </tns:ReliableMessaging>
+                <tns:PersistDuration>P1D</tns:PersistDuration>
+                <tns:ReceiverNonRepudiation>
+                    <tns:NonRepudiationProtocol>http://www.w3.org/2000/09/xmldsig#</tns:NonRepudiationProtocol>
+                    <tns:HashFunction>http://www.w3.org/2000/09/xmldsig#sha1</tns:HashFunction>
+                    <tns:SignatureAlgorithm>http://www.w3.org/2000/09/xmldsig#dsa-sha1</tns:SignatureAlgorithm>
+                    <tns:SigningSecurityDetailsRef tns:securityId="CompanyA_MessageSecurity" />
+                </tns:ReceiverNonRepudiation>
+                <tns:ReceiverDigitalEnvelope>
+                    <tns:DigitalEnvelopeProtocol tns:version="2.0">S/MIME</tns:DigitalEnvelopeProtocol>
+                    <tns:EncryptionAlgorithm>DES-CBC</tns:EncryptionAlgorithm>
+                    <tns:EncryptionCertificateRef tns:certId="CompanyA_EncryptionCert" />
+                </tns:ReceiverDigitalEnvelope>
+            </tns:ebXMLReceiverBinding>
+        </tns:DocExchange>
+    </tns:PartyInfo>
+    
+    <tns:PartyInfo tns:partyName="CompanyB" tns:defaultMshChannelId="asyncChannelB1" tns:defaultMshPackageId="CompanyB_MshSignalPackage">
+        <tns:PartyId tns:type="urn:oasis:names:tc:ebxml-cppa:partyid-type:duns">987654321</tns:PartyId>
+        <tns:PartyRef ns2:type="simple" ns2:href="http://CompanyB.com/about.html" />
+        <tns:CollaborationRole>
+            <tns:ProcessSpecification tns:version="2.0" tns:name="PIP3A4RequestPurchaseOrder" ns2:type="simple" ns2:href="http://www.rosettanet.org/processes/3A4.xml" tns:uuid="urn:icann:rosettanet.org:bpid:3A4$2.0" />
+            <tns:Role tns:name="Seller" ns2:type="simple" ns2:href="http://www.rosettanet.org/processes/3A4.xml#seller" />
+            <tns:ApplicationCertificateRef tns:certId="CompanyB_AppCert" />
+            <tns:ServiceBinding>
+                <tns:Service>bpid:icann:rosettanet.org:3A4$2.0</tns:Service>
+                <tns:CanSend>
+                    <tns:ThisPartyActionBinding tns:id="companyB_ABID1" tns:action="Purchase Order Confirmation Action" tns:packageId="CompanyB_ResponsePackage">
+                        <tns:BusinessTransactionCharacteristics tns:isNonRepudiationRequired="true" tns:isNonRepudiationReceiptRequired="true" tns:isConfidential="transient" tns:isAuthenticated="persistent" tns:isTamperProof="persistent" tns:isAuthorizationRequired="true" tns:timeToAcknowledgeReceipt="PT2H" />
+                        <tns:ActionContext tns:binaryCollaboration="Request Purchase Order" tns:businessTransactionActivity="Request Purchase Order" tns:requestOrResponseAction="Purchase Order Confirmation Action" />
+                        <tns:ChannelId>asyncChannelB1</tns:ChannelId>
+                    </tns:ThisPartyActionBinding>
+                    <tns:OtherPartyActionBinding>companyA_ABID3</tns:OtherPartyActionBinding>
+                </tns:CanSend>
+                <tns:CanSend>
+                    <tns:ThisPartyActionBinding tns:id="companyB_ABID2" tns:action="ReceiptAcknowledgement" tns:packageId="CompanyB_ReceiptAcknowledgmentPackage">
+                        <tns:BusinessTransactionCharacteristics tns:isNonRepudiationRequired="true" tns:isNonRepudiationReceiptRequired="true" tns:isConfidential="transient" tns:isAuthenticated="persistent" tns:isTamperProof="persistent" tns:isAuthorizationRequired="true" />
+                        <tns:ChannelId>asyncChannelB1</tns:ChannelId>
+                    </tns:ThisPartyActionBinding>
+                    <tns:OtherPartyActionBinding>companyA_ABID4</tns:OtherPartyActionBinding>
+                </tns:CanSend>
+                <tns:CanSend>
+                    <tns:ThisPartyActionBinding tns:id="companyB_ABID3" tns:action="Exception" tns:packageId="CompanyB_ExceptionPackage">
+                        <tns:BusinessTransactionCharacteristics tns:isNonRepudiationRequired="true" tns:isNonRepudiationReceiptRequired="true" tns:isConfidential="transient" tns:isAuthenticated="persistent" tns:isTamperProof="persistent" tns:isAuthorizationRequired="true" />
+                        <tns:ChannelId>asyncChannelB1</tns:ChannelId>
+                    </tns:ThisPartyActionBinding>
+                    <tns:OtherPartyActionBinding>companyA_ABID5</tns:OtherPartyActionBinding>
+                </tns:CanSend>
+                <tns:CanReceive>
+                    <tns:ThisPartyActionBinding tns:id="companyB_ABID4" tns:action="Purchase Order Request Action" tns:packageId="CompanyB_RequestPackage">
+                        <tns:BusinessTransactionCharacteristics tns:isNonRepudiationRequired="true" tns:isNonRepudiationReceiptRequired="true" tns:isConfidential="transient" tns:isAuthenticated="persistent" tns:isTamperProof="persistent" tns:isAuthorizationRequired="true" tns:timeToAcknowledgeReceipt="PT2H" tns:timeToPerform="P1D" />
+                        <tns:ActionContext tns:binaryCollaboration="Request Purchase Order" tns:businessTransactionActivity="Request Purchase Order" tns:requestOrResponseAction="Purchase Order Request Action" />
+                        <tns:ChannelId>asyncChannelB1</tns:ChannelId>
+                    </tns:ThisPartyActionBinding>
+                    <tns:OtherPartyActionBinding>companyA_ABID1</tns:OtherPartyActionBinding>
+                </tns:CanReceive>
+                <tns:CanReceive>
+                    <tns:ThisPartyActionBinding tns:id="companyB_ABID5" tns:action="ReceiptAcknowledgment" tns:packageId="CompanyB_ReceiptAcknowledgmentPackage">
+                        <tns:BusinessTransactionCharacteristics tns:isNonRepudiationRequired="true" tns:isNonRepudiationReceiptRequired="true" tns:isConfidential="transient" tns:isAuthenticated="persistent" tns:isTamperProof="persistent" tns:isAuthorizationRequired="true" />
+                        <tns:ChannelId>asyncChannelB1</tns:ChannelId>
+                    </tns:ThisPartyActionBinding>
+                    <tns:OtherPartyActionBinding>companyA_ABID2</tns:OtherPartyActionBinding>
+                </tns:CanReceive>
+                
+                <tns:CanReceive>
+                    <tns:ThisPartyActionBinding tns:id="companyB_ABID6" tns:action="Purchase Order Request Action" tns:packageId="CompanyB_RequestPackage">
+                        <tns:BusinessTransactionCharacteristics tns:isNonRepudiationRequired="true" tns:isNonRepudiationReceiptRequired="true" tns:isConfidential="transient" tns:isAuthenticated="persistent" tns:isTamperProof="persistent" tns:isAuthorizationRequired="true" tns:timeToAcknowledgeReceipt="PT5M" tns:timeToPerform="PT5M" />
+                        <tns:ActionContext tns:binaryCollaboration="Request Purchase Order" tns:businessTransactionActivity="Request Purchase Order" tns:requestOrResponseAction="Purchase Order Request Action" />
+                        <tns:ChannelId>syncChannelB1</tns:ChannelId>
+                    </tns:ThisPartyActionBinding>
+                    <tns:OtherPartyActionBinding>companyA_ABID6</tns:OtherPartyActionBinding>
+                    <tns:CanSend>
+                        <tns:ThisPartyActionBinding tns:id="companyB_ABID7" tns:action="Purchase Order Confirmation Action" tns:packageId="CompanyB_SyncReplyPackage">
+                            <tns:BusinessTransactionCharacteristics tns:isNonRepudiationRequired="true" tns:isNonRepudiationReceiptRequired="true" tns:isConfidential="transient" tns:isAuthenticated="persistent" tns:isTamperProof="persistent" tns:isAuthorizationRequired="true" tns:timeToAcknowledgeReceipt="PT5M" />
+                            <tns:ActionContext tns:binaryCollaboration="Request Purchase Order" tns:businessTransactionActivity="Request Purchase Order" tns:requestOrResponseAction="Purchase Order Confirmation Action" />
+                            <tns:ChannelId>syncChannelB1</tns:ChannelId>
+                        </tns:ThisPartyActionBinding>
+                        <tns:OtherPartyActionBinding>companyA_ABID7</tns:OtherPartyActionBinding>
+                    </tns:CanSend>
+                    <tns:CanSend>
+                        <tns:ThisPartyActionBinding tns:id="companyB_ABID8" tns:action="Exception" tns:packageId="CompanyB_ExceptionPackage">
+                            <tns:BusinessTransactionCharacteristics tns:isNonRepudiationRequired="true" tns:isNonRepudiationReceiptRequired="true" tns:isConfidential="transient" tns:isAuthenticated="persistent" tns:isTamperProof="persistent" tns:isAuthorizationRequired="true" />
+                            <tns:ChannelId>syncChannelB1</tns:ChannelId>
+                        </tns:ThisPartyActionBinding>
+                        <tns:OtherPartyActionBinding>companyA_ABID8</tns:OtherPartyActionBinding>
+                    </tns:CanSend>
+                </tns:CanReceive>
+            </tns:ServiceBinding>
+        </tns:CollaborationRole>
+
+        <tns:Certificate tns:certId="CompanyB_AppCert">
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+              <ds:KeyValue>
+                <ds:RSAKeyValue>
+                  <ds:Modulus>scYVzcOazzoi9hWe5BP7PrpG/CfYjNjBhSh1v2hmmst4gcaQSf4hMPVRRolzYEtMQaX2a2kvU8tSCZHOQULqPjlzJzvvlSvUld0KSffL/5sk/YBWz7bo+loHo3+WJiFhj6I6FHV4K8WaIeeAFbwiPKgvsGXa6JafZDY8xW8/mf9dwjAt+9O8Lf/Op7bkTXWWJd+eVKjIPm1ctZmcvR97PU3T7az3jURy93V60XTz2RIq4s3h/I2PYw9W3ugOWAiween9ojcgD64AEQqbOk1uFBnF92Nn4plm4fO3ENq+5XLsKGABR1mIUN0mdyicfeCj5VjK1AoTQN3Blu3klcO5ow==</ds:Modulus>
+                  <ds:Exponent>AQAB</ds:Exponent>
+                </ds:RSAKeyValue>
+              </ds:KeyValue>
+              <ds:X509Data>
+                <ds:X509SubjectName>CN=www.google.com</ds:X509SubjectName>
+                <ds:X509Certificate>MIIDaDCCAlCgAwIBAgIQAJIFi9/I9xvI3xijDoufijANBgkqhkiG9w0BAQsFADBoMQswCQYDVQQGEwJDWjEPMA0GA1UECAwGUHJhZ3VlMQ4wDAYDVQQKDAVBVkFTVDEdMBsGA1UECwwUU29mdHdhcmUgRGV2ZWxvcG1lbnQxGTAXBgNVBAMMEEF2YXN0IHRydXN0ZWQgQ0EwHhcNMjQwNTA2MTQ0NDUwWhcNMjQwNzI5MTQ0NDQ5WjAZMRcwFQYDVQQDEw53d3cuZ29vZ2xlLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALHGFc3Dms86IvYVnuQT+z66Rvwn2IzYwYUodb9oZprLeIHGkEn+ITD1UUaJc2BLTEGl9mtpL1PLUgmRzkFC6j45cyc775Ur1JXdCkn3y/+bJP2AVs+26PpaB6N/liYhYY+iOhR1eCvFmiHngBW8IjyoL7Bl2uiWn2Q2PMVvP5n/XcIwLfvTvC3/zqe25E11liXfnlSoyD5tXLWZnL0fez1N0+2s941Ecvd1etF089kSKuLN4fyNj2MPVt7oDlgIsHnp/aI3IA+uABEKmzpNbhQZxfdjZ+KZZuHztxDavuVy7ChgAUdZiFDdJnconH3go+VYytQKE0DdwZbt5JXDuaMCAwEAAaNdMFswHQYDVR0OBBYEFPYHAIho0QfK+e2yFZ+w6/YjelxGMB8GA1UdIwQYMBaAFHY4NDKoJE61+2LaS72dd5CVmatMMBkGA1UdEQQSMBCCDnd3dy5nb29nbGUuY29tMA0GCSqGSIb3DQEBCwUAA4IBAQBtZPiWWgdrEoo11oVdLyCRlw4DqlvG4y6OgkzJg1sKvAqedvtildDmkHmJcCspMNbtcCUG8VyRwtlVbf9o8BrEF2X2I72x/qONogrkILAI2Zlm9sLf5U4YEXog9P3GHbnHLvvTNsYG+Yg05QAj4VpysJ348N0aMG2OP0ic6cAuzvDc4Yk4agXWlAX/JEkz1YT6lt9oC5Rl3M1FbjR+YCzgd+65eD5U3UsHx4H4JRs7s0in714U6P6WSVt03oSpXTpm5ppqHJBuIfR7YsEv22Kh4toqr0/cbwfY7xKnyn79UrM00VpnB21i3zj420DhOF/0FE+tpp092hmKPcj8B7we</ds:X509Certificate>
+                <ds:X509IssuerSerial>
+                  <ds:X509IssuerName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509IssuerName>
+                  <ds:X509SerialNumber>758187835366801866001047472019578762</ds:X509SerialNumber>
+                </ds:X509IssuerSerial>
+              </ds:X509Data>
+              <ds:X509Data>
+                <ds:X509SubjectName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509SubjectName>
+                <ds:X509Certificate>MIIDsTCCApmgAwIBAgIUFPGN0QKJgvGyrAjpnkS7TM9URq0wDQYJKoZIhvcNAQELBQAwaDELMAkGA1UEBhMCQ1oxDzANBgNVBAgMBlByYWd1ZTEOMAwGA1UECgwFQVZBU1QxHTAbBgNVBAsMFFNvZnR3YXJlIERldmVsb3BtZW50MRkwFwYDVQQDDBBBdmFzdCB0cnVzdGVkIENBMB4XDTI0MDEwNTEyMDI0MloXDTM0MDEwMjEyMDI0MlowaDELMAkGA1UEBhMCQ1oxDzANBgNVBAgMBlByYWd1ZTEOMAwGA1UECgwFQVZBU1QxHTAbBgNVBAsMFFNvZnR3YXJlIERldmVsb3BtZW50MRkwFwYDVQQDDBBBdmFzdCB0cnVzdGVkIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArKi9nOZQEc7NNr9BuSV31v5YBzmHjCja3fslrBwPkod1P1xcdkP8f8IU7mYJf9xgeLkuSaUnPn9i/lQ9ApdktGM+FYtYg4LPejsvu/pLS7IV+rIWWTwJ4A3M7QDZd6QukP1/qzzLC6tf3ErK3cKSgfgcTUx+0EgLlVlBPN9dkgqkdiNjiLD/uC7OQ3C8vgU5vpBzXb2JQGHxKfDyeS7OLpBob0ttYPvLCPPyP3SY2UOTpjX9tDvAAc5m09VirqhhA5toBZBElqOvO9cju8AWM9fEQPVeVoEi1lT8+dqE0kHE9wq8DXWLpcBdnR/Qjf1OTl36bD+aLjY51z4JDjNV7QIDAQABo1MwUTAdBgNVHQ4EFgQUdjg0MqgkTrX7YtpLvZ13kJWZq0wwHwYDVR0jBBgwFoAUdjg0MqgkTrX7YtpLvZ13kJWZq0wwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEADwYOvncKvZmsPOAiexhMr80LA1wdMqJ4bWyyyMKPDW/mqiUtU3EsayiP+O1a5mJum8MFQwBPhoNYikWYp4p5iPh/n6hXSxVK8YBqM27JXjVaQiS1tPJk4UktZ9aXkjTWiSlWNMJsoHhI1JmVRg6ECfX1WTK38O97Ukm2XDTpwQtP0r/xCLFHrbEpSocmEnpco9Reg6+G3aWprdNLsHgznk1sCcG2ZbK58Wke/5VjUrzImRguhgzvHGVShE5MyhqGm4cARvJSz92o6yLLZHYwv4gIp8HVV2wKGrByeEa2Rek7qDMYsSN3+P28B56QpmVg+6wG7fS7ByivfKqFOq4WMg==</ds:X509Certificate>
+                <ds:X509IssuerSerial>
+                  <ds:X509IssuerName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509IssuerName>
+                  <ds:X509SerialNumber>119566648964026191856410076338168258360427955885</ds:X509SerialNumber>
+                </ds:X509IssuerSerial>
+              </ds:X509Data>
+            </ds:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="CompanyB_SigningCert">
+                        <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+              <ds:KeyValue>
+                <ds:RSAKeyValue>
+                  <ds:Modulus>scYVzcOazzoi9hWe5BP7PrpG/CfYjNjBhSh1v2hmmst4gcaQSf4hMPVRRolzYEtMQaX2a2kvU8tSCZHOQULqPjlzJzvvlSvUld0KSffL/5sk/YBWz7bo+loHo3+WJiFhj6I6FHV4K8WaIeeAFbwiPKgvsGXa6JafZDY8xW8/mf9dwjAt+9O8Lf/Op7bkTXWWJd+eVKjIPm1ctZmcvR97PU3T7az3jURy93V60XTz2RIq4s3h/I2PYw9W3ugOWAiween9ojcgD64AEQqbOk1uFBnF92Nn4plm4fO3ENq+5XLsKGABR1mIUN0mdyicfeCj5VjK1AoTQN3Blu3klcO5ow==</ds:Modulus>
+                  <ds:Exponent>AQAB</ds:Exponent>
+                </ds:RSAKeyValue>
+              </ds:KeyValue>
+              <ds:X509Data>
+                <ds:X509SubjectName>CN=www.google.com</ds:X509SubjectName>
+                <ds:X509Certificate>MIIDaDCCAlCgAwIBAgIQAJIFi9/I9xvI3xijDoufijANBgkqhkiG9w0BAQsFADBoMQswCQYDVQQGEwJDWjEPMA0GA1UECAwGUHJhZ3VlMQ4wDAYDVQQKDAVBVkFTVDEdMBsGA1UECwwUU29mdHdhcmUgRGV2ZWxvcG1lbnQxGTAXBgNVBAMMEEF2YXN0IHRydXN0ZWQgQ0EwHhcNMjQwNTA2MTQ0NDUwWhcNMjQwNzI5MTQ0NDQ5WjAZMRcwFQYDVQQDEw53d3cuZ29vZ2xlLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALHGFc3Dms86IvYVnuQT+z66Rvwn2IzYwYUodb9oZprLeIHGkEn+ITD1UUaJc2BLTEGl9mtpL1PLUgmRzkFC6j45cyc775Ur1JXdCkn3y/+bJP2AVs+26PpaB6N/liYhYY+iOhR1eCvFmiHngBW8IjyoL7Bl2uiWn2Q2PMVvP5n/XcIwLfvTvC3/zqe25E11liXfnlSoyD5tXLWZnL0fez1N0+2s941Ecvd1etF089kSKuLN4fyNj2MPVt7oDlgIsHnp/aI3IA+uABEKmzpNbhQZxfdjZ+KZZuHztxDavuVy7ChgAUdZiFDdJnconH3go+VYytQKE0DdwZbt5JXDuaMCAwEAAaNdMFswHQYDVR0OBBYEFPYHAIho0QfK+e2yFZ+w6/YjelxGMB8GA1UdIwQYMBaAFHY4NDKoJE61+2LaS72dd5CVmatMMBkGA1UdEQQSMBCCDnd3dy5nb29nbGUuY29tMA0GCSqGSIb3DQEBCwUAA4IBAQBtZPiWWgdrEoo11oVdLyCRlw4DqlvG4y6OgkzJg1sKvAqedvtildDmkHmJcCspMNbtcCUG8VyRwtlVbf9o8BrEF2X2I72x/qONogrkILAI2Zlm9sLf5U4YEXog9P3GHbnHLvvTNsYG+Yg05QAj4VpysJ348N0aMG2OP0ic6cAuzvDc4Yk4agXWlAX/JEkz1YT6lt9oC5Rl3M1FbjR+YCzgd+65eD5U3UsHx4H4JRs7s0in714U6P6WSVt03oSpXTpm5ppqHJBuIfR7YsEv22Kh4toqr0/cbwfY7xKnyn79UrM00VpnB21i3zj420DhOF/0FE+tpp092hmKPcj8B7we</ds:X509Certificate>
+                <ds:X509IssuerSerial>
+                  <ds:X509IssuerName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509IssuerName>
+                  <ds:X509SerialNumber>758187835366801866001047472019578762</ds:X509SerialNumber>
+                </ds:X509IssuerSerial>
+              </ds:X509Data>
+              <ds:X509Data>
+                <ds:X509SubjectName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509SubjectName>
+                <ds:X509Certificate>MIIDsTCCApmgAwIBAgIUFPGN0QKJgvGyrAjpnkS7TM9URq0wDQYJKoZIhvcNAQELBQAwaDELMAkGA1UEBhMCQ1oxDzANBgNVBAgMBlByYWd1ZTEOMAwGA1UECgwFQVZBU1QxHTAbBgNVBAsMFFNvZnR3YXJlIERldmVsb3BtZW50MRkwFwYDVQQDDBBBdmFzdCB0cnVzdGVkIENBMB4XDTI0MDEwNTEyMDI0MloXDTM0MDEwMjEyMDI0MlowaDELMAkGA1UEBhMCQ1oxDzANBgNVBAgMBlByYWd1ZTEOMAwGA1UECgwFQVZBU1QxHTAbBgNVBAsMFFNvZnR3YXJlIERldmVsb3BtZW50MRkwFwYDVQQDDBBBdmFzdCB0cnVzdGVkIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArKi9nOZQEc7NNr9BuSV31v5YBzmHjCja3fslrBwPkod1P1xcdkP8f8IU7mYJf9xgeLkuSaUnPn9i/lQ9ApdktGM+FYtYg4LPejsvu/pLS7IV+rIWWTwJ4A3M7QDZd6QukP1/qzzLC6tf3ErK3cKSgfgcTUx+0EgLlVlBPN9dkgqkdiNjiLD/uC7OQ3C8vgU5vpBzXb2JQGHxKfDyeS7OLpBob0ttYPvLCPPyP3SY2UOTpjX9tDvAAc5m09VirqhhA5toBZBElqOvO9cju8AWM9fEQPVeVoEi1lT8+dqE0kHE9wq8DXWLpcBdnR/Qjf1OTl36bD+aLjY51z4JDjNV7QIDAQABo1MwUTAdBgNVHQ4EFgQUdjg0MqgkTrX7YtpLvZ13kJWZq0wwHwYDVR0jBBgwFoAUdjg0MqgkTrX7YtpLvZ13kJWZq0wwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEADwYOvncKvZmsPOAiexhMr80LA1wdMqJ4bWyyyMKPDW/mqiUtU3EsayiP+O1a5mJum8MFQwBPhoNYikWYp4p5iPh/n6hXSxVK8YBqM27JXjVaQiS1tPJk4UktZ9aXkjTWiSlWNMJsoHhI1JmVRg6ECfX1WTK38O97Ukm2XDTpwQtP0r/xCLFHrbEpSocmEnpco9Reg6+G3aWprdNLsHgznk1sCcG2ZbK58Wke/5VjUrzImRguhgzvHGVShE5MyhqGm4cARvJSz92o6yLLZHYwv4gIp8HVV2wKGrByeEa2Rek7qDMYsSN3+P28B56QpmVg+6wG7fS7ByivfKqFOq4WMg==</ds:X509Certificate>
+                <ds:X509IssuerSerial>
+                  <ds:X509IssuerName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509IssuerName>
+                  <ds:X509SerialNumber>119566648964026191856410076338168258360427955885</ds:X509SerialNumber>
+                </ds:X509IssuerSerial>
+              </ds:X509Data>
+            </ds:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="CompanyB_EncryptionCert">
+                        <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+              <ds:KeyValue>
+                <ds:RSAKeyValue>
+                  <ds:Modulus>scYVzcOazzoi9hWe5BP7PrpG/CfYjNjBhSh1v2hmmst4gcaQSf4hMPVRRolzYEtMQaX2a2kvU8tSCZHOQULqPjlzJzvvlSvUld0KSffL/5sk/YBWz7bo+loHo3+WJiFhj6I6FHV4K8WaIeeAFbwiPKgvsGXa6JafZDY8xW8/mf9dwjAt+9O8Lf/Op7bkTXWWJd+eVKjIPm1ctZmcvR97PU3T7az3jURy93V60XTz2RIq4s3h/I2PYw9W3ugOWAiween9ojcgD64AEQqbOk1uFBnF92Nn4plm4fO3ENq+5XLsKGABR1mIUN0mdyicfeCj5VjK1AoTQN3Blu3klcO5ow==</ds:Modulus>
+                  <ds:Exponent>AQAB</ds:Exponent>
+                </ds:RSAKeyValue>
+              </ds:KeyValue>
+              <ds:X509Data>
+                <ds:X509SubjectName>CN=www.google.com</ds:X509SubjectName>
+                <ds:X509Certificate>MIIDaDCCAlCgAwIBAgIQAJIFi9/I9xvI3xijDoufijANBgkqhkiG9w0BAQsFADBoMQswCQYDVQQGEwJDWjEPMA0GA1UECAwGUHJhZ3VlMQ4wDAYDVQQKDAVBVkFTVDEdMBsGA1UECwwUU29mdHdhcmUgRGV2ZWxvcG1lbnQxGTAXBgNVBAMMEEF2YXN0IHRydXN0ZWQgQ0EwHhcNMjQwNTA2MTQ0NDUwWhcNMjQwNzI5MTQ0NDQ5WjAZMRcwFQYDVQQDEw53d3cuZ29vZ2xlLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALHGFc3Dms86IvYVnuQT+z66Rvwn2IzYwYUodb9oZprLeIHGkEn+ITD1UUaJc2BLTEGl9mtpL1PLUgmRzkFC6j45cyc775Ur1JXdCkn3y/+bJP2AVs+26PpaB6N/liYhYY+iOhR1eCvFmiHngBW8IjyoL7Bl2uiWn2Q2PMVvP5n/XcIwLfvTvC3/zqe25E11liXfnlSoyD5tXLWZnL0fez1N0+2s941Ecvd1etF089kSKuLN4fyNj2MPVt7oDlgIsHnp/aI3IA+uABEKmzpNbhQZxfdjZ+KZZuHztxDavuVy7ChgAUdZiFDdJnconH3go+VYytQKE0DdwZbt5JXDuaMCAwEAAaNdMFswHQYDVR0OBBYEFPYHAIho0QfK+e2yFZ+w6/YjelxGMB8GA1UdIwQYMBaAFHY4NDKoJE61+2LaS72dd5CVmatMMBkGA1UdEQQSMBCCDnd3dy5nb29nbGUuY29tMA0GCSqGSIb3DQEBCwUAA4IBAQBtZPiWWgdrEoo11oVdLyCRlw4DqlvG4y6OgkzJg1sKvAqedvtildDmkHmJcCspMNbtcCUG8VyRwtlVbf9o8BrEF2X2I72x/qONogrkILAI2Zlm9sLf5U4YEXog9P3GHbnHLvvTNsYG+Yg05QAj4VpysJ348N0aMG2OP0ic6cAuzvDc4Yk4agXWlAX/JEkz1YT6lt9oC5Rl3M1FbjR+YCzgd+65eD5U3UsHx4H4JRs7s0in714U6P6WSVt03oSpXTpm5ppqHJBuIfR7YsEv22Kh4toqr0/cbwfY7xKnyn79UrM00VpnB21i3zj420DhOF/0FE+tpp092hmKPcj8B7we</ds:X509Certificate>
+                <ds:X509IssuerSerial>
+                  <ds:X509IssuerName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509IssuerName>
+                  <ds:X509SerialNumber>758187835366801866001047472019578762</ds:X509SerialNumber>
+                </ds:X509IssuerSerial>
+              </ds:X509Data>
+              <ds:X509Data>
+                <ds:X509SubjectName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509SubjectName>
+                <ds:X509Certificate>MIIDsTCCApmgAwIBAgIUFPGN0QKJgvGyrAjpnkS7TM9URq0wDQYJKoZIhvcNAQELBQAwaDELMAkGA1UEBhMCQ1oxDzANBgNVBAgMBlByYWd1ZTEOMAwGA1UECgwFQVZBU1QxHTAbBgNVBAsMFFNvZnR3YXJlIERldmVsb3BtZW50MRkwFwYDVQQDDBBBdmFzdCB0cnVzdGVkIENBMB4XDTI0MDEwNTEyMDI0MloXDTM0MDEwMjEyMDI0MlowaDELMAkGA1UEBhMCQ1oxDzANBgNVBAgMBlByYWd1ZTEOMAwGA1UECgwFQVZBU1QxHTAbBgNVBAsMFFNvZnR3YXJlIERldmVsb3BtZW50MRkwFwYDVQQDDBBBdmFzdCB0cnVzdGVkIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArKi9nOZQEc7NNr9BuSV31v5YBzmHjCja3fslrBwPkod1P1xcdkP8f8IU7mYJf9xgeLkuSaUnPn9i/lQ9ApdktGM+FYtYg4LPejsvu/pLS7IV+rIWWTwJ4A3M7QDZd6QukP1/qzzLC6tf3ErK3cKSgfgcTUx+0EgLlVlBPN9dkgqkdiNjiLD/uC7OQ3C8vgU5vpBzXb2JQGHxKfDyeS7OLpBob0ttYPvLCPPyP3SY2UOTpjX9tDvAAc5m09VirqhhA5toBZBElqOvO9cju8AWM9fEQPVeVoEi1lT8+dqE0kHE9wq8DXWLpcBdnR/Qjf1OTl36bD+aLjY51z4JDjNV7QIDAQABo1MwUTAdBgNVHQ4EFgQUdjg0MqgkTrX7YtpLvZ13kJWZq0wwHwYDVR0jBBgwFoAUdjg0MqgkTrX7YtpLvZ13kJWZq0wwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEADwYOvncKvZmsPOAiexhMr80LA1wdMqJ4bWyyyMKPDW/mqiUtU3EsayiP+O1a5mJum8MFQwBPhoNYikWYp4p5iPh/n6hXSxVK8YBqM27JXjVaQiS1tPJk4UktZ9aXkjTWiSlWNMJsoHhI1JmVRg6ECfX1WTK38O97Ukm2XDTpwQtP0r/xCLFHrbEpSocmEnpco9Reg6+G3aWprdNLsHgznk1sCcG2ZbK58Wke/5VjUrzImRguhgzvHGVShE5MyhqGm4cARvJSz92o6yLLZHYwv4gIp8HVV2wKGrByeEa2Rek7qDMYsSN3+P28B56QpmVg+6wG7fS7ByivfKqFOq4WMg==</ds:X509Certificate>
+                <ds:X509IssuerSerial>
+                  <ds:X509IssuerName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509IssuerName>
+                  <ds:X509SerialNumber>119566648964026191856410076338168258360427955885</ds:X509SerialNumber>
+                </ds:X509IssuerSerial>
+              </ds:X509Data>
+            </ds:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="CompanyB_ServerCert">
+                        <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+              <ds:KeyValue>
+                <ds:RSAKeyValue>
+                  <ds:Modulus>scYVzcOazzoi9hWe5BP7PrpG/CfYjNjBhSh1v2hmmst4gcaQSf4hMPVRRolzYEtMQaX2a2kvU8tSCZHOQULqPjlzJzvvlSvUld0KSffL/5sk/YBWz7bo+loHo3+WJiFhj6I6FHV4K8WaIeeAFbwiPKgvsGXa6JafZDY8xW8/mf9dwjAt+9O8Lf/Op7bkTXWWJd+eVKjIPm1ctZmcvR97PU3T7az3jURy93V60XTz2RIq4s3h/I2PYw9W3ugOWAiween9ojcgD64AEQqbOk1uFBnF92Nn4plm4fO3ENq+5XLsKGABR1mIUN0mdyicfeCj5VjK1AoTQN3Blu3klcO5ow==</ds:Modulus>
+                  <ds:Exponent>AQAB</ds:Exponent>
+                </ds:RSAKeyValue>
+              </ds:KeyValue>
+              <ds:X509Data>
+                <ds:X509SubjectName>CN=www.google.com</ds:X509SubjectName>
+                <ds:X509Certificate>MIIDaDCCAlCgAwIBAgIQAJIFi9/I9xvI3xijDoufijANBgkqhkiG9w0BAQsFADBoMQswCQYDVQQGEwJDWjEPMA0GA1UECAwGUHJhZ3VlMQ4wDAYDVQQKDAVBVkFTVDEdMBsGA1UECwwUU29mdHdhcmUgRGV2ZWxvcG1lbnQxGTAXBgNVBAMMEEF2YXN0IHRydXN0ZWQgQ0EwHhcNMjQwNTA2MTQ0NDUwWhcNMjQwNzI5MTQ0NDQ5WjAZMRcwFQYDVQQDEw53d3cuZ29vZ2xlLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALHGFc3Dms86IvYVnuQT+z66Rvwn2IzYwYUodb9oZprLeIHGkEn+ITD1UUaJc2BLTEGl9mtpL1PLUgmRzkFC6j45cyc775Ur1JXdCkn3y/+bJP2AVs+26PpaB6N/liYhYY+iOhR1eCvFmiHngBW8IjyoL7Bl2uiWn2Q2PMVvP5n/XcIwLfvTvC3/zqe25E11liXfnlSoyD5tXLWZnL0fez1N0+2s941Ecvd1etF089kSKuLN4fyNj2MPVt7oDlgIsHnp/aI3IA+uABEKmzpNbhQZxfdjZ+KZZuHztxDavuVy7ChgAUdZiFDdJnconH3go+VYytQKE0DdwZbt5JXDuaMCAwEAAaNdMFswHQYDVR0OBBYEFPYHAIho0QfK+e2yFZ+w6/YjelxGMB8GA1UdIwQYMBaAFHY4NDKoJE61+2LaS72dd5CVmatMMBkGA1UdEQQSMBCCDnd3dy5nb29nbGUuY29tMA0GCSqGSIb3DQEBCwUAA4IBAQBtZPiWWgdrEoo11oVdLyCRlw4DqlvG4y6OgkzJg1sKvAqedvtildDmkHmJcCspMNbtcCUG8VyRwtlVbf9o8BrEF2X2I72x/qONogrkILAI2Zlm9sLf5U4YEXog9P3GHbnHLvvTNsYG+Yg05QAj4VpysJ348N0aMG2OP0ic6cAuzvDc4Yk4agXWlAX/JEkz1YT6lt9oC5Rl3M1FbjR+YCzgd+65eD5U3UsHx4H4JRs7s0in714U6P6WSVt03oSpXTpm5ppqHJBuIfR7YsEv22Kh4toqr0/cbwfY7xKnyn79UrM00VpnB21i3zj420DhOF/0FE+tpp092hmKPcj8B7we</ds:X509Certificate>
+                <ds:X509IssuerSerial>
+                  <ds:X509IssuerName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509IssuerName>
+                  <ds:X509SerialNumber>758187835366801866001047472019578762</ds:X509SerialNumber>
+                </ds:X509IssuerSerial>
+              </ds:X509Data>
+              <ds:X509Data>
+                <ds:X509SubjectName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509SubjectName>
+                <ds:X509Certificate>MIIDsTCCApmgAwIBAgIUFPGN0QKJgvGyrAjpnkS7TM9URq0wDQYJKoZIhvcNAQELBQAwaDELMAkGA1UEBhMCQ1oxDzANBgNVBAgMBlByYWd1ZTEOMAwGA1UECgwFQVZBU1QxHTAbBgNVBAsMFFNvZnR3YXJlIERldmVsb3BtZW50MRkwFwYDVQQDDBBBdmFzdCB0cnVzdGVkIENBMB4XDTI0MDEwNTEyMDI0MloXDTM0MDEwMjEyMDI0MlowaDELMAkGA1UEBhMCQ1oxDzANBgNVBAgMBlByYWd1ZTEOMAwGA1UECgwFQVZBU1QxHTAbBgNVBAsMFFNvZnR3YXJlIERldmVsb3BtZW50MRkwFwYDVQQDDBBBdmFzdCB0cnVzdGVkIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArKi9nOZQEc7NNr9BuSV31v5YBzmHjCja3fslrBwPkod1P1xcdkP8f8IU7mYJf9xgeLkuSaUnPn9i/lQ9ApdktGM+FYtYg4LPejsvu/pLS7IV+rIWWTwJ4A3M7QDZd6QukP1/qzzLC6tf3ErK3cKSgfgcTUx+0EgLlVlBPN9dkgqkdiNjiLD/uC7OQ3C8vgU5vpBzXb2JQGHxKfDyeS7OLpBob0ttYPvLCPPyP3SY2UOTpjX9tDvAAc5m09VirqhhA5toBZBElqOvO9cju8AWM9fEQPVeVoEi1lT8+dqE0kHE9wq8DXWLpcBdnR/Qjf1OTl36bD+aLjY51z4JDjNV7QIDAQABo1MwUTAdBgNVHQ4EFgQUdjg0MqgkTrX7YtpLvZ13kJWZq0wwHwYDVR0jBBgwFoAUdjg0MqgkTrX7YtpLvZ13kJWZq0wwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEADwYOvncKvZmsPOAiexhMr80LA1wdMqJ4bWyyyMKPDW/mqiUtU3EsayiP+O1a5mJum8MFQwBPhoNYikWYp4p5iPh/n6hXSxVK8YBqM27JXjVaQiS1tPJk4UktZ9aXkjTWiSlWNMJsoHhI1JmVRg6ECfX1WTK38O97Ukm2XDTpwQtP0r/xCLFHrbEpSocmEnpco9Reg6+G3aWprdNLsHgznk1sCcG2ZbK58Wke/5VjUrzImRguhgzvHGVShE5MyhqGm4cARvJSz92o6yLLZHYwv4gIp8HVV2wKGrByeEa2Rek7qDMYsSN3+P28B56QpmVg+6wG7fS7ByivfKqFOq4WMg==</ds:X509Certificate>
+                <ds:X509IssuerSerial>
+                  <ds:X509IssuerName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509IssuerName>
+                  <ds:X509SerialNumber>119566648964026191856410076338168258360427955885</ds:X509SerialNumber>
+                </ds:X509IssuerSerial>
+              </ds:X509Data>
+            </ds:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="CompanyB_ClientCert">
+                        <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+              <ds:KeyValue>
+                <ds:RSAKeyValue>
+                  <ds:Modulus>scYVzcOazzoi9hWe5BP7PrpG/CfYjNjBhSh1v2hmmst4gcaQSf4hMPVRRolzYEtMQaX2a2kvU8tSCZHOQULqPjlzJzvvlSvUld0KSffL/5sk/YBWz7bo+loHo3+WJiFhj6I6FHV4K8WaIeeAFbwiPKgvsGXa6JafZDY8xW8/mf9dwjAt+9O8Lf/Op7bkTXWWJd+eVKjIPm1ctZmcvR97PU3T7az3jURy93V60XTz2RIq4s3h/I2PYw9W3ugOWAiween9ojcgD64AEQqbOk1uFBnF92Nn4plm4fO3ENq+5XLsKGABR1mIUN0mdyicfeCj5VjK1AoTQN3Blu3klcO5ow==</ds:Modulus>
+                  <ds:Exponent>AQAB</ds:Exponent>
+                </ds:RSAKeyValue>
+              </ds:KeyValue>
+              <ds:X509Data>
+                <ds:X509SubjectName>CN=www.google.com</ds:X509SubjectName>
+                <ds:X509Certificate>MIIDaDCCAlCgAwIBAgIQAJIFi9/I9xvI3xijDoufijANBgkqhkiG9w0BAQsFADBoMQswCQYDVQQGEwJDWjEPMA0GA1UECAwGUHJhZ3VlMQ4wDAYDVQQKDAVBVkFTVDEdMBsGA1UECwwUU29mdHdhcmUgRGV2ZWxvcG1lbnQxGTAXBgNVBAMMEEF2YXN0IHRydXN0ZWQgQ0EwHhcNMjQwNTA2MTQ0NDUwWhcNMjQwNzI5MTQ0NDQ5WjAZMRcwFQYDVQQDEw53d3cuZ29vZ2xlLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALHGFc3Dms86IvYVnuQT+z66Rvwn2IzYwYUodb9oZprLeIHGkEn+ITD1UUaJc2BLTEGl9mtpL1PLUgmRzkFC6j45cyc775Ur1JXdCkn3y/+bJP2AVs+26PpaB6N/liYhYY+iOhR1eCvFmiHngBW8IjyoL7Bl2uiWn2Q2PMVvP5n/XcIwLfvTvC3/zqe25E11liXfnlSoyD5tXLWZnL0fez1N0+2s941Ecvd1etF089kSKuLN4fyNj2MPVt7oDlgIsHnp/aI3IA+uABEKmzpNbhQZxfdjZ+KZZuHztxDavuVy7ChgAUdZiFDdJnconH3go+VYytQKE0DdwZbt5JXDuaMCAwEAAaNdMFswHQYDVR0OBBYEFPYHAIho0QfK+e2yFZ+w6/YjelxGMB8GA1UdIwQYMBaAFHY4NDKoJE61+2LaS72dd5CVmatMMBkGA1UdEQQSMBCCDnd3dy5nb29nbGUuY29tMA0GCSqGSIb3DQEBCwUAA4IBAQBtZPiWWgdrEoo11oVdLyCRlw4DqlvG4y6OgkzJg1sKvAqedvtildDmkHmJcCspMNbtcCUG8VyRwtlVbf9o8BrEF2X2I72x/qONogrkILAI2Zlm9sLf5U4YEXog9P3GHbnHLvvTNsYG+Yg05QAj4VpysJ348N0aMG2OP0ic6cAuzvDc4Yk4agXWlAX/JEkz1YT6lt9oC5Rl3M1FbjR+YCzgd+65eD5U3UsHx4H4JRs7s0in714U6P6WSVt03oSpXTpm5ppqHJBuIfR7YsEv22Kh4toqr0/cbwfY7xKnyn79UrM00VpnB21i3zj420DhOF/0FE+tpp092hmKPcj8B7we</ds:X509Certificate>
+                <ds:X509IssuerSerial>
+                  <ds:X509IssuerName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509IssuerName>
+                  <ds:X509SerialNumber>758187835366801866001047472019578762</ds:X509SerialNumber>
+                </ds:X509IssuerSerial>
+              </ds:X509Data>
+              <ds:X509Data>
+                <ds:X509SubjectName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509SubjectName>
+                <ds:X509Certificate>MIIDsTCCApmgAwIBAgIUFPGN0QKJgvGyrAjpnkS7TM9URq0wDQYJKoZIhvcNAQELBQAwaDELMAkGA1UEBhMCQ1oxDzANBgNVBAgMBlByYWd1ZTEOMAwGA1UECgwFQVZBU1QxHTAbBgNVBAsMFFNvZnR3YXJlIERldmVsb3BtZW50MRkwFwYDVQQDDBBBdmFzdCB0cnVzdGVkIENBMB4XDTI0MDEwNTEyMDI0MloXDTM0MDEwMjEyMDI0MlowaDELMAkGA1UEBhMCQ1oxDzANBgNVBAgMBlByYWd1ZTEOMAwGA1UECgwFQVZBU1QxHTAbBgNVBAsMFFNvZnR3YXJlIERldmVsb3BtZW50MRkwFwYDVQQDDBBBdmFzdCB0cnVzdGVkIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArKi9nOZQEc7NNr9BuSV31v5YBzmHjCja3fslrBwPkod1P1xcdkP8f8IU7mYJf9xgeLkuSaUnPn9i/lQ9ApdktGM+FYtYg4LPejsvu/pLS7IV+rIWWTwJ4A3M7QDZd6QukP1/qzzLC6tf3ErK3cKSgfgcTUx+0EgLlVlBPN9dkgqkdiNjiLD/uC7OQ3C8vgU5vpBzXb2JQGHxKfDyeS7OLpBob0ttYPvLCPPyP3SY2UOTpjX9tDvAAc5m09VirqhhA5toBZBElqOvO9cju8AWM9fEQPVeVoEi1lT8+dqE0kHE9wq8DXWLpcBdnR/Qjf1OTl36bD+aLjY51z4JDjNV7QIDAQABo1MwUTAdBgNVHQ4EFgQUdjg0MqgkTrX7YtpLvZ13kJWZq0wwHwYDVR0jBBgwFoAUdjg0MqgkTrX7YtpLvZ13kJWZq0wwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEADwYOvncKvZmsPOAiexhMr80LA1wdMqJ4bWyyyMKPDW/mqiUtU3EsayiP+O1a5mJum8MFQwBPhoNYikWYp4p5iPh/n6hXSxVK8YBqM27JXjVaQiS1tPJk4UktZ9aXkjTWiSlWNMJsoHhI1JmVRg6ECfX1WTK38O97Ukm2XDTpwQtP0r/xCLFHrbEpSocmEnpco9Reg6+G3aWprdNLsHgznk1sCcG2ZbK58Wke/5VjUrzImRguhgzvHGVShE5MyhqGm4cARvJSz92o6yLLZHYwv4gIp8HVV2wKGrByeEa2Rek7qDMYsSN3+P28B56QpmVg+6wG7fS7ByivfKqFOq4WMg==</ds:X509Certificate>
+                <ds:X509IssuerSerial>
+                  <ds:X509IssuerName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509IssuerName>
+                  <ds:X509SerialNumber>119566648964026191856410076338168258360427955885</ds:X509SerialNumber>
+                </ds:X509IssuerSerial>
+              </ds:X509Data>
+            </ds:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="TrustedRootCertB4">
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+              <ds:KeyValue>
+                <ds:RSAKeyValue>
+                  <ds:Modulus>scYVzcOazzoi9hWe5BP7PrpG/CfYjNjBhSh1v2hmmst4gcaQSf4hMPVRRolzYEtMQaX2a2kvU8tSCZHOQULqPjlzJzvvlSvUld0KSffL/5sk/YBWz7bo+loHo3+WJiFhj6I6FHV4K8WaIeeAFbwiPKgvsGXa6JafZDY8xW8/mf9dwjAt+9O8Lf/Op7bkTXWWJd+eVKjIPm1ctZmcvR97PU3T7az3jURy93V60XTz2RIq4s3h/I2PYw9W3ugOWAiween9ojcgD64AEQqbOk1uFBnF92Nn4plm4fO3ENq+5XLsKGABR1mIUN0mdyicfeCj5VjK1AoTQN3Blu3klcO5ow==</ds:Modulus>
+                  <ds:Exponent>AQAB</ds:Exponent>
+                </ds:RSAKeyValue>
+              </ds:KeyValue>
+              <ds:X509Data>
+                <ds:X509SubjectName>CN=www.google.com</ds:X509SubjectName>
+                <ds:X509Certificate>MIIDaDCCAlCgAwIBAgIQAJIFi9/I9xvI3xijDoufijANBgkqhkiG9w0BAQsFADBoMQswCQYDVQQGEwJDWjEPMA0GA1UECAwGUHJhZ3VlMQ4wDAYDVQQKDAVBVkFTVDEdMBsGA1UECwwUU29mdHdhcmUgRGV2ZWxvcG1lbnQxGTAXBgNVBAMMEEF2YXN0IHRydXN0ZWQgQ0EwHhcNMjQwNTA2MTQ0NDUwWhcNMjQwNzI5MTQ0NDQ5WjAZMRcwFQYDVQQDEw53d3cuZ29vZ2xlLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALHGFc3Dms86IvYVnuQT+z66Rvwn2IzYwYUodb9oZprLeIHGkEn+ITD1UUaJc2BLTEGl9mtpL1PLUgmRzkFC6j45cyc775Ur1JXdCkn3y/+bJP2AVs+26PpaB6N/liYhYY+iOhR1eCvFmiHngBW8IjyoL7Bl2uiWn2Q2PMVvP5n/XcIwLfvTvC3/zqe25E11liXfnlSoyD5tXLWZnL0fez1N0+2s941Ecvd1etF089kSKuLN4fyNj2MPVt7oDlgIsHnp/aI3IA+uABEKmzpNbhQZxfdjZ+KZZuHztxDavuVy7ChgAUdZiFDdJnconH3go+VYytQKE0DdwZbt5JXDuaMCAwEAAaNdMFswHQYDVR0OBBYEFPYHAIho0QfK+e2yFZ+w6/YjelxGMB8GA1UdIwQYMBaAFHY4NDKoJE61+2LaS72dd5CVmatMMBkGA1UdEQQSMBCCDnd3dy5nb29nbGUuY29tMA0GCSqGSIb3DQEBCwUAA4IBAQBtZPiWWgdrEoo11oVdLyCRlw4DqlvG4y6OgkzJg1sKvAqedvtildDmkHmJcCspMNbtcCUG8VyRwtlVbf9o8BrEF2X2I72x/qONogrkILAI2Zlm9sLf5U4YEXog9P3GHbnHLvvTNsYG+Yg05QAj4VpysJ348N0aMG2OP0ic6cAuzvDc4Yk4agXWlAX/JEkz1YT6lt9oC5Rl3M1FbjR+YCzgd+65eD5U3UsHx4H4JRs7s0in714U6P6WSVt03oSpXTpm5ppqHJBuIfR7YsEv22Kh4toqr0/cbwfY7xKnyn79UrM00VpnB21i3zj420DhOF/0FE+tpp092hmKPcj8B7we</ds:X509Certificate>
+                <ds:X509IssuerSerial>
+                  <ds:X509IssuerName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509IssuerName>
+                  <ds:X509SerialNumber>758187835366801866001047472019578762</ds:X509SerialNumber>
+                </ds:X509IssuerSerial>
+              </ds:X509Data>
+              <ds:X509Data>
+                <ds:X509SubjectName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509SubjectName>
+                <ds:X509Certificate>MIIDsTCCApmgAwIBAgIUFPGN0QKJgvGyrAjpnkS7TM9URq0wDQYJKoZIhvcNAQELBQAwaDELMAkGA1UEBhMCQ1oxDzANBgNVBAgMBlByYWd1ZTEOMAwGA1UECgwFQVZBU1QxHTAbBgNVBAsMFFNvZnR3YXJlIERldmVsb3BtZW50MRkwFwYDVQQDDBBBdmFzdCB0cnVzdGVkIENBMB4XDTI0MDEwNTEyMDI0MloXDTM0MDEwMjEyMDI0MlowaDELMAkGA1UEBhMCQ1oxDzANBgNVBAgMBlByYWd1ZTEOMAwGA1UECgwFQVZBU1QxHTAbBgNVBAsMFFNvZnR3YXJlIERldmVsb3BtZW50MRkwFwYDVQQDDBBBdmFzdCB0cnVzdGVkIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArKi9nOZQEc7NNr9BuSV31v5YBzmHjCja3fslrBwPkod1P1xcdkP8f8IU7mYJf9xgeLkuSaUnPn9i/lQ9ApdktGM+FYtYg4LPejsvu/pLS7IV+rIWWTwJ4A3M7QDZd6QukP1/qzzLC6tf3ErK3cKSgfgcTUx+0EgLlVlBPN9dkgqkdiNjiLD/uC7OQ3C8vgU5vpBzXb2JQGHxKfDyeS7OLpBob0ttYPvLCPPyP3SY2UOTpjX9tDvAAc5m09VirqhhA5toBZBElqOvO9cju8AWM9fEQPVeVoEi1lT8+dqE0kHE9wq8DXWLpcBdnR/Qjf1OTl36bD+aLjY51z4JDjNV7QIDAQABo1MwUTAdBgNVHQ4EFgQUdjg0MqgkTrX7YtpLvZ13kJWZq0wwHwYDVR0jBBgwFoAUdjg0MqgkTrX7YtpLvZ13kJWZq0wwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEADwYOvncKvZmsPOAiexhMr80LA1wdMqJ4bWyyyMKPDW/mqiUtU3EsayiP+O1a5mJum8MFQwBPhoNYikWYp4p5iPh/n6hXSxVK8YBqM27JXjVaQiS1tPJk4UktZ9aXkjTWiSlWNMJsoHhI1JmVRg6ECfX1WTK38O97Ukm2XDTpwQtP0r/xCLFHrbEpSocmEnpco9Reg6+G3aWprdNLsHgznk1sCcG2ZbK58Wke/5VjUrzImRguhgzvHGVShE5MyhqGm4cARvJSz92o6yLLZHYwv4gIp8HVV2wKGrByeEa2Rek7qDMYsSN3+P28B56QpmVg+6wG7fS7ByivfKqFOq4WMg==</ds:X509Certificate>
+                <ds:X509IssuerSerial>
+                  <ds:X509IssuerName>CN=Avast trusted CA,OU=Software Development,O=AVAST,ST=Prague,C=CZ</ds:X509IssuerName>
+                  <ds:X509SerialNumber>119566648964026191856410076338168258360427955885</ds:X509SerialNumber>
+                </ds:X509IssuerSerial>
+              </ds:X509Data>
+            </ds:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="TrustedRootCertB5">
+            <ns3:KeyInfo>
+                <ns3:KeyName>TrustedRootCertB5_Key</ns3:KeyName>
+            </ns3:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="TrustedRootCertB6">
+            <ns3:KeyInfo>
+                <ns3:KeyName>TrustedRootCertB6_Key</ns3:KeyName>
+            </ns3:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="TrustedRootCertB7">
+            <ns3:KeyInfo>
+                <ns3:KeyName>TrustedRootCertB7_Key</ns3:KeyName>
+            </ns3:KeyInfo>
+        </tns:Certificate>
+        <tns:Certificate tns:certId="TrustedRootCertB8">
+            <ns3:KeyInfo>
+                <ns3:KeyName>TrustedRootCertB8_Key</ns3:KeyName>
+            </ns3:KeyInfo>
+        </tns:Certificate>
+        <tns:SecurityDetails tns:securityId="CompanyB_TransportSecurity">
+            <tns:TrustAnchors>
+                <tns:AnchorCertificateRef tns:certId="KetenPartner_ServerCrt" />
+                <tns:AnchorCertificateRef tns:certId="KetenPartner_ClientCrt" />
+            </tns:TrustAnchors>
+        </tns:SecurityDetails>
+        <tns:SecurityDetails tns:securityId="CompanyB_MessageSecurity">
+            <tns:TrustAnchors>
+                <tns:AnchorCertificateRef tns:certId="KetenPartner_ServerCrt" />
+                <tns:AnchorCertificateRef tns:certId="KetenPartner_ClientCrt" />
+            </tns:TrustAnchors>
+        </tns:SecurityDetails>
+        
+        <tns:DeliveryChannel tns:channelId="asyncChannelB1" tns:transportId="transportB1" tns:docExchangeId="docExchangeB1">
+            <tns:MessagingCharacteristics tns:syncReplyMode="none" tns:ackRequested="always" tns:ackSignatureRequested="always" tns:duplicateElimination="always" />
+        </tns:DeliveryChannel>
+        
+        <tns:DeliveryChannel tns:channelId="syncChannelB1" tns:transportId="transportB2" tns:docExchangeId="docExchangeB1">
+            <tns:MessagingCharacteristics tns:syncReplyMode="signalsAndResponse" tns:ackRequested="always" tns:ackSignatureRequested="always" tns:duplicateElimination="always" />
+        </tns:DeliveryChannel>
+        <tns:Transport tns:transportId="transportB1">
+            <tns:TransportSender>
+                <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
+                <tns:AccessAuthentication>basic</tns:AccessAuthentication>
+                <tns:TransportClientSecurity>
+                    <tns:TransportSecurityProtocol tns:version="3.0">SSL</tns:TransportSecurityProtocol>
+                    <tns:ClientCertificateRef tns:certId="CompanyB_ClientCert" />
+                    <tns:ServerSecurityDetailsRef tns:securityId="CompanyB_TransportSecurity" />
+                </tns:TransportClientSecurity>
+            </tns:TransportSender>
+            <tns:TransportReceiver>
+                <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
+                <tns:AccessAuthentication>basic</tns:AccessAuthentication>
+                <tns:Endpoint tns:uri="https://www.CompanyB.com/servlets/ebxmlhandler/async" tns:type="allPurpose" />
+                <tns:TransportServerSecurity>
+                    <tns:TransportSecurityProtocol tns:version="3.0">SSL</tns:TransportSecurityProtocol>
+                    <tns:ServerCertificateRef tns:certId="CompanyB_ServerCert" />
+                    <tns:ClientSecurityDetailsRef tns:securityId="CompanyB_TransportSecurity" />
+                </tns:TransportServerSecurity>
+            </tns:TransportReceiver>
+        </tns:Transport>
+        <tns:Transport tns:transportId="transportB2">
+            <tns:TransportSender>
+                <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
+                <tns:AccessAuthentication>basic</tns:AccessAuthentication>
+                <tns:TransportClientSecurity>
+                    <tns:TransportSecurityProtocol tns:version="3.0">SSL</tns:TransportSecurityProtocol>
+                    <tns:ClientCertificateRef tns:certId="CompanyB_ClientCert" />
+                    <tns:ServerSecurityDetailsRef tns:securityId="CompanyB_TransportSecurity" />
+                </tns:TransportClientSecurity>
+            </tns:TransportSender>
+            <tns:TransportReceiver>
+                <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
+                <tns:AccessAuthentication>basic</tns:AccessAuthentication>
+                <tns:Endpoint tns:uri="https://www.CompanyB.com/servlets/ebxmlhandler/sync" tns:type="allPurpose" />
+                <tns:TransportServerSecurity>
+                    <tns:TransportSecurityProtocol tns:version="3.0">SSL</tns:TransportSecurityProtocol>
+                    <tns:ServerCertificateRef tns:certId="CompanyB_ServerCert" />
+                    <tns:ClientSecurityDetailsRef tns:securityId="CompanyB_TransportSecurity" />
+                </tns:TransportServerSecurity>
+            </tns:TransportReceiver>
+        </tns:Transport>
+        <tns:DocExchange tns:docExchangeId="docExchangeB1">
+            <tns:ebXMLSenderBinding tns:version="2.0">
+                <tns:ReliableMessaging>
+                    <tns:Retries>3</tns:Retries>
+                    <tns:RetryInterval>PT2H</tns:RetryInterval>
+                    <tns:MessageOrderSemantics>Guaranteed</tns:MessageOrderSemantics>
+                </tns:ReliableMessaging>
+                <tns:PersistDuration>P1D</tns:PersistDuration>
+                <tns:SenderNonRepudiation>
+                    <tns:NonRepudiationProtocol>http://www.w3.org/2000/09/xmldsig#</tns:NonRepudiationProtocol>
+                    <tns:HashFunction>http://www.w3.org/2000/09/xmldsig#sha1</tns:HashFunction>
+                    <tns:SignatureAlgorithm>http://www.w3.org/2000/09/xmldsig#dsa-sha1</tns:SignatureAlgorithm>
+                    <tns:SigningCertificateRef tns:certId="CompanyB_SigningCert" />
+                </tns:SenderNonRepudiation>
+                <tns:SenderDigitalEnvelope>
+                    <tns:DigitalEnvelopeProtocol tns:version="2.0">S/MIME</tns:DigitalEnvelopeProtocol>
+                    <tns:EncryptionAlgorithm>DES-CBC</tns:EncryptionAlgorithm>
+                    <tns:EncryptionSecurityDetailsRef tns:securityId="CompanyB_MessageSecurity" />
+                </tns:SenderDigitalEnvelope>
+            </tns:ebXMLSenderBinding>
+            <tns:ebXMLReceiverBinding tns:version="2.0">
+                <tns:ReliableMessaging>
+                    <tns:Retries>3</tns:Retries>
+                    <tns:RetryInterval>PT2H</tns:RetryInterval>
+                    <tns:MessageOrderSemantics>Guaranteed</tns:MessageOrderSemantics>
+                </tns:ReliableMessaging>
+                <tns:PersistDuration>P1D</tns:PersistDuration>
+                <tns:ReceiverNonRepudiation>
+                    <tns:NonRepudiationProtocol>http://www.w3.org/2000/09/xmldsig#</tns:NonRepudiationProtocol>
+                    <tns:HashFunction>http://www.w3.org/2000/09/xmldsig#sha1</tns:HashFunction>
+                    <tns:SignatureAlgorithm>http://www.w3.org/2000/09/xmldsig#dsa-sha1</tns:SignatureAlgorithm>
+                    <tns:SigningSecurityDetailsRef tns:securityId="CompanyB_MessageSecurity" />
+                </tns:ReceiverNonRepudiation>
+                <tns:ReceiverDigitalEnvelope>
+                    <tns:DigitalEnvelopeProtocol tns:version="2.0">S/MIME</tns:DigitalEnvelopeProtocol>
+                    <tns:EncryptionAlgorithm>DES-CBC</tns:EncryptionAlgorithm>
+                    <tns:EncryptionCertificateRef tns:certId="CompanyB_EncryptionCert" />
+                </tns:ReceiverDigitalEnvelope>
+            </tns:ebXMLReceiverBinding>
+        </tns:DocExchange>
+    </tns:PartyInfo>
+    
+    <tns:SimplePart tns:id="CompanyA_MsgHdr" tns:mimetype="text/xml">
+        <tns:NamespaceSupported tns:location="http://www.oasis-open.org/committees/ebxml-msg/schema/msg-header-2_0.xsd" tns:version="2.0">http://www.oasis-open.org/committees/ebxml-msg/schema/msg-header-2_0.xsd
+        </tns:NamespaceSupported>
+    </tns:SimplePart>
+    <tns:SimplePart tns:id="CompanyB_MsgHdr" tns:mimetype="text/xml">
+        <tns:NamespaceSupported tns:location="http://www.oasis-open.org/committees/ebxml-msg/schema/msg-header-2_0.xsd" tns:version="2.0">http://www.oasis-open.org/committees/ebxml-msg/schema/msg-header-2_0.xsd
+        </tns:NamespaceSupported>
+    </tns:SimplePart>
+    
+    <tns:SimplePart tns:id="CompanyA_ReceiptAcknowledgment" tns:mimetype="application/xml">
+        <tns:NamespaceSupported tns:location="http://www.ebxml.org/bpss/ReceiptAcknowledgment.xsd" tns:version="2.0">
+            http://www.ebxml.org/bpss/ReceiptAcknowledgment.xsd
+        </tns:NamespaceSupported>
+    </tns:SimplePart>
+    <tns:SimplePart tns:id="CompanyB_ReceiptAcknowledgment" tns:mimetype="application/xml">
+        <tns:NamespaceSupported tns:location="http://www.ebxml.org/bpss/ReceiptAcknowledgment.xsd" tns:version="2.0">
+            http://www.ebxml.org/bpss/ReceiptAcknowledgment.xsd
+        </tns:NamespaceSupported>
+    </tns:SimplePart>
+    
+    <tns:SimplePart tns:id="CompanyA_Exception" tns:mimetype="application/xml">
+        <tns:NamespaceSupported tns:location="http://www.oasis-open.org/committees/ebxml-msg/schema/msg-header-2_0.xsd" tns:version="2.0">http://www.ebxml.org/bpss/Exception.xsd
+        </tns:NamespaceSupported>
+    </tns:SimplePart>
+    <tns:SimplePart tns:id="CompanyB_Exception" tns:mimetype="application/xml">
+        <tns:NamespaceSupported tns:location="http://www.oasis-open.org/committees/ebxml-msg/schema/msg-header-2_0.xsd" tns:version="2.0">http://www.ebxml.org/bpss/Exception.xsd
+        </tns:NamespaceSupported>
+    </tns:SimplePart>
+    
+    <tns:SimplePart tns:id="CompanyA_Request" tns:mimetype="application/xml">
+        <tns:NamespaceSupported tns:location="http://www.rosettanet.org/schemas/PIP3A4RequestPurchaseOrder.xsd" tns:version="1.0">http://www.rosettanet.org/schemas/PIP3A4RequestPurchaseOrder.xsd
+        </tns:NamespaceSupported>
+    </tns:SimplePart>
+    <tns:SimplePart tns:id="CompanyB_Request" tns:mimetype="application/xml">
+        <tns:NamespaceSupported tns:location="http://www.rosettanet.org/schemas/PIP3A4RequestPurchaseOrder.xsd" tns:version="1.0">http://www.rosettanet.org/schemas/PIP3A4RequestPurchaseOrder.xsd
+        </tns:NamespaceSupported>
+    </tns:SimplePart>
+    
+    <tns:SimplePart tns:id="CompanyA_Response" tns:mimetype="application/xml">
+        <tns:NamespaceSupported tns:location="http://www.rosettanet.org/schemas/PurchaseOrderConfirmation.xsd" tns:version="1.0">http://www.rosettanet.org/schemas/PIP3A4PurchaseOrderConfirmation.xsd
+        </tns:NamespaceSupported>
+    </tns:SimplePart>
+    <tns:SimplePart tns:id="CompanyB_Response" tns:mimetype="application/xml">
+        <tns:NamespaceSupported tns:location="http://www.rosettanet.org/schemas/PurchaseOrderConfirmation.xsd" tns:version="1.0">http://www.rosettanet.org/schemas/PIP3A4PurchaseOrderConfirmation.xsd
+        </tns:NamespaceSupported>
+    </tns:SimplePart>
+    
+    <tns:Packaging tns:id="CompanyA_MshSignalPackage">
+        <tns:ProcessingCapabilities tns:parse="true" tns:generate="true" />
+        <tns:CompositeList>
+            <tns:Composite tns:id="CompanyA_MshSignal" tns:mimetype="multipart/related" tns:mimeparameters="type=text/xml">
+                <tns:Constituent tns:idref="CompanyA_MsgHdr" />
+            </tns:Composite>
+        </tns:CompositeList>
+    </tns:Packaging>
+    <tns:Packaging tns:id="CompanyB_MshSignalPackage">
+        <tns:ProcessingCapabilities tns:parse="true" tns:generate="true" />
+        <tns:CompositeList>
+            <tns:Composite tns:id="CompanyB_MshSignal" tns:mimetype="multipart/related" tns:mimeparameters="type=text/xml">
+                <tns:Constituent tns:idref="CompanyB_MsgHdr" />
+            </tns:Composite>
+        </tns:CompositeList>
+    </tns:Packaging>
+    
+    <tns:Packaging tns:id="CompanyA_RequestPackage">
+        <tns:ProcessingCapabilities tns:parse="true" tns:generate="true" />
+        <tns:CompositeList>
+            <tns:Composite tns:id="CompanyA_RequestMsg" tns:mimetype="multipart/related" tns:mimeparameters="type=text/xml">
+                <tns:Constituent tns:idref="CompanyA_MsgHdr" />
+                <tns:Constituent tns:idref="CompanyA_Request" />
+            </tns:Composite>
+        </tns:CompositeList>
+    </tns:Packaging>
+    <tns:Packaging tns:id="CompanyB_RequestPackage">
+        <tns:ProcessingCapabilities tns:parse="true" tns:generate="true" />
+        <tns:CompositeList>
+            <tns:Composite tns:id="CompanyB_RequestMsg" tns:mimetype="multipart/related" tns:mimeparameters="type=text/xml">
+                <tns:Constituent tns:idref="CompanyB_MsgHdr" />
+                <tns:Constituent tns:idref="CompanyB_Request" />
+            </tns:Composite>
+        </tns:CompositeList>
+    </tns:Packaging>
+    
+    <tns:Packaging tns:id="CompanyA_ResponsePackage">
+        <tns:ProcessingCapabilities tns:parse="true" tns:generate="true" />
+        <tns:CompositeList>
+            <tns:Composite tns:id="CompanyA_ResponseMsg" tns:mimetype="multipart/related" tns:mimeparameters="type=text/xml">
+                <tns:Constituent tns:idref="CompanyA_MsgHdr" />
+                <tns:Constituent tns:idref="CompanyA_Response" />
+            </tns:Composite>
+        </tns:CompositeList>
+    </tns:Packaging>
+    <tns:Packaging tns:id="CompanyB_ResponsePackage">
+        <tns:ProcessingCapabilities tns:parse="true" tns:generate="true" />
+        <tns:CompositeList>
+            <tns:Composite tns:id="CompanyB_ResponseMsg" tns:mimetype="multipart/related" tns:mimeparameters="type=text/xml">
+                <tns:Constituent tns:idref="CompanyB_MsgHdr" />
+                <tns:Constituent tns:idref="CompanyB_Response" />
+            </tns:Composite>
+        </tns:CompositeList>
+    </tns:Packaging>
+    
+    <tns:Packaging tns:id="CompanyA_ReceiptAcknowledgmentPackage">
+        <tns:ProcessingCapabilities tns:parse="true" tns:generate="true" />
+        <tns:CompositeList>
+            <tns:Composite tns:id="CompanyA_ReceiptAcknowledgmentMsg" tns:mimetype="multipart/related" tns:mimeparameters="type=text/xml">
+                <tns:Constituent tns:idref="CompanyA_MsgHdr" />
+                <tns:Constituent tns:idref="CompanyA_ReceiptAcknowledgment" />
+            </tns:Composite>
+        </tns:CompositeList>
+    </tns:Packaging>
+    <tns:Packaging tns:id="CompanyB_ReceiptAcknowledgmentPackage">
+        <tns:ProcessingCapabilities tns:parse="true" tns:generate="true" />
+        <tns:CompositeList>
+            <tns:Composite tns:id="CompanyB_ReceiptAcknowledgmentMsg" tns:mimetype="multipart/related" tns:mimeparameters="type=text/xml">
+                <tns:Constituent tns:idref="CompanyB_MsgHdr" />
+                <tns:Constituent tns:idref="CompanyB_ReceiptAcknowledgment" />
+            </tns:Composite>
+        </tns:CompositeList>
+    </tns:Packaging>
+    
+    <tns:Packaging tns:id="CompanyA_ExceptionPackage">
+        <tns:ProcessingCapabilities tns:parse="true" tns:generate="true" />
+        <tns:CompositeList>
+            <tns:Composite tns:id="CompanyA_ExceptionMsg" tns:mimetype="multipart/related" tns:mimeparameters="type=text/xml">
+                <tns:Constituent tns:idref="CompanyA_MsgHdr" />
+                <tns:Constituent tns:idref="CompanyA_Exception" />
+            </tns:Composite>
+        </tns:CompositeList>
+    </tns:Packaging>
+    <tns:Packaging tns:id="CompanyB_ExceptionPackage">
+        <tns:ProcessingCapabilities tns:parse="true" tns:generate="true" />
+        <tns:CompositeList>
+            <tns:Composite tns:id="CompanyB_ExceptionMsg" tns:mimetype="multipart/related" tns:mimeparameters="type=text/xml">
+                <tns:Constituent tns:idref="CompanyB_MsgHdr" />
+                <tns:Constituent tns:idref="CompanyB_Exception" />
+            </tns:Composite>
+        </tns:CompositeList>
+    </tns:Packaging>
+    
+    <tns:Packaging tns:id="CompanyA_SyncReplyPackage">
+        <tns:ProcessingCapabilities tns:parse="true" tns:generate="true" />
+        <tns:CompositeList>
+            <tns:Composite tns:id="CompanyA_SignalAndResponseMsg" tns:mimetype="multipart/related" tns:mimeparameters="type=text/xml">
+                <tns:Constituent tns:idref="CompanyA_MsgHdr" />
+                <tns:Constituent tns:idref="CompanyA_ReceiptAcknowledgment" />
+                <tns:Constituent tns:idref="CompanyA_Response" />
+            </tns:Composite>
+        </tns:CompositeList>
+    </tns:Packaging>
+    <tns:Packaging tns:id="CompanyB_SyncReplyPackage">
+        <tns:ProcessingCapabilities tns:parse="true" tns:generate="true" />
+        <tns:CompositeList>
+            <tns:Composite tns:id="CompanyB_SignalAndResponseMsg" tns:mimetype="multipart/related" tns:mimeparameters="type=text/xml">
+                <tns:Constituent tns:idref="CompanyB_MsgHdr" />
+                <tns:Constituent tns:idref="CompanyB_ReceiptAcknowledgment" />
+                <tns:Constituent tns:idref="CompanyB_Response" />
+            </tns:Composite>
+        </tns:CompositeList>
+    </tns:Packaging>
+    <tns:Comment xml:lang="en-US">buy/sell agreement between CompanyA.com and CompanyB.com</tns:Comment>
+</tns:CollaborationProtocolAgreement>

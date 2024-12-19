@@ -1,0 +1,101 @@
+<h1>CollaborationProtocolAgreement</h1>
+<h2>Attributes</h2>
+<ul>
+<li><code>cpaid</code>: A unique identifier for the CPA.</li>
+<li><code>version</code>: The version of the CPA.</li>
+</ul>
+<h2>Sub-elements</h2>
+<ul>
+<li><a href="Status.html">Status</a></li>
+<li><a href="Start.html">Start</a></li>
+<li><a href="End.html">End</a></li>
+<li><a href="ConversationConstraints.html">ConversationConstraints</a> (optional)</li>
+<li><a href="PartyInfo.html">PartyInfo</a> (2 occurrences)</li>
+<li><a href="SimplePart.html">SimplePart</a> (unbounded)</li>
+<li><a href="Packaging.html">Packaging</a> (unbounded)</li>
+<li><a href="Signature.html">Signature</a> (optional)</li>
+<li><a href="Comment.html">Comment</a> (optional, unbounded)</li>
+</ul>
+<h2>Example</h2>
+<pre><code class="language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;
+&lt;tns:CollaborationProtocolAgreement xmlns:tns=&quot;http://example.com/cpp-cpa-2_0.xsd&quot; cpaid=&quot;CPA12345&quot; version=&quot;2.0&quot;&gt;
+    &lt;tns:Status&gt;agreed&lt;/tns:Status&gt;
+    &lt;tns:Start&gt;2023-01-01T00:00:00Z&lt;/tns:Start&gt;
+    &lt;tns:End&gt;2024-01-01T00:00:00Z&lt;/tns:End&gt;
+    &lt;tns:ConversationConstraints&gt;
+        &lt;!-- Optional constraints here --&gt;
+    &lt;/tns:ConversationConstraints&gt;
+    &lt;tns:PartyInfo&gt;
+        &lt;tns:PartyId&gt;PartyA&lt;/tns:PartyId&gt;
+        &lt;tns:PartyRef&gt;ReferenceA&lt;/tns:PartyRef&gt;
+        &lt;tns:CollaborationRole&gt;
+            &lt;tns:ProcessSpecification&gt;ProcessSpecA&lt;/tns:ProcessSpecification&gt;
+            &lt;tns:Role name=&quot;RoleA&quot;/&gt;
+            &lt;tns:ApplicationCertificateRef&gt;CertRefA&lt;/tns:ApplicationCertificateRef&gt;
+            &lt;tns:ServiceBinding&gt;
+                &lt;tns:Service&gt;ServiceA&lt;/tns:Service&gt;
+                &lt;tns:CanSend&gt;
+                    &lt;tns:ThisPartyActionBinding&gt;
+                        &lt;tns:BusinessTransactionCharacteristics&gt;CharacteristicsA&lt;/tns:BusinessTransactionCharacteristics&gt;
+                        &lt;tns:ActionContext&gt;ContextA&lt;/tns:ActionContext&gt;
+                        &lt;tns:ChannelId&gt;ChannelA&lt;/tns:ChannelId&gt;
+                    &lt;/tns:ThisPartyActionBinding&gt;
+                    &lt;tns:OtherPartyActionBinding&gt;
+                        &lt;!-- Other party action binding details --&gt;
+                    &lt;/tns:OtherPartyActionBinding&gt;
+                &lt;/tns:CanSend&gt;
+                &lt;tns:CanReceive&gt;
+                    &lt;tns:ThisPartyActionBinding&gt;
+                        &lt;tns:BusinessTransactionCharacteristics&gt;CharacteristicsB&lt;/tns:BusinessTransactionCharacteristics&gt;
+                        &lt;tns:ActionContext&gt;ContextB&lt;/tns:ActionContext&gt;
+                        &lt;tns:ChannelId&gt;ChannelB&lt;/tns:ChannelId&gt;
+                    &lt;/tns:ThisPartyActionBinding&gt;
+                    &lt;tns:OtherPartyActionBinding&gt;
+                        &lt;!-- Other party action binding details --&gt;
+                    &lt;/tns:OtherPartyActionBinding&gt;
+                &lt;/tns:CanReceive&gt;
+            &lt;/tns:ServiceBinding&gt;
+        &lt;/tns:CollaborationRole&gt;
+        &lt;tns:Certificate&gt;CertA&lt;/tns:Certificate&gt;
+        &lt;tns:SecurityDetails&gt;
+            &lt;tns:TrustAnchors&gt;
+                &lt;tns:AnchorCertificateRef&gt;AnchorCertA&lt;/tns:AnchorCertificateRef&gt;
+            &lt;/tns:TrustAnchors&gt;
+        &lt;/tns:SecurityDetails&gt;
+        &lt;tns:DeliveryChannel&gt;
+            &lt;tns:MessagingCharacteristics&gt;CharacteristicsC&lt;/tns:MessagingCharacteristics&gt;
+        &lt;/tns:DeliveryChannel&gt;
+        &lt;tns:Transport&gt;
+            &lt;tns:TransportSender&gt;SenderA&lt;/tns:TransportSender&gt;
+            &lt;tns:TransportReceiver&gt;ReceiverA&lt;/tns:TransportReceiver&gt;
+            &lt;tns:TransportClientSecurity&gt;ClientSecurityA&lt;/tns:TransportClientSecurity&gt;
+            &lt;tns:TransportServerSecurity&gt;ServerSecurityA&lt;/tns:TransportServerSecurity&gt;
+        &lt;/tns:Transport&gt;
+        &lt;tns:DocExchange&gt;
+            &lt;tns:ebXMLSenderBinding&gt;
+                &lt;tns:ReliableMessaging&gt;ReliableA&lt;/tns:ReliableMessaging&gt;
+                &lt;tns:PersistDuration&gt;DurationA&lt;/tns:PersistDuration&gt;
+                &lt;tns:SenderNonRepudiation&gt;NonRepudiationA&lt;/tns:SenderNonRepudiation&gt;
+                &lt;tns:SenderDigitalEnvelope&gt;EnvelopeA&lt;/tns:SenderDigitalEnvelope&gt;
+            &lt;/tns:ebXMLSenderBinding&gt;
+            &lt;tns:ebXMLReceiverBinding&gt;
+                &lt;tns:ReliableMessaging&gt;ReliableB&lt;/tns:ReliableMessaging&gt;
+                &lt;tns:PersistDuration&gt;DurationB&lt;/tns:PersistDuration&gt;
+                &lt;tns:ReceiverNonRepudiation&gt;NonRepudiationB&lt;/tns:ReceiverNonRepudiation&gt;
+                &lt;tns:ReceiverDigitalEnvelope&gt;EnvelopeB&lt;/tns:ReceiverDigitalEnvelope&gt;
+                &lt;tns:NamespaceSupported&gt;NamespaceA&lt;/tns:NamespaceSupported&gt;
+            &lt;/tns:ebXMLReceiverBinding&gt;
+        &lt;/tns:DocExchange&gt;
+    &lt;/tns:PartyInfo&gt;
+    &lt;tns:PartyInfo&gt;
+        &lt;tns:PartyId&gt;PartyB&lt;/tns:PartyId&gt;
+        &lt;tns:PartyRef&gt;ReferenceB&lt;/tns:PartyRef&gt;
+        &lt;!-- Similar structure as the first PartyInfo --&gt;
+    &lt;/tns:PartyInfo&gt;
+    &lt;tns:SimplePart&gt;PartA&lt;/tns:SimplePart&gt;
+    &lt;tns:Packaging&gt;PackagingA&lt;/tns:Packaging&gt;
+    &lt;tns:Signature&gt;SignatureA&lt;/tns:Signature&gt;
+    &lt;tns:Comment&gt;CommentA&lt;/tns:Comment&gt;
+&lt;/tns:CollaborationProtocolAgreement&gt;
+</code></pre>
+<p><a href="../Readme.html">Go Back to Main Page</a></p>

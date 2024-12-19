@@ -1,0 +1,18 @@
+<h1>TransportSender</h1>
+<h2>Sub-elements</h2>
+<ul>
+<li><code>TransportProtocol</code></li>
+<li><a href="AccessAuthentication.html">AccessAuthentication</a> (optional, unbounded)</li>
+<li><a href="TransportClientSecurity.html">TransportClientSecurity</a> (optional)</li>
+</ul>
+<h2>Example</h2>
+<pre><code class="language-xml">&lt;tns:TransportSender&gt;
+    &lt;tns:TransportProtocol tns:version=&quot;1.1&quot;&gt;HTTP&lt;/tns:TransportProtocol&gt;
+    &lt;tns:AccessAuthentication&gt;basic&lt;/tns:AccessAuthentication&gt;
+    &lt;tns:TransportClientSecurity&gt;
+        &lt;tns:TransportSecurityProtocol tns:version=&quot;3.0&quot;&gt;SSL&lt;/tns:TransportSecurityProtocol&gt;
+        &lt;tns:ClientCertificateRef tns:certId=&quot;CompanyA_ClientCert&quot; /&gt;
+        &lt;tns:ServerSecurityDetailsRef tns:securityId=&quot;CompanyA_TransportSecurity&quot; /&gt;
+    &lt;/tns:TransportClientSecurity&gt;
+&lt;/tns:TransportSender&gt;
+</code></pre>
