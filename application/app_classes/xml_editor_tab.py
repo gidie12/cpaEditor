@@ -28,10 +28,11 @@ class XMLEditor(tk.Frame):
         self.logger = logger
 
     def reload(self):
-        clear_tree(self.tree_editor)
         self.load()
 
     def load(self):
+        # Clear here and not only in reload: loading another CPA must replace the tree of the previous one
+        clear_tree(self.tree_editor)
         self.xml_element_mapping = {}
         self.populate_tree(self.tree_editor, self.master.root)
 

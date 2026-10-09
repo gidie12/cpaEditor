@@ -10,7 +10,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('schemaValidation', 'schemaValidation')] + collect_data_files('xmlschema'),
+    datas=[('schemaValidation', 'schemaValidation'), ('README.md', '.'), ('docs', 'docs')] + collect_data_files('xmlschema'),
     hiddenimports=[],
     hookspath=[],
     runtime_hooks=[],

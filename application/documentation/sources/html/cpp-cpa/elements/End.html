@@ -3,3 +3,15 @@
 <ul>
 <li><code>dateTime</code></li>
 </ul>
+<h2>Format</h2>
+<ul>
+<li>Written as <code>YYYY-MM-DDTHH:MM:SSZ</code>, for example <code>2027-03-01T12:00:00Z</code>.</li>
+<li>The <code>Z</code> means Zulu time (UTC). A date with an offset such as <code>2027-03-01T13:00:00+01:00</code> is the same moment and is also valid.</li>
+</ul>
+<h2>In the CPA Editor</h2>
+<ul>
+<li>The <strong>End date</strong> field on the <strong>General</strong> tab.</li>
+<li>Below the field the same moment is shown in Zulu time and in the timezone set on the computer, for example <code>Zulu: 2027-03-01T12:00:00Z    Local: 2027-03-01 13:00:00 CET (UTC+01:00)</code>.</li>
+<li>The button <strong>Set from certificates</strong> sets the end date to the expiry date of the certificate in the CPA that expires first. Every certificate counts: both partners and the whole chain (leaf, intermediate and root). Certificate dates are always in Zulu time.</li>
+<li>With <strong>Show debug messages</strong> on, the log also lists every certificate with its common name and end date, the first to expire at the top.</li>
+</ul>

@@ -1,4 +1,5 @@
 import base64
+import re
 import xml.etree.ElementTree as Et
 import tkinter as tk
 from functools import partial
@@ -6,7 +7,7 @@ from tkinter import ttk, filedialog
 from cryptography.hazmat.primitives import serialization
 from lxml import etree as lxml_etree
 from cryptography.hazmat.backends import default_backend
-from cryptography.x509 import load_pem_x509_certificate, ExtensionNotFound, KeyUsage
+from cryptography.x509 import load_der_x509_certificate, load_pem_x509_certificate, ExtensionNotFound, KeyUsage
 from application.helper_classes.cpaParser import CPAParser
 
 
@@ -75,6 +76,29 @@ def create_x509_data(cert, key_info):
         element.text = element_text
 
     return x509_data
+
+
+def key_info_to_pem(key_info):
+    """
+    Converts the certificates of a KeyInfo element to PEM.
+
+    Args:
+        key_info (lxml.etree.Element): The KeyInfo element with one X509Certificate per certificate in the chain.
+
+    Returns:
+        str: The certificates in PEM format in the order of the KeyInfo (leaf first), empty without certificates.
+
+    Test Functions:
+        - test_key_info_to_pem_returns_chain_in_order
+        - test_key_info_to_pem_without_certificates
+    """
+    pem = ''
+    if key_info is None:
+        return pem
+    for x509_certificate in key_info.iter('{http://www.w3.org/2000/09/xmldsig#}X509Certificate'):
+        cert = load_der_x509_certificate(base64.b64decode(x509_certificate.text))
+        pem += cert.public_bytes(serialization.Encoding.PEM).decode('utf-8')
+    return pem
 
 
 def create_sub_elements(parent, elements):
@@ -160,14 +184,18 @@ class Certificates(tk.Frame):
 
         namespace_certificate_id = '{' + self.master.namespace_uri + '}' + 'certId'
 
-        if certificate_party_a_elements and certificate_party_b_elements:
-            partner_a_keyinfo_certid_list = self.generate_partner_keyinfo_certid_list(certificate_party_a_elements, namespace_certificate_id)
-            self.populate_tree(partner_a,partner_a_keyinfo_certid_list)
-            partner_b_key_info_certid_list = self.generate_partner_keyinfo_certid_list(certificate_party_b_elements, namespace_certificate_id)
-            self.populate_tree(partner_b, partner_b_key_info_certid_list, clear_tree=False)
+        # Always drop the certificates of the previously loaded CPA, also when the new CPA has none
+        self.clear_tree()
 
-        else:
+        if not certificate_party_a_elements and not certificate_party_b_elements:
             self.logger.error("No certificates found in the CPA")
+            return
+
+        for partner, certificate_party_elements in ((partner_a, certificate_party_a_elements),
+                                                    (partner_b, certificate_party_b_elements)):
+            if certificate_party_elements:
+                partner_keyinfo_certid_list = self.generate_partner_keyinfo_certid_list(certificate_party_elements, namespace_certificate_id)
+                self.populate_tree(partner, partner_keyinfo_certid_list, clear_tree=False)
 
     def generate_partner_keyinfo_certid_list(self, certificate_party_elements, namespace_certificate_id):
         """
@@ -236,6 +264,7 @@ class Certificates(tk.Frame):
                 menu = tk.Menu(self, tearoff=0)
                 menu.add_command(label="Copy KeyInfo", command=self.copy_item)
                 menu.add_command(label="Upload Certificate", command=self.open_certificate)
+                menu.add_command(label="Download Certificate", command=self.save_certificate)
                 menu.post(event.x_root, event.y_root)
 
     def copy_item(self):
@@ -302,6 +331,40 @@ class Certificates(tk.Frame):
             self.tree_editor.bind("<Button-2>", self.show_menu)
         else:
             self.tree_editor.bind("<Button-3>", self.show_menu)
+
+    def save_certificate(self):
+        """
+        Saves the certificate chain of the selected KeyInfo as a PEM file.
+
+        The file holds every certificate of the KeyInfo, leaf first, and can be uploaded again with open_certificate.
+
+        Returns:
+            None
+
+        Test Functions:
+            - test_save_certificate_writes_chain
+            - test_save_certificate_no_file_selected
+            - test_save_certificate_without_certificate
+        """
+        try:
+            key_info_element, cert_element = self.xml_element_mapping.get(self.tree_editor.selection()[0])
+            pem = key_info_to_pem(key_info_element)
+            if not pem:
+                self.logger.error("No certificate found in this KeyInfo")
+                return
+
+            cert_id = cert_element.get('{' + self.master.namespace_uri + '}certId') or 'certificate'
+            file_path = filedialog.asksaveasfilename(defaultextension=".pem",
+                                                     initialfile=re.sub(r'[^\w.-]', '_', cert_id) + ".pem",
+                                                     filetypes=[("Certificate files", "*.pem *.crt *.cer")])
+            if not file_path:
+                return
+
+            with open(file_path, 'w', encoding='utf-8') as cert_file:
+                cert_file.write(pem)
+            self.logger.info(f"{pem.count('BEGIN CERTIFICATE')} certificate(s) of certId {cert_id} saved to {file_path}")
+        except Exception as e:
+            self.logger.error(f"Error while downloading certificate: {e}")
 
     def open_certificate(self):
         """
