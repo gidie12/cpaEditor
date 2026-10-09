@@ -12,6 +12,7 @@ class TestLoadFunction(unittest.TestCase):
 
     def setUp(self):
         self.master = tk.Tk()
+        self.addCleanup(self.master.destroy)
         self.logger = Mock()
         self.master.namespace_uri = 'http://example.com'
         # load self.master.root from file

@@ -71,7 +71,8 @@ Na het vervangen van een certificaat kun je op het tabblad **General** met **Set
 ## 4. De CPA opslaan
 
 - Klik linksonder in het venster op **Save CPA**.
-- Kies een bestandsnaam en een locatie. Gebruik een nieuwe naam om het oorspronkelijke bestand te bewaren.
+- Kies een bestandsnaam en een locatie. Gebruik een nieuwe naam om het oorspronkelijke bestand te bewaren. Het bestand krijgt de extensie `.xml` als je er geen typt.
+- In het logvenster staat `CPA saved to` gevolgd door de bestandsnaam als het bestand is geschreven. Mislukt het opslaan, dan verschijnt een foutmelding en blijft een bestaand bestand ongewijzigd.
 
 ## Logvenster en debugmeldingen
 
@@ -84,6 +85,9 @@ Na het vervangen van een certificaat kun je op het tabblad **General** met **Set
 - **Help > Handleiding (Nederlands)** opent deze handleiding.
 - **Help > How to use (English)** opent deze handleiding in het Engels.
 - **Help > Readme** opent de technische readme (installatie, tests, build).
+- Elke keer dat de applicatie start, zoekt zij de nieuwste versie op GitHub op. Is er een nieuwere versie, dan toont een pop-up beide versies met de knoppen **Download** en **Skip**. **Download** opent de download in je browser; **Skip** sluit de pop-up, en die verschijnt opnieuw als je de applicatie de volgende keer start. Er verschijnt niets als je de nieuwste versie al hebt of als er geen internetverbinding is.
+- **Help > Check for updates** doet dezelfde controle op het moment dat jij dat wilt en toont het resultaat in het logvenster.
+- Alleen de versie wordt opgezocht; er wordt niets over je CPA verstuurd. De applicatie installeert zelf niets: vervang het oude programma door het gedownloade. De versie die je gebruikt staat in de titelbalk van het venster.
 
 ## Tips
 

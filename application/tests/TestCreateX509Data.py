@@ -17,6 +17,7 @@ class TestCreateX509Data(unittest.TestCase):
 
     def setUp(self):
         self.master = tk.Tk()
+        self.addCleanup(self.master.destroy)
         # generate mock logger with a mock info method
         self.logger = logger
         self.cert_tab = Certificates(self.master, self.logger)

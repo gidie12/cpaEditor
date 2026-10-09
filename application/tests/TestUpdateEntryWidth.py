@@ -9,6 +9,7 @@ class TestUpdateEntryWidth(unittest.TestCase):
 
     def setUp(self):
         self.master = tk.Tk()
+        self.addCleanup(self.master.destroy)
         self.logger = Mock()
         self.entry_fields = [tk.Entry(self.master) for _ in range(3)]
 
