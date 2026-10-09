@@ -83,7 +83,7 @@ Every time the application starts, it compares the running version with the late
 - **Help > Check for updates** runs the same check on request and always shows the result in the log.
 - The check runs in the background and is one request for the public release information; nothing about the CPA or the user is sent.
 - The server certificate is verified with the certificates trusted by the operating system.
-- Without network access an error is logged and nothing else happens.
+- Without network access an error is logged and nothing else happens. `[Errno 11001] getaddrinfo failed` (Windows) means `api.github.com` could not be found: there is no internet connection, or the network only reaches the internet through a proxy. On Windows the check is then repeated with the internet settings of Windows (WinINet), which handle a proxy the way the browser does: an automatic configuration script (PAC), automatic detection and a login with the Windows account. On other systems set the `HTTPS_PROXY` environment variable. When both attempts fail, the log shows both errors and points to the release page.
 
 The running version is shown in the title bar, for example `CPA Editor v1.0.2`, and is defined in `application/version.py`. It is the release the code belongs to: the same number as the release tag on GitHub. A release build takes the version from its tag: the workflow overwrites `application/version.py` for `v*` tags, so tag `v1.2.3` produces version `v1.2.3`. For running from source, update the file by hand when a release is made.
 
