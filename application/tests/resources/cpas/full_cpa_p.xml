@@ -205,7 +205,6 @@
          </tns:Composite>
       </tns:CompositeList>
    </tns:Packaging>
-   <tns:Comment xml:lang="nl-NL">Deze CPA is gemaakt met de EBV/JustID CPA Creatie Toolkit (SMF 2.0). Website http://www.justid.nl.</tns:Comment>
    <tns:Comment xml:lang="nl-NL">Deze CPA mag alleen gebruikt worden door de partijen die genoemd zijn in deze CPA.</tns:Comment>
    <tns:Comment xml:lang="nl-NL">Creatie datum/tijd: 2021-03-29T13:45:02.813Z</tns:Comment>
    <tns:Comment xml:lang="nl-NL">Nederland</tns:Comment>
