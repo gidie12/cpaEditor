@@ -1,14 +1,17 @@
 import io
+import socket
 import ssl
 import time
 import unittest
 from unittest.mock import patch
+import urllib.error
 import tkinter as tk
 
 from application import CpaEditorApp as cpa_editor_app
 from application.helper_classes import updateCheck
 from application.helper_classes.updateCheck import (LATEST_RELEASE_DOWNLOAD_URL, LATEST_RELEASE_PAGE_URL,
-                                                    check_for_update, get_latest_version, is_newer, parse_version)
+                                                    check_for_update, describe_network_error, get_latest_version,
+                                                    is_newer, parse_version)
 from application.version import __version__
 
 
@@ -62,6 +65,49 @@ class TestUpdateCheck(unittest.TestCase):
             self.assertEqual(check_for_update('1.1.0'), {'current': '1.1.0', 'error': 'no network'})
         with patch.object(updateCheck, 'get_latest_version', return_value='nightly'):
             self.assertIn('error', check_for_update('1.1.0'))
+
+    def test_get_latest_version_falls_back_to_windows_internet_settings(self):
+        """Test: get_latest_version_falls_back_to_windows_internet_settings"""
+        unresolved = urllib.error.URLError(socket.gaierror(11001, 'getaddrinfo failed'))
+        rate_limited = urllib.error.HTTPError(updateCheck.LATEST_RELEASE_API_URL, 403, 'rate limit', None, None)
+        proxy_login = urllib.error.HTTPError(updateCheck.LATEST_RELEASE_API_URL, 407, 'proxy login', None, None)
+        with patch.object(updateCheck, 'fetch_with_windows_internet_settings',
+                          return_value=b'{"tag_name": "v1.2.3"}') as fallback:
+            with patch.object(updateCheck.sys, 'platform', 'win32'):
+                for error in (unresolved, proxy_login):
+                    with patch.object(updateCheck.urllib.request, 'urlopen', side_effect=error):
+                        self.assertEqual(get_latest_version(timeout=3), 'v1.2.3')
+                self.assertEqual(fallback.call_args.args[0], updateCheck.LATEST_RELEASE_API_URL)
+                self.assertEqual(fallback.call_args.args[2], 3)
+                # An answer of GitHub itself is not retried
+                fallback.reset_mock()
+                with patch.object(updateCheck.urllib.request, 'urlopen', side_effect=rate_limited):
+                    self.assertRaises(urllib.error.HTTPError, get_latest_version)
+                fallback.assert_not_called()
+                # When Windows cannot get out either, both errors are reported
+                fallback.side_effect = OSError("no route")
+                with patch.object(updateCheck.urllib.request, 'urlopen', side_effect=unresolved):
+                    error_message = check_for_update('1.1.0')['error']
+                self.assertIn('HTTPS_PROXY', error_message)
+                self.assertIn('no route', error_message)
+            # Other systems have no such settings
+            fallback.reset_mock()
+            with patch.object(updateCheck.sys, 'platform', 'darwin'):
+                with patch.object(updateCheck.urllib.request, 'urlopen', side_effect=unresolved):
+                    self.assertRaises(urllib.error.URLError, get_latest_version)
+            fallback.assert_not_called()
+
+    def test_describe_network_error(self):
+        """Test: describe_network_error"""
+        unresolved = urllib.error.URLError(socket.gaierror(11001, 'getaddrinfo failed'))
+        message = describe_network_error(unresolved)
+        self.assertIn('getaddrinfo failed', message)
+        self.assertIn('HTTPS_PROXY', message)
+        self.assertIn(LATEST_RELEASE_PAGE_URL, message)
+        with patch.object(updateCheck, 'get_latest_version', side_effect=unresolved):
+            self.assertEqual(check_for_update('1.1.0')['error'], message)
+        refused = urllib.error.URLError(ConnectionRefusedError(61, 'Connection refused'))
+        self.assertEqual(describe_network_error(refused), str(refused))
 
 
 class TestUpdateCheckInApp(unittest.TestCase):
