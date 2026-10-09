@@ -29,7 +29,7 @@ A step-by-step guide is available in English (`docs/how-to-use.en.md`) and Dutch
 - **Transport**: transport elements of both partners
 - **Comment**: comments in the CPA
 - **XML editor**: the complete CPA as an editable tree
-- **Certificates**: certificates and KeyInfo of both partners, upload of a new certificate chain, download of a certificate chain as PEM file
+- **Certificates**: certificates and KeyInfo of both partners, details of each certificate (common name, expiry date, issuer), unused certificates in grey, upload of a new certificate chain, download of a certificate chain as PEM file
 - **CPA Validation**: validates the CPA against the schema
 
 Loading another CPA replaces the content of all tabs, including the validation result and any selected item.
@@ -53,6 +53,20 @@ On the **General** tab, the button **Set from certificates** below the end date 
 - Without certificates in the CPA an error is logged and the end date is left unchanged.
 
 A certificate without the CA flag is a leaf, a CA certificate issued by itself is a root, and any other CA certificate is an intermediate.
+
+## Certificate details
+
+On the **Certificates** tab, open a **CertId** row to see a **Certificate** row for every certificate of its KeyInfo, leaf first, for example `Certificate (leaf)` with `partner.example.com - expires 2027-03-01T12:00:00Z`.
+
+- Open the **Certificate** row for the common name, subject, issuer, serial number (hexadecimal) and the dates **Valid from** and **Valid until** in Zulu time.
+- An expired certificate is marked with `(EXPIRED)` behind its expiry date.
+- The details are updated after **Upload Certificate**.
+
+## Which certificates are used
+
+On the **Certificates** tab, a certificate that no element of the CPA refers to is shown in grey. Certificates in the normal text colour are in use.
+
+- Every element with a `certId` counts as a reference: `ClientCertificateRef`, `ServerCertificateRef`, `SigningCertificateRef`, `EncryptionCertificateRef`, `ApplicationCertificateRef` and `AnchorCertificateRef`.
 
 ## Download a certificate
 

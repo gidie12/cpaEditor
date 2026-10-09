@@ -15,10 +15,10 @@ class TestLoadFunction(unittest.TestCase):
         self.logger = Mock()
         self.master.namespace_uri = 'http://example.com'
         # load self.master.root from file
-        self.master.root = Mock()
+        self.master.root = etree.Element('root')
         self.cert_tab = Certificates(self.master, self.logger)  # Use the real logger instance
         self.cert_tab.tree_editor = ttk.Treeview(self.master)
-        self.cert_tab.tree_editor.insert = Mock()  # Mock the insert method
+        self.cert_tab.tree_editor.insert = Mock(wraps=self.cert_tab.tree_editor.insert)  # Record the inserted rows
 
     @patch('application.app_classes.certificates_tab.CPAParser')
     def test_load_populates_tree_with_certificates(self, MockCPAParser):

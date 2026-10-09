@@ -1,4 +1,5 @@
 import base64
+import datetime
 
 from cryptography.x509 import load_der_x509_certificate, BasicConstraints, ExtensionNotFound
 from cryptography.x509.oid import NameOID
@@ -39,6 +40,46 @@ def certificate_common_name(cert):
     """
     common_names = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
     return common_names[0].value if common_names else cert.subject.rfc4514_string()
+
+
+def get_key_info_certificates(key_info, logger=None, now=None):
+    """
+    Reads the details of every X509Certificate of a KeyInfo element.
+
+    Args:
+        key_info (lxml.etree.Element): The KeyInfo element, or None.
+        logger (logging.Logger): Optional logger for certificates that cannot be read.
+        now (datetime.datetime): The moment to compare the expiry date with, the current time by default.
+
+    Returns:
+        list: One dict per certificate in the order of the KeyInfo with the keys 'type', 'common_name', 'subject',
+              'issuer', 'serial_number', 'not_before' and 'not_after' (UTC datetimes) and 'expired' (bool).
+
+    Test Functions:
+        - test_get_key_info_certificates_reads_details
+        - test_get_key_info_certificates_marks_expired
+        - test_get_key_info_certificates_without_key_info
+    """
+    certificates = []
+    if key_info is None:
+        return certificates
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    for x509_certificate in key_info.iter('{' + DS_NAMESPACE + '}X509Certificate'):
+        try:
+            cert = load_der_x509_certificate(base64.b64decode(x509_certificate.text))
+        except Exception as e:
+            if logger:
+                logger.error(f"Could not read a certificate: {e}")
+            continue
+        certificates.append({'type': certificate_type(cert),
+                             'common_name': certificate_common_name(cert),
+                             'subject': cert.subject.rfc4514_string(),
+                             'issuer': cert.issuer.rfc4514_string(),
+                             'serial_number': format(cert.serial_number, 'X'),
+                             'not_before': cert.not_valid_before_utc,
+                             'not_after': cert.not_valid_after_utc,
+                             'expired': cert.not_valid_after_utc < now})
+    return certificates
 
 
 def get_certificate_expiries(root, logger=None):

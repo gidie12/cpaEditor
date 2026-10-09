@@ -10,6 +10,9 @@
 <h2>In the CPA Editor</h2>
 <ul>
 <li>Shown on the <strong>Certificates</strong> tab: per partner each <code>certId</code> with its <code>KeyInfo</code>.</li>
+<li>Open a <strong>CertId</strong> row for a <strong>Certificate</strong> row per certificate of the <code>KeyInfo</code>, leaf first, with its type (leaf, intermediate or root), common name and expiry date. Open that row for the subject, issuer, serial number (hexadecimal), <strong>Valid from</strong> and <strong>Valid until</strong> (Zulu time).</li>
+<li>An expired certificate is marked with <code>(EXPIRED)</code>. The details are updated after <strong>Upload Certificate</strong>.</li>
+<li>A certificate that no element refers to is shown in grey; the other certificates are in use. References are <code>ClientCertificateRef</code>, <code>ServerCertificateRef</code>, <code>SigningCertificateRef</code>, <code>EncryptionCertificateRef</code>, <a href="ApplicationCertificateRef.html">ApplicationCertificateRef</a> and <a href="AnchorCertificateRef.html">AnchorCertificateRef</a>.</li>
 <li>Right-click a <strong>KeyInfo</strong> row for the actions below.</li>
 <li><strong>Upload Certificate</strong> replaces the <code>KeyInfo</code> with the certificates of a PEM file (<code>.cer</code>, <code>.crt</code> or <code>.pem</code>). The file may contain the whole chain, the leaf certificate first. The certificate must have an RSA key.</li>
 <li><strong>Download Certificate</strong> saves the certificates of the <code>KeyInfo</code> as a PEM file, in the order of the CPA (leaf first). The default file name is the <code>certId</code>. The file can be uploaded again with <strong>Upload Certificate</strong>.</li>

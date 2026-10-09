@@ -53,6 +53,8 @@ Each tab shows one part of the CPA. Changes are kept in memory until you save th
 ### Certificates
 
 - Shows per partner each certificate id (`CertId`) with its `KeyInfo`.
+- **See the details of a certificate**: open a `CertId` to see a **Certificate** row for every certificate of the chain, with its type (leaf, intermediate or root), common name and expiry date. Open that row for the subject, issuer, serial number, **Valid from** and **Valid until**. An expired certificate is marked with `(EXPIRED)`.
+- **See which certificates are used**: a certificate that no element of the CPA refers to is shown in grey. Certificates in the normal text colour are in use.
 - **Replace a certificate**: open a `CertId`, select the **KeyInfo** row, right-click it and choose **Upload Certificate**. Choose a PEM file (`.cer`, `.crt` or `.pem`). The file may contain the whole chain; put the leaf certificate first. The certificate must have an RSA key.
 - **Download a certificate**: select the **KeyInfo** row, right-click it and choose **Download Certificate**. Choose a file name. The file is a PEM file with every certificate of that `CertId`, the leaf certificate first. Only certificates are saved; a CPA never contains a private key.
 - **Copy**: select the **KeyInfo** row, right-click it and choose **Copy KeyInfo**.

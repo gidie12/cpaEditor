@@ -55,6 +55,8 @@ Elk tabblad toont een deel van de CPA. Wijzigingen blijven in het geheugen staan
 ### Certificates
 
 - Toont per partij elk certificaat-id (`CertId`) met de bijbehorende `KeyInfo`.
+- **De gegevens van een certificaat bekijken**: open een `CertId` om per certificaat van de keten een regel **Certificate** te zien, met het type (leaf, intermediate of root), de common name en de verloopdatum. Open die regel voor subject, issuer, serienummer, **Valid from** en **Valid until**. Een verlopen certificaat is gemarkeerd met `(EXPIRED)`.
+- **Zien welke certificaten worden gebruikt**: een certificaat waar geen enkel element van de CPA naar verwijst staat in grijs. Certificaten in de normale tekstkleur zijn in gebruik.
 - **Een certificaat vervangen**: open een `CertId`, selecteer de regel **KeyInfo**, klik er met de rechtermuisknop op en kies **Upload Certificate**. Kies een PEM-bestand (`.cer`, `.crt` of `.pem`). Het bestand mag de hele keten bevatten; zet het leaf-certificaat bovenaan. Het certificaat moet een RSA-sleutel hebben.
 - **Een certificaat downloaden**: selecteer de regel **KeyInfo**, klik er met de rechtermuisknop op en kies **Download Certificate**. Kies een bestandsnaam. Het bestand is een PEM-bestand met alle certificaten van dat `CertId`, het leaf-certificaat bovenaan. Alleen certificaten worden opgeslagen; een CPA bevat nooit een private key.
 - **Kopiëren**: selecteer de regel **KeyInfo**, klik er met de rechtermuisknop op en kies **Copy KeyInfo**.
