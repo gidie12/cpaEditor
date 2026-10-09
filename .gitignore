@@ -2,3 +2,10 @@
 build/
 dist/
 __pycache__/
+
+# Private keys: only the generated test chain may be committed
+*_key.pem
+*.key
+*.p12
+*.pfx
+!application/tests/resources/certs/**/*_key.pem
