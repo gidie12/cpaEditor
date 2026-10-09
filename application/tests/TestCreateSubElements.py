@@ -9,6 +9,7 @@ class TestCreateSubElements(unittest.TestCase):
 
     def setUp(self):
         self.master = tk.Tk()
+        self.addCleanup(self.master.destroy)
         self.logger = Mock()
         self.cert_tab = Certificates(self.master, self.logger)
 

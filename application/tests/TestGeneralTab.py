@@ -11,6 +11,7 @@ class TestGeneralTab(unittest.TestCase):
 
     def setUp(self):
         self.master = tk.Tk()
+        self.addCleanup(self.master.destroy)
         self.logger = Mock()
         self.logger.debug = Mock()
         self.master.root = MagicMock()

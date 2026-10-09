@@ -71,7 +71,8 @@ After replacing a certificate you can use **Set from certificates** on the **Gen
 ## 4. Save the CPA
 
 - Click **Save CPA** at the bottom left of the window.
-- Choose a file name and location. Use a new name to keep the original file.
+- Choose a file name and location. Use a new name to keep the original file. The file gets the extension `.xml` when you do not type one.
+- The log shows `CPA saved to` followed by the file name when the file is written. When saving fails, an error is shown and an existing file is left unchanged.
 
 ## Log and debug messages
 
@@ -84,6 +85,9 @@ After replacing a certificate you can use **Set from certificates** on the **Gen
 - **Help > How to use (English)** opens this guide.
 - **Help > Handleiding (Nederlands)** opens this guide in Dutch.
 - **Help > Readme** opens the technical readme (installation, tests, build).
+- Every time the application starts, it looks up the latest version on GitHub. When a newer version exists, a popup shows both versions with the buttons **Download** and **Skip**. **Download** opens the download in your browser; **Skip** closes the popup, and it is shown again the next time you start the application. Nothing is shown when you already have the latest version or when there is no internet connection.
+- **Help > Check for updates** does the same check when you ask for it and shows the result in the log. When it reports that `api.github.com` could not be found (`getaddrinfo failed`), there is no internet connection or the proxy of your network could not be used; open the release page from the message in your browser instead. On Windows the proxy settings of Windows are used automatically, so behind a company proxy the check normally just works.
+- Only the version is looked up; nothing about your CPA is sent. The application does not install anything itself: replace the old program with the downloaded one. The version you are using is shown in the title bar of the window.
 
 ## Tips
 

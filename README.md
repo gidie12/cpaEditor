@@ -18,7 +18,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Use **Load CPA** to open a CPA file and **Save CPA** to write the edited CPA to a file.
+Use **Load CPA** to open a CPA file and **Save CPA** to write the edited CPA to a file. The CPA is saved as UTF-8 with an XML declaration; the extension `.xml` is added when none is given.
 
 A step-by-step guide is available in English (`docs/how-to-use.en.md`) and Dutch (`docs/how-to-use.nl.md`). Inside the application the guides and this readme are in the **Help** menu.
 
@@ -86,6 +86,20 @@ INFO - End date set to 2027-03-01T12:00:00Z: expiry of leaf certificate 'CN=part
 ```
 
 A certificate that is used under more than one certId is listed once per certId.
+
+## Check for updates
+
+Every time the application starts, it compares the running version with the latest release on GitHub (`gidie12/cpaEditor`). When a newer version exists, a popup shows both versions with the buttons **Download** and **Skip**.
+
+- **Download** opens the download in the browser: on Windows the `CpaEditor.exe` of the latest release, on other systems the release page. The application itself does not download, install or run anything.
+- **Skip** closes the popup. It is shown again at the next start as long as a newer version exists.
+- At startup nothing is shown when the version is up to date or when the check fails (no network); with debug messages on, the outcome is in the log.
+- **Help > Check for updates** runs the same check on request and always shows the result in the log.
+- The check runs in the background and is one request for the public release information; nothing about the CPA or the user is sent.
+- The server certificate is verified with the certificates trusted by the operating system.
+- Without network access an error is logged and nothing else happens. `[Errno 11001] getaddrinfo failed` (Windows) means `api.github.com` could not be found: there is no internet connection, or the network only reaches the internet through a proxy. On Windows the check is then repeated with the internet settings of Windows (WinINet), which handle a proxy the way the browser does: an automatic configuration script (PAC), automatic detection and a login with the Windows account. On other systems set the `HTTPS_PROXY` environment variable. When both attempts fail, the log shows both errors and points to the release page.
+
+The running version is shown in the title bar, for example `CPA Editor v1.0.2`, and is defined in `application/version.py`. It is the release the code belongs to: the same number as the release tag on GitHub. A release build takes the version from its tag: the workflow overwrites `application/version.py` for `v*` tags, so tag `v1.2.3` produces version `v1.2.3`. For running from source, update the file by hand when a release is made.
 
 ## Tests
 

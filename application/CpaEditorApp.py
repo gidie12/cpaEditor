@@ -1,5 +1,8 @@
 import logging
+import queue
+import threading
 import time
+import webbrowser
 
 # import xml.etree.ElementTree as Et
 import lxml.etree as Et
@@ -19,6 +22,9 @@ from application.app_classes.validator_tab import Validator
 from application.app_classes.xml_editor_tab import XMLEditor
 from application.app_classes.comment_tab import Comment
 from application.helper_classes.textHandler import TextHandler
+from application.helper_classes.updateCheck import (LATEST_RELEASE_DOWNLOAD_URL, LATEST_RELEASE_PAGE_URL,
+                                                    check_for_update)
+from application.version import __version__
 from application.app_classes.settings_tab import Setting
 logger = logging.getLogger(__name__)
 
@@ -36,6 +42,10 @@ class CpaEditorApp(tk.Tk):
         self.debug_enabled = tk.BooleanVar(value=False)
         self.debug_checkbutton = None
         self.help_windows = {}
+        self.update_check_results = queue.Queue()
+        self.update_dialog = None
+        self.startup_update_check = None
+        self.update_check_poll = None
         self.log_output = None
         self.certificates_tab = None
         self.validator_tab = None
@@ -53,7 +63,7 @@ class CpaEditorApp(tk.Tk):
         self.height_tabs = 800
         self.tab_control = tk.ttk.Notebook(self, width=self.width_tabs, height=self.height_tabs)
         self.tab_control.focus_set()  # Set focus to the Notebook widget initially
-        self.title(f"CPA Editor V1")
+        self.title(f"CPA Editor v{__version__}")
         # Never open larger than the physical screen (margin for title bar / taskbar / dock)
         self.screen_width = min(1920, self.winfo_screenwidth())
         self.screen_height = min(1080, self.winfo_screenheight() - 100)
@@ -84,22 +94,24 @@ class CpaEditorApp(tk.Tk):
         # self.run_function_every_minute()
         self.namespace_uri = ''
         self.validation_errors = ''
+        # Look for a newer version once the window is shown
+        self.startup_update_check = self.after(1000, lambda: self.check_for_updates(automatic=True))
         self.mainloop()
 
 
 
-    def load_xml_file_dialog(self, event):
-        """
-
-        :type event: object
-        """
+    def load_xml_file_dialog(self, event=None):
         # Open a file dialog to select a CPA file
         filename = filedialog.askopenfilename(filetypes=[('xml files', '.xml')])
         if filename:
             self.load_cpa_data(filename)
     
-    def save_xml_file_dialog(self, event):
-        filename = filedialog.asksaveasfile(filetypes=[('xml files', '.xml')])
+    def save_xml_file_dialog(self, event=None):
+        if self.root is None:
+            logger.error("No CPA loaded, nothing to save")
+            return
+        # Ask for the name only: the file is created in save_cpa_data, after the CPA is known to be writable
+        filename = filedialog.asksaveasfilename(defaultextension=".xml", filetypes=[('xml files', '.xml')])
         if filename:
             self.save_cpa_data(filename)
 
@@ -113,11 +125,9 @@ class CpaEditorApp(tk.Tk):
         logger.setLevel(self.log_level)
 
         self.save_button = ttk.Button(self, text="Save CPA", command=self.save_xml_file_dialog)
-        self.save_button.bind("<Button-1>", self.save_xml_file_dialog)
         self.save_button.grid(sticky='w', row=21, column=0, padx=5, pady=5)
 
         self.load_button = ttk.Button(self,text="Load CPA", command=self.load_xml_file_dialog)
-        self.load_button.bind("<Button-1>", self.load_xml_file_dialog)
         self.load_button.grid(sticky='w', row=21, column=1, padx=5, pady=5)
 
         self.debug_checkbutton = ttk.Checkbutton(self, text="Show debug messages", variable=self.debug_enabled,
@@ -132,8 +142,79 @@ class CpaEditorApp(tk.Tk):
                                  ("Handleiding (Nederlands)", HOW_TO_USE_FILE_NL),
                                  ("Readme", README_FILE)):
             help_menu.add_command(label=label, command=lambda label=label, help_file=help_file: self.show_help(help_file, label))
+        help_menu.add_separator()
+        help_menu.add_command(label="Check for updates", command=self.check_for_updates)
         menu_bar.add_cascade(label="Help", menu=help_menu)
         self.config(menu=menu_bar)
+
+    def check_for_updates(self, automatic=False):
+        """
+        Looks up the latest release in the background, so a slow network does not freeze the window.
+
+        The automatic check at startup only shows something when a newer version exists.
+        """
+        if not automatic:
+            logger.info("Checking for updates...")
+        threading.Thread(target=lambda: self.update_check_results.put((automatic, check_for_update(__version__))),
+                         daemon=True).start()
+        self.update_check_poll = self.after(100, self.poll_update_check)
+
+    def poll_update_check(self):
+        # Tk may only be used from the main thread: the result is collected here instead of in the worker thread
+        try:
+            automatic, result = self.update_check_results.get_nowait()
+        except queue.Empty:
+            self.update_check_poll = self.after(100, self.poll_update_check)
+            return
+        self.show_update_result(result, automatic)
+
+    def show_update_result(self, result, automatic=False):
+        # At startup a failed check (no network) or an up-to-date version is not worth interrupting for
+        quiet_log = logger.debug if automatic else None
+        if 'error' in result:
+            (quiet_log or logger.error)(f"Could not check for updates: {result['error']}")
+        elif result['update_available']:
+            logger.info(f"Version v{result['latest']} is available, this is version v{result['current']}")
+            if self.ask_download(result):
+                # The browser does the download: the application itself never downloads or runs a file
+                webbrowser.open(LATEST_RELEASE_DOWNLOAD_URL if self.host == 'windows' else LATEST_RELEASE_PAGE_URL)
+        else:
+            (quiet_log or logger.info)(f"You are using the latest version (v{result['current']})")
+
+    def destroy(self):
+        # Timers of the update check must not fire after the window is gone
+        for timer in (self.startup_update_check, self.update_check_poll):
+            if timer is not None:
+                self.after_cancel(timer)
+        super().destroy()
+
+    def ask_download(self, result):
+        """Asks in a popup whether to download the newer version; returns True for Download and False for Skip."""
+        dialog = tk.Toplevel(self)
+        dialog.title("Update available")
+        dialog.resizable(False, False)
+        dialog.transient(self)
+        answer = {'download': False}
+
+        def close(download):
+            answer['download'] = download
+            dialog.destroy()
+
+        tk.Label(dialog, justify="left", padx=20, pady=15,
+                 text=f"Version v{result['latest']} of the CPA Editor is available.\n"
+                      f"You are using version v{result['current']}.").pack()
+        buttons = tk.Frame(dialog)
+        buttons.pack(pady=(0, 15))
+        download_button = ttk.Button(buttons, text="Download", command=lambda: close(True))
+        download_button.pack(side=tk.LEFT, padx=5)
+        ttk.Button(buttons, text="Skip", command=lambda: close(False)).pack(side=tk.LEFT, padx=5)
+        dialog.bind("<Escape>", lambda event: close(False))
+        dialog.protocol("WM_DELETE_WINDOW", lambda: close(False))
+        download_button.focus_set()
+        self.update_dialog = dialog
+        dialog.grab_set()
+        self.wait_window(dialog)
+        return answer['download']
 
     def show_help(self, help_file, title):
         # Reuse the window of this help file when it is still open
@@ -147,17 +228,17 @@ class CpaEditorApp(tk.Tk):
         self.log_level = logging.DEBUG if self.debug_enabled.get() else logging.INFO
         logger.setLevel(self.log_level)
 
-    def save_cpa_data(self, file):
+    def save_cpa_data(self, file_path):
         try:
-            # tree = Et.ElementTree(self.root)
-            data = Et.tostring(self.root, encoding='unicode', xml_declaration=True)
-            file.write(data)
-            # add <?xml version="1.0" encoding="UTF-8"?> to the top of the file
-
-            # tree.write(file, encoding="utf-8", xml_declaration=True)
-
+            # Serialise the whole document (also comments before the root element) as UTF-8 bytes, so the
+            # content matches the encoding in the XML declaration on every platform
+            data = Et.tostring(self.root.getroottree(), encoding='UTF-8', xml_declaration=True)
+            # Only open the file once there is something to write: a failed save must not empty an existing file
+            with open(file_path, 'wb') as file:
+                file.write(data)
+            logger.info(f"CPA saved to {file_path}")
         except Exception as e:
-            logger.error(str(e))  # Display the error message in the error output field
+            logger.error(f"Error while saving CPA: {e}")  # Display the error message in the error output field
     def load(self):
         self.log_output.delete('1.0', tk.END)  # Clear the error output field
 

@@ -34,6 +34,8 @@ class TestCertificates(unittest.TestCase):
         mock_load_cert.return_value = mock_cert
 
         master = tk.Tk()  # Use tkinter.Tk as the master object
+
+        self.addCleanup(master.destroy)
         master.namespace_uri = 'http://example.com'
         logger = Mock()
         cert_tab = Certificates(master, logger)
@@ -54,6 +56,8 @@ class TestCertificates(unittest.TestCase):
         mock_askopenfilename.return_value = ''
 
         master = tk.Tk()  # Use tkinter.Tk as the master object
+
+        self.addCleanup(master.destroy)
         master.namespace_uri = 'http://example.com'
         logger = Mock()
         cert_tab = Certificates(master, logger)
@@ -73,6 +77,8 @@ class TestCertificates(unittest.TestCase):
         mock_open.return_value.__enter__.return_value.read.return_value = 'invalid_certificate_data'
 
         master = tk.Tk()  # Use tkinter.Tk as the master object
+
+        self.addCleanup(master.destroy)
         master.namespace_uri = 'http://example.com'
         logger = Mock()
         cert_tab = Certificates(master, logger)
@@ -101,6 +107,8 @@ class TestCertificates(unittest.TestCase):
         mock_load_cert.return_value = mock_cert
 
         master = tk.Tk()
+
+        self.addCleanup(master.destroy)
         master.namespace_uri = 'http://example.com'
         logger = Mock()
         cert_tab = Certificates(master, logger)
@@ -119,6 +127,7 @@ class TestCertificates(unittest.TestCase):
 class TestCreateTreeWidget(unittest.TestCase):
     def setUp(self):
         self.master = tk.Tk()
+        self.addCleanup(self.master.destroy)
         self.master.host = 'Darwin'
         self.logger = Mock()
         self.cert_tab = Certificates(self.master, self.logger)
@@ -156,6 +165,7 @@ class TestCreateRSAKeyValueElements(unittest.TestCase):
 
     def setUp(self):
         self.master = tk.Tk()
+        self.addCleanup(self.master.destroy)
         self.logger = Mock()
         self.cert_tab = Certificates(self.master, self.logger)
 
