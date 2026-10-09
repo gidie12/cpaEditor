@@ -99,7 +99,7 @@ class CpaEditorApp(tk.Tk):
             self.save_cpa_data(filename)
 
     def root_window(self):
-        self.log_output = tk.Text(self, height=5, wrap="word", fg="white")
+        self.log_output = tk.Text(self, height=5, wrap="word")
         self.log_output.grid(sticky="we", row=20, column=0, columnspan=10, padx=5, pady=5)
 
         text_handler = TextHandler(self.log_output)
