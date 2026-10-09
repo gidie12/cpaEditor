@@ -29,6 +29,12 @@ class Validator(tk.Frame):
         # Configure grid weights for resizing
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
+
+    def load(self):
+        # A validation result belongs to the CPA it was run on
+        self.validation_errors.delete('1.0', tk.END)
+        self.validation_errors.insert('1.0', 'Geen validatie uitgevoerd')
+
     def validate_schema(self):
         xml_object_validation = xmlValidation(root=self.master.root, is_xml_object=True)
         if xml_object_validation.validate() is True:

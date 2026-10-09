@@ -71,6 +71,10 @@ class Comment(tk.Frame):
 
         self.listbox.delete(0, tk.END)
         self.xml_element_mapping = {}
+        # The selection points into the previous list, it must not survive a (re)load
+        if self.selected_index is not None:
+            self.comment_entry.delete(0, tk.END)
+        self.selected_index = None
         
         x = 0
         for comment in self.comments_objects:
@@ -126,7 +130,7 @@ class Comment(tk.Frame):
                   - updates_comment_correctly
                   - handles_no_selection_on_update
               """
-        print(self.selected_index)
+        self.logger.debug(f"Comment selected: index {self.selected_index}")
         if self.selected_index is not None and self.comment_entry.get():
             self.listbox.delete(self.selected_index)
             self.listbox.insert(self.selected_index, self.comment_entry.get())

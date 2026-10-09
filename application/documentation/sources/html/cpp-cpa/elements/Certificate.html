@@ -7,3 +7,12 @@
 <ul>
 <li><code>ds:KeyInfo</code></li>
 </ul>
+<h2>In the CPA Editor</h2>
+<ul>
+<li>Shown on the <strong>Certificates</strong> tab: per partner each <code>certId</code> with its <code>KeyInfo</code>.</li>
+<li>Right-click a <strong>KeyInfo</strong> row for the actions below.</li>
+<li><strong>Upload Certificate</strong> replaces the <code>KeyInfo</code> with the certificates of a PEM file (<code>.cer</code>, <code>.crt</code> or <code>.pem</code>). The file may contain the whole chain, the leaf certificate first. The certificate must have an RSA key.</li>
+<li><strong>Download Certificate</strong> saves the certificates of the <code>KeyInfo</code> as a PEM file, in the order of the CPA (leaf first). The default file name is the <code>certId</code>. The file can be uploaded again with <strong>Upload Certificate</strong>.</li>
+<li><strong>Copy KeyInfo</strong> copies the <code>KeyInfo</code> XML to the clipboard.</li>
+<li>The expiry dates of these certificates are used by <strong>Set from certificates</strong> on the <strong>General</strong> tab, see <a href="End.html">End</a>.</li>
+</ul>

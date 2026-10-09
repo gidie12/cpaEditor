@@ -1,9 +1,12 @@
 import logging
 
 import tkinter as tk
+from datetime import datetime, timezone
 from functools import partial
 
+from application.helper_classes.certificateExpiry import CPA_DATE_FORMAT, get_certificate_expiries
 from application.helper_classes.cpaCreator import CPACreator
+from application.helper_classes.cpaDates import describe_cpa_date
 from application.helper_classes.cpaParser import CPAParser
 from application.helper_classes.resizeApplication import update_entry_width
 
@@ -18,6 +21,10 @@ class General(tk.Frame):
         self.label_end_date = None
         self.all_dropdown_fields = None
         self.entry_end_date = None
+        self.button_end_date_from_certificates = None
+        self.button_start_date_now = None
+        self.label_start_date_times = None
+        self.label_end_date_times = None
         self.entry_party_id_type_partner_b = None
         self.label_party_id_type_partner_b = None
         self.entry_party_id_type_partner_a = None
@@ -39,7 +46,7 @@ class General(tk.Frame):
         self.master = master
         self.cpa_status_options = [
         "proposed",
-        "agreeed",
+        "agreed",
         "signed",
         ]
         self.cpa_status_value = tk.StringVar(self)
@@ -122,6 +129,22 @@ class General(tk.Frame):
         self.label_end_date.grid(sticky="w", row=4, column=2, padx=5, pady=5)
         self.entry_end_date.grid(sticky="we", row=4, column=3, padx=5, pady=5)
 
+        # Below each date: the same moment in Zulu time and in the timezone set on this computer
+        self.label_start_date_times = tk.Label(self, text="", anchor="w")
+        self.label_start_date_times.grid(sticky="we", row=5, column=1, padx=5)
+        self.label_end_date_times = tk.Label(self, text="", anchor="w")
+        self.label_end_date_times.grid(sticky="we", row=5, column=3, padx=5)
+        for entry in (self.entry_start_date, self.entry_end_date):
+            entry.bind("<KeyRelease>", self.update_date_labels)
+
+        # The date buttons sit below the field they fill
+        self.button_start_date_now = tk.Button(self, text="Set to now", command=self.set_start_date_to_now)
+        self.button_start_date_now.grid(sticky="w", row=6, column=1, padx=5, pady=5)
+
+        self.button_end_date_from_certificates = tk.Button(self, text="Set from certificates",
+                                                           command=self.set_end_date_from_certificates)
+        self.button_end_date_from_certificates.grid(sticky="w", row=6, column=3, padx=5, pady=5)
+
         # Entry columns share the available width, so the fields scale with the window
         self.grid_columnconfigure(1, weight=1, uniform="entries")
         self.grid_columnconfigure(3, weight=1, uniform="entries")
@@ -174,6 +197,69 @@ class General(tk.Frame):
                 self.logger.debug(f"Field '{field_name}' changed: New value: {entry.get()}")
             except Exception as e:
                 self.logger.error(f"Error while changing element: {e}")
+
+    def update_date_labels(self, event=None):
+        """
+        Shows the start and end date in Zulu time (UTC) and in local time below their fields.
+
+        Tests:
+        - test_update_date_labels_shows_zulu_and_local
+        """
+        self.label_start_date_times.config(text=describe_cpa_date(self.entry_start_date.get()))
+        self.label_end_date_times.config(text=describe_cpa_date(self.entry_end_date.get()))
+
+    def set_start_date_to_now(self):
+        """
+        Sets the start date of the CPA to the current date and time (UTC).
+
+        Tests:
+        - test_set_start_date_to_now
+        - test_set_start_date_to_now_without_cpa
+        """
+        if self.master.root is None:
+            self.logger.error("No CPA loaded")
+            return
+        start_date = datetime.now(timezone.utc).strftime(CPA_DATE_FORMAT)
+        CPACreator(self.master.root, self.logger).apply_changes({'cpaStartDate': start_date})
+        self.entry_start_date.delete(0, tk.END)
+        self.entry_start_date.insert(0, start_date)
+        self.update_date_labels()
+        self.logger.info(f"Start date set to {start_date} (current date and time, UTC)")
+
+    def set_end_date_from_certificates(self):
+        """
+        Sets the end date of the CPA to the expiry date of the certificate that expires first.
+
+        All certificates in the CPA are taken into account: leaf, intermediate and root.
+        With debug messages enabled, every certificate is listed in order of expiry.
+
+        Tests:
+        - test_set_end_date_from_certificates_uses_first_expiring
+        - test_set_end_date_from_certificates_lists_certificates_in_debug
+        - test_set_end_date_from_certificates_without_cpa
+        - test_set_end_date_from_certificates_without_certificates
+        """
+        if self.master.root is None:
+            self.logger.error("No CPA loaded")
+            return
+        expiries = get_certificate_expiries(self.master.root, self.logger)
+        if not expiries:
+            self.logger.error("No certificates found in the CPA, end date not changed")
+            return
+        for position, expiry in enumerate(expiries, start=1):
+            self.logger.debug(f"Certificate {position}/{len(expiries)}: {expiry['common_name']} expires "
+                              f"{expiry['not_after'].strftime(CPA_DATE_FORMAT)} "
+                              f"({expiry['type']}, certId {expiry['cert_id']})")
+        first_expiring = expiries[0]
+        end_date = first_expiring['not_after'].strftime(CPA_DATE_FORMAT)
+        CPACreator(self.master.root, self.logger).apply_changes({'cpaEndDate': end_date})
+        self.entry_end_date.delete(0, tk.END)
+        self.entry_end_date.insert(0, end_date)
+        self.update_date_labels()
+        self.logger.info(f"End date set to {end_date}: expiry of {first_expiring['type']} certificate "
+                         f"'{first_expiring['subject']}' (certId {first_expiring['cert_id']})")
+        if first_expiring['not_after'] < datetime.now(timezone.utc):
+            self.logger.warning("This certificate has already expired, the end date is in the past")
 
     def bind_event_to_entry(self, entry, callback):
         entry.bind("<FocusOut>", lambda event, callback=callback: callback(event))
@@ -229,3 +315,5 @@ class General(tk.Frame):
 
         self.entry_party_id_type_partner_b.delete(0, tk.END)
         self.entry_party_id_type_partner_b.insert(0, party_id_type_partner_b)
+
+        self.update_date_labels()

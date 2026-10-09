@@ -52,6 +52,7 @@ class Transport(tk.Frame):
         self.security_id_partner_b = cpa_parser.get_security_ids_partner_b()
 
         self.tree_editor.delete(*self.tree_editor.get_children())  # Clear existing Treeview items
+        self.reset_edit_fields()
 
         # Populate Treeview with data for Partner A
         if self.transport_items_partner_a:
@@ -64,6 +65,17 @@ class Transport(tk.Frame):
             for item in self.transport_items_partner_b:
                 self.populate_tree(self.tree_editor, parent=item, header_value=f'Partner {self.partner_b}',
                                    headers=True, color_background="red", parent_tag=f"{self.partner_b}")
+
+    def reset_edit_fields(self):
+        """Forget the selected item: it belongs to the Treeview content that was just replaced."""
+        self.selected_item = None
+        self.selected_field_name = None
+        self.field_label.config(text="Select a field to edit")
+        self.attribute_value_entry.config(state="normal")
+        self.attribute_value_entry.delete(0, tk.END)
+        self.attribute_value_entry.config(state="disabled")
+        self.options_combobox.config(state="disabled")
+        self.options_combobox.set("No options")
 
     def clear_tree(self):
         """Clear the Treeview of all items."""

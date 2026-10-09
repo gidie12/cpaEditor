@@ -13,6 +13,7 @@ import platform
 from application.app_classes.certificates_tab import Certificates
 from application.app_classes.collaboration_role import CollaborationRole
 from application.app_classes.general_tab import General
+from application.app_classes.help_window import HelpWindow, HOW_TO_USE_FILE_EN, HOW_TO_USE_FILE_NL, README_FILE
 from application.app_classes.transport_tab import Transport
 from application.app_classes.validator_tab import Validator
 from application.app_classes.xml_editor_tab import XMLEditor
@@ -31,7 +32,10 @@ class CpaEditorApp(tk.Tk):
         self.debounce_delay = 0.3 # 300 milliseconds
         self.collaboration_role_tab = None
         self.setting_tab = None
-        self.log_level = logging.DEBUG
+        self.log_level = logging.INFO
+        self.debug_enabled = tk.BooleanVar(value=False)
+        self.debug_checkbutton = None
+        self.help_windows = {}
         self.log_output = None
         self.certificates_tab = None
         self.validator_tab = None
@@ -64,6 +68,7 @@ class CpaEditorApp(tk.Tk):
         self.grid_columnconfigure(9, weight=1)
         self.tab_control.grid(row=0, column=0, rowspan=15, columnspan=10, sticky="nsew")
         self.root_window()
+        self.create_menu()
         self.create_tabs()
         self.tab_control.bind("<<NotebookTabChanged>>", self.on_tab_change)
         self.reload_tabs = {
@@ -115,6 +120,33 @@ class CpaEditorApp(tk.Tk):
         self.load_button.bind("<Button-1>", self.load_xml_file_dialog)
         self.load_button.grid(sticky='w', row=21, column=1, padx=5, pady=5)
 
+        self.debug_checkbutton = ttk.Checkbutton(self, text="Show debug messages", variable=self.debug_enabled,
+                                                 command=self.toggle_debug_messages)
+        self.debug_checkbutton.grid(sticky='w', row=21, column=2, padx=5, pady=5)
+
+    def create_menu(self):
+        menu_bar = tk.Menu(self)
+        # The name 'help' makes Tk use the standard Help menu of the platform (macOS)
+        help_menu = tk.Menu(menu_bar, name='help', tearoff=0)
+        for label, help_file in (("How to use (English)", HOW_TO_USE_FILE_EN),
+                                 ("Handleiding (Nederlands)", HOW_TO_USE_FILE_NL),
+                                 ("Readme", README_FILE)):
+            help_menu.add_command(label=label, command=lambda label=label, help_file=help_file: self.show_help(help_file, label))
+        menu_bar.add_cascade(label="Help", menu=help_menu)
+        self.config(menu=menu_bar)
+
+    def show_help(self, help_file, title):
+        # Reuse the window of this help file when it is still open
+        help_window = self.help_windows.get(help_file)
+        if help_window is None or not help_window.winfo_exists():
+            help_window = self.help_windows[help_file] = HelpWindow(self, help_file, title)
+        help_window.lift()
+        help_window.focus_set()
+
+    def toggle_debug_messages(self):
+        self.log_level = logging.DEBUG if self.debug_enabled.get() else logging.INFO
+        logger.setLevel(self.log_level)
+
     def save_cpa_data(self, file):
         try:
             # tree = Et.ElementTree(self.root)
@@ -151,6 +183,7 @@ class CpaEditorApp(tk.Tk):
                 self.xml_editor_tab.load()
                 self.transport_tab.load()
                 self.certificates_tab.load()
+                self.validator_tab.load()
                 # self.setting_tab.load()
 
             logger.info("CPA data loaded successfully.")
