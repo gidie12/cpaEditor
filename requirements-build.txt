@@ -1,0 +1,4 @@
+# Dependencies for building the standalone executable (not needed to run the app)
+#   pip install -r requirements-build.txt
+-r requirements.txt
+pyinstaller==6.22.3
