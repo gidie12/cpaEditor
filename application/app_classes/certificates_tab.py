@@ -57,6 +57,13 @@ def create_x509_data(cert, key_info):
 
     x509_data = lxml_etree.SubElement(key_info, '{http://www.w3.org/2000/09/xmldsig#}X509Data')
 
+    # X509DataType is a sequence in xmldsig.xsd: X509IssuerSerial must come before X509SubjectName and X509Certificate
+    X509IssuerSerial = lxml_etree.SubElement(x509_data, '{http://www.w3.org/2000/09/xmldsig#}X509IssuerSerial')
+    X509IssuerName = lxml_etree.SubElement(X509IssuerSerial, '{http://www.w3.org/2000/09/xmldsig#}X509IssuerName')
+    X509IssuerName.text = cert.issuer.rfc4514_string()
+
+    X509SerialNumber = lxml_etree.SubElement(X509IssuerSerial, '{http://www.w3.org/2000/09/xmldsig#}X509SerialNumber')
+    X509SerialNumber.text = str(cert.serial_number)
 
     data_elements = [
         ('{http://www.w3.org/2000/09/xmldsig#}X509SubjectName', cert.subject.rfc4514_string()),
@@ -66,15 +73,6 @@ def create_x509_data(cert, key_info):
     for element_name, element_text in data_elements:
         element = lxml_etree.SubElement(x509_data, element_name)
         element.text = element_text
-
-    # create X509IssuerSerial and add X509SerialNumber and X509IssuerName
-    X509IssuerSerial = lxml_etree.SubElement(x509_data, '{http://www.w3.org/2000/09/xmldsig#}X509IssuerSerial')
-    X509IssuerName = lxml_etree.SubElement(X509IssuerSerial, '{http://www.w3.org/2000/09/xmldsig#}X509IssuerName')
-    X509IssuerName.text = cert.issuer.rfc4514_string()
-
-    X509SerialNumber = lxml_etree.SubElement(X509IssuerSerial, '{http://www.w3.org/2000/09/xmldsig#}X509SerialNumber')
-    X509SerialNumber.text = str(cert.serial_number)
-    ('{http://www.w3.org/2000/09/xmldsig#}X509SerialNumber', str(cert.serial_number)),
 
     return x509_data
 
@@ -369,9 +367,6 @@ class Certificates(tk.Frame):
 
             # if isinstance(new_key_info, lxml_etree._Element):
             #     new_key_info = Et.fromstring(lxml_etree.tostring(new_key_info))
-
-            # Add xmlns:ds attribute to the new_key_info element
-            new_key_info.set('ds', 'http://www.w3.org/2000/09/xmldsig#')
 
             replace_xml_object(cert_element, key_info_element, new_key_info)
             self.xml_element_mapping[self.tree_editor.selection()[0]] = [new_key_info, cert_element]
