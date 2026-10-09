@@ -225,7 +225,8 @@ class KeyInfoExtractor:
             key_info : str
                 the key info
         """
-        tree = etree.fromstring(key_info.encode('utf-8'))
+        parser = etree.XMLParser(resolve_entities=False, no_network=True, load_dtd=False)
+        tree = etree.fromstring(key_info.encode('utf-8'), parser)
         x509_certificate = tree.find("./X509Data/X509Certificate")
         if x509_certificate is not None:
             return base64.b64decode(x509_certificate.text.strip()).decode('utf-8')

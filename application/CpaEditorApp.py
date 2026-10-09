@@ -21,6 +21,9 @@ from application.helper_classes.textHandler import TextHandler
 from application.app_classes.settings_tab import Setting
 logger = logging.getLogger(__name__)
 
+# CPA files come from external parties: never expand entities or load DTDs (XXE)
+SAFE_XML_PARSER = Et.XMLParser(resolve_entities=False, no_network=True, load_dtd=False)
+
 class CpaEditorApp(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -130,7 +133,7 @@ class CpaEditorApp(tk.Tk):
 
         try:
             # Parse the CPA file as an XML tree
-            self.xml_tree = Et.parse(file_path)
+            self.xml_tree = Et.parse(file_path, SAFE_XML_PARSER)
             self.root = self.xml_tree.getroot()
 
             # Get the namespace URI from the root element

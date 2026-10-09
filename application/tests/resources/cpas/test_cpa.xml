@@ -123,7 +123,7 @@
          </tns:TransportSender>
          <tns:TransportReceiver>
             <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
-            <tns:Endpoint tns:uri="https://PARTY_A.nl/exchange/PARTNER_A" tns:type="allPurpose" />
+            <tns:Endpoint tns:uri="https://party-a.example.com/exchange/PARTNER_A" tns:type="allPurpose" />
             <tns:TransportServerSecurity>
                <tns:TransportSecurityProtocol tns:version="3.0">SSL</tns:TransportSecurityProtocol>
                <tns:ServerCertificateRef tns:certId="BROKER_ServerCert" />
@@ -228,7 +228,7 @@
          </tns:TransportSender>
          <tns:TransportReceiver>
             <tns:TransportProtocol tns:version="1.1">HTTP</tns:TransportProtocol>
-            <tns:Endpoint tns:uri="https://partner.nu/exchange/TEST" tns:type="allPurpose" />
+            <tns:Endpoint tns:uri="https://partner.example.com/exchange/TEST" tns:type="allPurpose" />
             <tns:TransportServerSecurity>
                <tns:TransportSecurityProtocol tns:version="3.0">SSL</tns:TransportSecurityProtocol>
                <tns:ServerCertificateRef tns:certId="Ketenpartner_ServerCert" />
