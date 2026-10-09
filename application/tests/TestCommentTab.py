@@ -6,6 +6,7 @@ from application.app_classes.comment_tab import Comment
 class TestCommentTab(unittest.TestCase):
     def setUp(self):
         self.master = tk.Tk()
+        self.addCleanup(self.master.destroy)
         self.logger = Mock()
         self.comment_tab = Comment(self.master, self.logger)
         self.comment_tab.create()
