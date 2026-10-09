@@ -64,7 +64,7 @@ class General(tk.Frame):
         self.label_cpa_id.grid(sticky="w", row=0, column=0, padx=5, pady=5)
         self.entry_cpa_id = tk.Entry(self)
         self.entry_fields.append(self.entry_cpa_id)
-        self.entry_cpa_id.grid(sticky="w", row=0, column=1, padx=5, pady=5)
+        self.entry_cpa_id.grid(sticky="we", row=0, column=1, padx=5, pady=5)
 
         self.label_cpa_status = tk.Label(self, text="Status:")
         # self.entry_cpa_status = tk.Entry(self, width=25)
@@ -77,50 +77,54 @@ class General(tk.Frame):
         self.entry_partner_name_partner_a = tk.Entry(self)
         self.entry_fields.append(self.entry_partner_name_partner_a)
         self.label_partner_name_partner_a.grid(sticky="w", row=1, column=0, padx=5, pady=5)
-        self.entry_partner_name_partner_a.grid(sticky="w",row=1, column=1, padx=5, pady=5)
+        self.entry_partner_name_partner_a.grid(sticky="we",row=1, column=1, padx=5, pady=5)
 
         self.label_partner_name_partner_b = tk.Label(self, text="Party Name Partner B:")
         self.entry_partner_name_partner_b = tk.Entry(self)
         self.entry_fields.append(self.entry_partner_name_partner_b)
         self.label_partner_name_partner_b.grid(sticky="w", row=1, column=2, padx=5, pady=5)
-        self.entry_partner_name_partner_b.grid(sticky="w", row=1, column=3, padx=5, pady=5)
+        self.entry_partner_name_partner_b.grid(sticky="we", row=1, column=3, padx=5, pady=5)
 
         self.label_party_id_partner_a = tk.Label(self, text="Party Id Partner A:")
         self.entry_party_id_partner_a = tk.Entry(self)
         self.entry_fields.append(self.entry_party_id_partner_a)
         self.label_party_id_partner_a.grid(sticky="w", row=2, column=0, padx=5, pady=5)
-        self.entry_party_id_partner_a.grid(sticky="w", row=2, column=1, padx=5, pady=5)
+        self.entry_party_id_partner_a.grid(sticky="we", row=2, column=1, padx=5, pady=5)
 
         self.label_party_id_partner_b = tk.Label(self, text="Party Id Partner B:")
         self.entry_party_id_partner_b = tk.Entry(self)
         self.entry_fields.append(self.entry_party_id_partner_b)
         self.label_party_id_partner_b.grid(sticky="w", row=2, column=2, padx=5, pady=5)
-        self.entry_party_id_partner_b.grid(sticky="w", row=2, column=3, padx=5, pady=5)
+        self.entry_party_id_partner_b.grid(sticky="we", row=2, column=3, padx=5, pady=5)
 
         self.label_party_id_type_partner_a = tk.Label(self, text="Party Id Type Partner A:")
         self.entry_party_id_type_partner_a = tk.Entry(self)
         self.entry_fields.append(self.entry_party_id_type_partner_a)
         self.label_party_id_type_partner_a.grid(sticky="w", row=3, column=0, padx=5, pady=5)
-        self.entry_party_id_type_partner_a.grid(sticky="w", row=3, column=1, padx=5, pady=5)
+        self.entry_party_id_type_partner_a.grid(sticky="we", row=3, column=1, padx=5, pady=5)
 
         self.label_party_id_type_partner_b = tk.Label(self, text="Party Id Type Partner B:")
         self.entry_party_id_type_partner_b = tk.Entry(self)
         self.entry_fields.append(self.entry_party_id_type_partner_b)
         self.label_party_id_type_partner_b.grid(sticky="w", row=3, column=2, padx=5, pady=5)
-        self.entry_party_id_type_partner_b.grid(sticky="w", row=3, column=3, padx=5, pady=5)
+        self.entry_party_id_type_partner_b.grid(sticky="we", row=3, column=3, padx=5, pady=5)
 
         self.label_start_date = tk.Label(self, text="Start date:")
         # resize based on screen size
         self.entry_start_date = tk.Entry(self)
         self.entry_fields.append(self.entry_start_date)
         self.label_start_date.grid(sticky="w", row=4, column=0, padx=5, pady=5)
-        self.entry_start_date.grid(sticky="w", row=4, column=1, padx=5, pady=5)
+        self.entry_start_date.grid(sticky="we", row=4, column=1, padx=5, pady=5)
 
         self.label_end_date = tk.Label(self, text="End date:")
         self.entry_end_date = tk.Entry(self)
         self.entry_fields.append(self.entry_end_date)
         self.label_end_date.grid(sticky="w", row=4, column=2, padx=5, pady=5)
-        self.entry_end_date.grid(sticky="w", row=4, column=3, padx=5, pady=5)
+        self.entry_end_date.grid(sticky="we", row=4, column=3, padx=5, pady=5)
+
+        # Entry columns share the available width, so the fields scale with the window
+        self.grid_columnconfigure(1, weight=1, uniform="entries")
+        self.grid_columnconfigure(3, weight=1, uniform="entries")
 
         self.bind_fields()
         update_entry_width(self.entry_fields, self.master.winfo_width())

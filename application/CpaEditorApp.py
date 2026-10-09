@@ -47,13 +47,19 @@ class CpaEditorApp(tk.Tk):
         self.tab_control = tk.ttk.Notebook(self, width=self.width_tabs, height=self.height_tabs)
         self.tab_control.focus_set()  # Set focus to the Notebook widget initially
         self.title(f"CPA Editor V1")
-        self.screen_width = int(1920)
-        self.screen_height = int(1080)
-        self.geometry(f"{self.screen_width}x{self.screen_height}")
+        # Never open larger than the physical screen (margin for title bar / taskbar / dock)
+        self.screen_width = min(1920, self.winfo_screenwidth())
+        self.screen_height = min(1080, self.winfo_screenheight() - 100)
+        self.geometry(f"{self.screen_width}x{self.screen_height}+0+0")
+        self.minsize(800, 400)
         self.grid_propagate(False)  # Prevent automatic resizing of content_frame
 
         self.host = 'windows' if platform.system() == 'Windows' else 'mac' if platform.system() == 'Darwin' else ''
-        self.tab_control.grid(rowspan=15, columnspan=10)
+        # Only the notebook row/column absorbs size changes, so the log output and
+        # the save/load buttons below it always stay visible
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(9, weight=1)
+        self.tab_control.grid(row=0, column=0, rowspan=15, columnspan=10, sticky="nsew")
         self.root_window()
         self.create_tabs()
         self.tab_control.bind("<<NotebookTabChanged>>", self.on_tab_change)
@@ -100,11 +106,11 @@ class CpaEditorApp(tk.Tk):
 
         self.save_button = ttk.Button(self, text="Save CPA", command=self.save_xml_file_dialog)
         self.save_button.bind("<Button-1>", self.save_xml_file_dialog)
-        self.save_button.grid(sticky='w', row=21, column=0, columnspan=5, padx=5, pady=5)
+        self.save_button.grid(sticky='w', row=21, column=0, padx=5, pady=5)
 
         self.load_button = ttk.Button(self,text="Load CPA", command=self.load_xml_file_dialog)
         self.load_button.bind("<Button-1>", self.load_xml_file_dialog)
-        self.load_button.grid(sticky='w', row=21, column=1, columnspan=5, padx=5, pady=5)
+        self.load_button.grid(sticky='w', row=21, column=1, padx=5, pady=5)
 
     def save_cpa_data(self, file):
         try:

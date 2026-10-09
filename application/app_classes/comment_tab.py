@@ -184,3 +184,7 @@ class Comment(tk.Frame):
         self.new_comment_button = tk.Button(self, text="New", command=self.add_item, width=10)
         self.new_comment_button.grid(row=6, column=1, sticky="w",columnspan=2, padx=5, pady=5)
 
+        # Let the listbox and entry columns scale with the window
+        for column in range(1, 9):
+            self.grid_columnconfigure(column, weight=1)
+

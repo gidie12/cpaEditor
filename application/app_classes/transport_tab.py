@@ -308,16 +308,17 @@ class Transport(tk.Frame):
         self.field_label = tk.Label(self, text="Select a field to edit")
         self.field_label.pack(side=tk.LEFT, padx=5, pady=5)
 
-        self.attribute_value_entry = tk.Entry(self, width=40)
-        self.attribute_value_entry.pack(side=tk.LEFT,after=self.field_label, padx=5, pady=5)
+        # Small requested width + expand: the field scales with the window
+        self.attribute_value_entry = tk.Entry(self, width=10)
+        self.attribute_value_entry.pack(side=tk.LEFT,after=self.field_label, fill=tk.X, expand=True, padx=5, pady=5)
         self.attribute_value_entry.config(state="disabled")
         # self.entry_party_id_partner_a.grid(sticky="w", row=2, column=1, padx=5, pady=5)
 
 
         # ComboBox to display certId options for selection
-        self.options_combobox = ttk.Combobox(self, state="disabled", width=40)
+        self.options_combobox = ttk.Combobox(self, state="disabled", width=10)
         self.options_combobox.set("No options")  # Reset selection
-        self.options_combobox.pack(side=tk.LEFT, padx=5, pady=5)
+        self.options_combobox.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5, pady=5)
 
         # Add a button to save changes
         self.save_button = tk.Button(self, text="Save Changes", command=self.save_changes)
