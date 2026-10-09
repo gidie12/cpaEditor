@@ -55,10 +55,11 @@ class XMLEditor(tk.Frame):
         self.tree_editor.tag_configure("attribute", font=("Helvetica", 10, "normal"))
 
         # Create entry fields for adding new items
-        self.xml_editor_entry = tk.Entry(self)
-        self.xml_editor_entry.pack(side=tk.LEFT, padx=5, pady=5)
-        self.xml_entry_value = tk.Entry(self)
-        self.xml_entry_value.pack(side=tk.LEFT, padx=5, pady=5)
+        # Small requested width + expand: the fields scale with the window
+        self.xml_editor_entry = tk.Entry(self, width=10)
+        self.xml_editor_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5, pady=5)
+        self.xml_entry_value = tk.Entry(self, width=10)
+        self.xml_entry_value.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5, pady=5)
 
         # Create a dropdown for selecting attribute or element
         self.add_type_var = tk.StringVar()
