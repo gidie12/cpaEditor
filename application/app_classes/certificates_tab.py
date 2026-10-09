@@ -9,6 +9,8 @@ from lxml import etree as lxml_etree
 from cryptography.hazmat.backends import default_backend
 from cryptography.x509 import load_der_x509_certificate, load_pem_x509_certificate, ExtensionNotFound, KeyUsage
 from application.helper_classes.cpaParser import CPAParser
+from application.helper_classes.certificateExpiry import CPA_DATE_FORMAT, get_key_info_certificates
+from application.helper_classes.certificateUsage import get_certificate_usages
 
 
 def create_rsa_key_value_elements(cert):
@@ -165,7 +167,8 @@ class Certificates(tk.Frame):
           1. Retrieves the party names for Partner A and Partner B.
           2. Parses the certificate information for both parties.
           3. Generates a dictionary mapping certificate IDs to their KeyInfo and certificate elements.
-          4. Populates the Treeview widget with the certificate and key info data.
+          4. Collects which elements of the CPA refer to each certificate.
+          5. Populates the Treeview widget with the key info and certificate details; unused certificates in grey.
 
           Returns:
               None
@@ -173,6 +176,8 @@ class Certificates(tk.Frame):
           Test Functions:
               - test_load_populates_tree_with_certificates
               - test_load_logs_error_when_no_certificates_found
+              - test_load_shows_unused_certificates_in_grey
+              - test_load_shows_details_of_certificates
           """
         cpa_parser_functions = CPAParser(self.master.root)
         partner_a = cpa_parser_functions.get_party_name_partner_a()
@@ -191,11 +196,13 @@ class Certificates(tk.Frame):
             self.logger.error("No certificates found in the CPA")
             return
 
+        usages = get_certificate_usages(self.master.root)
+
         for partner, certificate_party_elements in ((partner_a, certificate_party_a_elements),
                                                     (partner_b, certificate_party_b_elements)):
             if certificate_party_elements:
                 partner_keyinfo_certid_list = self.generate_partner_keyinfo_certid_list(certificate_party_elements, namespace_certificate_id)
-                self.populate_tree(partner, partner_keyinfo_certid_list, clear_tree=False)
+                self.populate_tree(partner, partner_keyinfo_certid_list, clear_tree=False, usages=usages)
 
     def generate_partner_keyinfo_certid_list(self, certificate_party_elements, namespace_certificate_id):
         """
@@ -276,20 +283,62 @@ class Certificates(tk.Frame):
             self.clipboard_append(text)
             self.update()
 
-    def populate_tree(self, partner, data, clear_tree=True):
+    def populate_tree(self, partner, data, clear_tree=True, usages=None):
         # Clear existing tree items
         if clear_tree:
             self.clear_tree()
+        usages = usages or {}
 
         # Populate the tree with certificate and key info data
         partner = self.tree_editor.insert("", "end", text=f"Partner {partner}", values=(), open=True)
         for cert_id, items in data.items():
-            cert_id_item = self.tree_editor.insert(partner, "end", text="CertId", values=(cert_id))
+            cert_id_item = self.tree_editor.insert(partner, "end", text="CertId", values=(cert_id,),
+                                                   tags=() if cert_id in usages else ("unused",))
             key_info_item = self.tree_editor.insert(cert_id_item, "end", text="KeyInfo", values=(items[0],))
             self.xml_element_mapping[key_info_item] = [items[1], items[2]]  # Map Treeview item ID to XML element
+            self.insert_certificate_rows(cert_id_item, items[1])
 
+    def insert_certificate_rows(self, cert_id_item, key_info):
+        """
+        Shows the details of every certificate of a KeyInfo below its CertId row, directly after the KeyInfo row.
 
-            
+        Each certificate gets a row with its type, common name and expiry date, with the subject, issuer, serial
+        number and validity period as child rows. Rows of a previous KeyInfo are replaced. An expired certificate
+        is marked with (EXPIRED).
+
+        Args:
+            cert_id_item (str): The Treeview item ID of the CertId row.
+            key_info (lxml.etree.Element): The KeyInfo element of that certificate, or None.
+
+        Returns:
+            None
+
+        Test Functions:
+            - test_load_shows_details_of_certificates
+            - test_load_marks_expired_certificate
+            - test_open_certificate_replaces_certificate_details
+        """
+        for item in self.tree_editor.get_children(cert_id_item):
+            if "certificate" in self.tree_editor.item(item, 'tags'):
+                self.tree_editor.delete(item)
+
+        certificates = get_key_info_certificates(key_info, self.logger)
+        for index, certificate in enumerate(certificates, start=1):
+            expires = certificate['not_after'].strftime(CPA_DATE_FORMAT)
+            summary = f"{certificate['common_name']} - expires {expires}"
+            if certificate['expired']:
+                summary += " (EXPIRED)"
+            certificate_item = self.tree_editor.insert(
+                cert_id_item, index, text=f"Certificate ({certificate['type']})", values=(summary,),
+                tags=("certificate",))
+            for name, value in (("Common name", certificate['common_name']),
+                                ("Subject", certificate['subject']),
+                                ("Issuer", certificate['issuer']),
+                                ("Serial number", certificate['serial_number']),
+                                ("Valid from", certificate['not_before'].strftime(CPA_DATE_FORMAT)),
+                                ("Valid until", expires)):
+                self.tree_editor.insert(certificate_item, "end", text=name, values=(value,))
+
     def clear_tree(self):
         for item in self.tree_editor.get_children():
             self.tree_editor.delete(item)
@@ -313,7 +362,7 @@ class Certificates(tk.Frame):
         """
 
         # Create a Treeview widget for displaying the certificate and key info
-        self.tree_editor = ttk.Treeview(self, columns=("Value"), selectmode="browse")
+        self.tree_editor = ttk.Treeview(self, columns=("Value",), selectmode="browse")
         self.tree_editor.heading("#0", text="Partner/Certificate ID")
         self.tree_editor.heading("Value", text="Value/KeyInfo")
         self.tree_editor.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -325,6 +374,9 @@ class Certificates(tk.Frame):
 
         # Create a tag for attribute items
         self.tree_editor.tag_configure("attribute", font=("Helvetica", 10, "normal"))
+
+        # Certificates that no element in the CPA refers to are shown in grey
+        self.tree_editor.tag_configure("unused", foreground="grey")
 
         # Bind the Treeview widget to the right-click menu
         if self.master.host == 'mac':
@@ -377,6 +429,7 @@ class Certificates(tk.Frame):
         4. For the leaf certificate, creates the RSAKeyValue element.
         5. Creates the X509Data element for each certificate and adds it to the KeyInfo.
         6. Updates the XML tree with the new KeyInfo element.
+        7. Replaces the certificate details below the CertId row.
 
         Returns:
             None
@@ -385,6 +438,7 @@ class Certificates(tk.Frame):
             - test_open_certificate_no_file_selected
             - test_open_certificate_invalid_certificate
             - test_open_certificate_valid_file_updates_tree
+            - test_open_certificate_replaces_certificate_details
         """
         try:
 
@@ -434,6 +488,7 @@ class Certificates(tk.Frame):
             replace_xml_object(cert_element, key_info_element, new_key_info)
             self.xml_element_mapping[self.tree_editor.selection()[0]] = [new_key_info, cert_element]
             self.tree_editor.item(self.tree_editor.selection()[0], values=(pretty_printed_key_info,))
+            self.insert_certificate_rows(self.tree_editor.parent(self.tree_editor.selection()[0]), new_key_info)
             self.logger.info(f"Certificate uploaded successfully and transformed into KeyInfo element")
         except Exception as e:
             self.logger.error(f"Error while uploading certificate: {e}")

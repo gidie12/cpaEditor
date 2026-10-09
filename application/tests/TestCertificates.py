@@ -41,6 +41,7 @@ class TestCertificates(unittest.TestCase):
         cert_tab = Certificates(master, logger)
         cert_tab.tree_editor = Mock()
         cert_tab.tree_editor.selection.return_value = ['item']
+        cert_tab.tree_editor.get_children.return_value = []
         cert_tab.xml_element_mapping = {'item': [None, None]}
 
         cert_tab.open_certificate()
@@ -113,6 +114,7 @@ class TestCertificates(unittest.TestCase):
         cert_tab = Certificates(master, logger)
         cert_tab.tree_editor = Mock()
         cert_tab.tree_editor.selection.return_value = ['item']
+        cert_tab.tree_editor.get_children.return_value = []
         cert_tab.xml_element_mapping = {'item': [None, None]}
 
         cert_tab.open_certificate()
