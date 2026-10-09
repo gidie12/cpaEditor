@@ -46,7 +46,7 @@ class General(tk.Frame):
         self.master = master
         self.cpa_status_options = [
         "proposed",
-        "agreeed",
+        "agreed",
         "signed",
         ]
         self.cpa_status_value = tk.StringVar(self)

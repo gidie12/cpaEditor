@@ -1,7 +1,9 @@
 import unittest
 from unittest.mock import patch, Mock, MagicMock
 import tkinter as tk
+from lxml import etree as lxml_etree
 from application.app_classes.general_tab import General
+from application.helper_classes.validateSchema import DEFAULT_XSD
 import logging
 logger = logging.getLogger(__name__)
 
@@ -72,6 +74,14 @@ class TestGeneralTab(unittest.TestCase):
         self.assertEqual(self.general_tab.entry_end_date.get(), '')
         self.assertEqual(self.general_tab.entry_party_id_type_partner_a.get(), '')
         self.assertEqual(self.general_tab.entry_party_id_type_partner_b.get(), '')
+
+    def test_status_options_match_schema(self):
+        """Test: status_options_match_schema"""
+        xs = '{http://www.w3.org/2001/XMLSchema}'
+        schema = lxml_etree.parse(DEFAULT_XSD)
+        status_type = schema.find(f".//{xs}simpleType[@name='statusValue.type']")
+        allowed = [enumeration.get('value') for enumeration in status_type.iter(f'{xs}enumeration')]
+        self.assertCountEqual(self.general_tab.cpa_status_options, allowed)
 
     def test_bind_fields(self):
         """Test: bind_fields"""

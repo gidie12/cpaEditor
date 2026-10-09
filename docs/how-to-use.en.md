@@ -18,7 +18,7 @@ Each tab shows one part of the CPA. Changes are kept in memory until you save th
 
 - Shows the CPA id, status, party names, party ids, party id types, start date and end date.
 - Type a new value and leave the field (press Tab or click another field). The value is applied when you leave the field.
-- Choose the status from the **Status** list.
+- Choose the status from the **Status** list: `proposed`, `agreed` or `signed`.
 - Dates are written as `YYYY-MM-DDTHH:MM:SSZ`, for example `2027-03-01T12:00:00Z`. The `Z` means Zulu time (UTC). In the Netherlands that is 1 hour (winter) or 2 hours (summer) earlier than the time on your clock.
 - Below each date the same moment is shown twice: in Zulu time and in the timezone set on your computer. Example: `Zulu: 2026-10-09T10:44:32Z    Local: 2026-10-09 12:44:32 CEST (UTC+02:00)`. A message is shown there when the date is not valid or has no timezone.
 - **Set to now** below the start date fills in the current date and time in Zulu time.

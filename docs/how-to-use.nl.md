@@ -20,7 +20,7 @@ Elk tabblad toont een deel van de CPA. Wijzigingen blijven in het geheugen staan
 
 - Toont het CPA-id, de status, de partijnamen, de party-id's, de typen van de party-id's, de startdatum en de einddatum.
 - Typ een nieuwe waarde en verlaat het veld (druk op Tab of klik in een ander veld). De waarde wordt verwerkt zodra je het veld verlaat.
-- Kies de status in de lijst **Status**.
+- Kies de status in de lijst **Status**: `proposed`, `agreed` of `signed`.
 - Datums hebben de vorm `JJJJ-MM-DDTUU:MM:SSZ`, bijvoorbeeld `2027-03-01T12:00:00Z`. De `Z` betekent Zulu-tijd (UTC). In Nederland is dat 1 uur (winter) of 2 uur (zomer) vroeger dan de tijd op je klok.
 - Onder elke datum staat hetzelfde moment twee keer: in Zulu-tijd en in de tijdzone die op je computer is ingesteld. Voorbeeld: `Zulu: 2026-10-09T10:44:32Z    Local: 2026-10-09 12:44:32 CEST (UTC+02:00)`. Is de datum ongeldig of ontbreekt de tijdzone, dan staat daar een melding.
 - **Set to now** onder de startdatum vult de datum en tijd van nu in, in Zulu-tijd.
