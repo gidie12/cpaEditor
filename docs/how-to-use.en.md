@@ -16,6 +16,8 @@ Each tab shows one part of the CPA. Changes are kept in memory until you save th
 
 ### General
 
+![General tab](images/general.png)
+
 - Shows the CPA id, status, party names, party ids, party id types, start date and end date.
 - Type a new value and leave the field (press Tab or click another field). The value is applied when you leave the field.
 - Choose the status from the **Status** list: `proposed`, `agreed` or `signed`.
@@ -26,9 +28,13 @@ Each tab shows one part of the CPA. Changes are kept in memory until you save th
 
 ### Collaboration Role
 
+![Collaboration Role tab](images/collaboration_role.png)
+
 - Shows the collaboration roles of both partners as a tree. This tab is for viewing; use the **XML editor** tab to change these values.
 
 ### Transport
+
+![Transport tab](images/transport.png)
 
 - Shows the transport elements of both partners as a tree.
 - Click a row that has a value. The label below the tree shows `Editing:` followed by the name of the field.
@@ -37,12 +43,16 @@ Each tab shows one part of the CPA. Changes are kept in memory until you save th
 
 ### Comment
 
+![Comment tab](images/comment.png)
+
 - Shows the comments in the CPA.
 - **New**: type a text in the field below the list and click **New**.
 - **Update**: click a comment, change the text and click **Update**.
 - **Delete**: click a comment and click **Delete**.
 
 ### XML editor
+
+![XML editor tab](images/xml_editor.png)
 
 - Shows the complete CPA as a tree with elements and attributes.
 - **Change a value**: select a row, double-click its **Value** column, type the new value and press Enter. Press Escape to cancel.
@@ -51,6 +61,8 @@ Each tab shows one part of the CPA. Changes are kept in memory until you save th
 - **Copy**: select a row, right-click it and choose **Copy Value**.
 
 ### Certificates
+
+![Certificates tab](images/certificates.png)
 
 - Shows per partner each certificate id (`CertId`) with its `KeyInfo`.
 - **See the details of a certificate**: open a `CertId` to see a **Certificate** row for every certificate of the chain, with its type (leaf, intermediate or root), common name and expiry date. Open that row for the subject, issuer, serial number, **Valid from** and **Valid until**. An expired certificate is marked with `(EXPIRED)`.
@@ -62,6 +74,8 @@ Each tab shows one part of the CPA. Changes are kept in memory until you save th
 After replacing a certificate you can use **Set from certificates** on the **General** tab to update the end date.
 
 ## 3. Validate the CPA
+
+![CPA Validation tab](images/validation.png)
 
 - Open the **CPA Validation** tab and click **Validate CPA**.
 - `Geen fouten gevonden` means the CPA is valid according to the CPA schema (`cpp-cpa-2_0.xsd`).

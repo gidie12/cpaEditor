@@ -37,6 +37,11 @@ class TestInsertMarkdown(unittest.TestCase):
         self.assertEqual(self.tagged('code'), ["# not a **heading**\n"])
         self.assertEqual(self.tagged('bold'), [])
 
+    def test_insert_markdown_skips_images(self):
+        """Test: insert_markdown_skips_images"""
+        insert_markdown(self.text, "### General\n\n![General tab](images/general.png)\n\n- Shows the CPA id")
+        self.assertEqual(self.text.get('1.0', tk.END).strip(), "General\n\n• Shows the CPA id")
+
 
 class TestHelpWindow(unittest.TestCase):
 

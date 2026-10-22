@@ -2,6 +2,8 @@
 
 Desktop application (Tkinter) for viewing and editing ebXML CPA files (Collaboration Protocol Agreement, `cpp-cpa-2_0.xsd`).
 
+![CPA Editor with the Certificates tab open](docs/images/certificates.png)
+
 ## Setup
 
 Python 3.11 is used for development and for the Windows build.
@@ -33,6 +35,40 @@ A step-by-step guide is available in English (`docs/how-to-use.en.md`) and Dutch
 - **CPA Validation**: validates the CPA against the schema
 
 Loading another CPA replaces the content of all tabs, including the validation result and any selected item.
+
+## Screenshots
+
+The screenshots show the test CPA `application/tests/resources/cpas/full_test_cpa.xml`.
+
+**General**
+
+![General tab](docs/images/general.png)
+
+**Collaboration Role**
+
+![Collaboration Role tab](docs/images/collaboration_role.png)
+
+**Transport**
+
+![Transport tab](docs/images/transport.png)
+
+**Comment**
+
+![Comment tab](docs/images/comment.png)
+
+**XML editor**
+
+![XML editor tab](docs/images/xml_editor.png)
+
+**Certificates**
+
+![Certificates tab](docs/images/certificates.png)
+
+**CPA Validation**
+
+![CPA Validation tab](docs/images/validation.png)
+
+In the application the README and the guides are shown without images.
 
 ## Zulu time and local time
 
