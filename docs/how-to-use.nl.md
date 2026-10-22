@@ -18,6 +18,8 @@ Elk tabblad toont een deel van de CPA. Wijzigingen blijven in het geheugen staan
 
 ### General
 
+![General tabblad](images/general.png)
+
 - Toont het CPA-id, de status, de partijnamen, de party-id's, de typen van de party-id's, de startdatum en de einddatum.
 - Typ een nieuwe waarde en verlaat het veld (druk op Tab of klik in een ander veld). De waarde wordt verwerkt zodra je het veld verlaat.
 - Kies de status in de lijst **Status**: `proposed`, `agreed` of `signed`.
@@ -28,9 +30,13 @@ Elk tabblad toont een deel van de CPA. Wijzigingen blijven in het geheugen staan
 
 ### Collaboration Role
 
+![Collaboration Role tabblad](images/collaboration_role.png)
+
 - Toont de collaboration roles van beide partijen als boom. Dit tabblad is om te bekijken; gebruik het tabblad **XML editor** om deze waarden te wijzigen.
 
 ### Transport
+
+![Transport tabblad](images/transport.png)
 
 - Toont de transportelementen van beide partijen als boom.
 - Klik op een regel met een waarde. Onder de boom staat dan `Editing:` gevolgd door de naam van het veld.
@@ -39,12 +45,16 @@ Elk tabblad toont een deel van de CPA. Wijzigingen blijven in het geheugen staan
 
 ### Comment
 
+![Comment tabblad](images/comment.png)
+
 - Toont de opmerkingen in de CPA.
 - **New**: typ een tekst in het veld onder de lijst en klik op **New**.
 - **Update**: klik op een opmerking, pas de tekst aan en klik op **Update**.
 - **Delete**: klik op een opmerking en klik op **Delete**.
 
 ### XML editor
+
+![XML editor tabblad](images/xml_editor.png)
 
 - Toont de volledige CPA als boom met elementen en attributen.
 - **Een waarde wijzigen**: selecteer een regel, dubbelklik in de kolom **Value**, typ de nieuwe waarde en druk op Enter. Druk op Escape om te annuleren.
@@ -53,6 +63,8 @@ Elk tabblad toont een deel van de CPA. Wijzigingen blijven in het geheugen staan
 - **Kopiëren**: selecteer een regel, klik er met de rechtermuisknop op en kies **Copy Value**.
 
 ### Certificates
+
+![Certificates tabblad](images/certificates.png)
 
 - Toont per partij elk certificaat-id (`CertId`) met de bijbehorende `KeyInfo`.
 - **De gegevens van een certificaat bekijken**: open een `CertId` om per certificaat van de keten een regel **Certificate** te zien, met het type (leaf, intermediate of root), de common name en de verloopdatum. Open die regel voor subject, issuer, serienummer, **Valid from** en **Valid until**. Een verlopen certificaat is gemarkeerd met `(EXPIRED)`.
@@ -64,6 +76,8 @@ Elk tabblad toont een deel van de CPA. Wijzigingen blijven in het geheugen staan
 Na het vervangen van een certificaat kun je op het tabblad **General** met **Set from certificates** de einddatum bijwerken.
 
 ## 3. De CPA valideren
+
+![CPA Validation tabblad](images/validation.png)
 
 - Open het tabblad **CPA Validation** en klik op **Validate CPA**.
 - `Geen fouten gevonden` betekent dat de CPA geldig is volgens het CPA-schema (`cpp-cpa-2_0.xsd`).

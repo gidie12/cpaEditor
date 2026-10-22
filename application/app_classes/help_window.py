@@ -13,6 +13,8 @@ HOW_TO_USE_FILE_NL = os.path.join(BUNDLE_DIR, 'docs', 'how-to-use.nl.md')
 
 # **bold** and `code` inside a line
 INLINE_MARKUP = re.compile(r'(\*\*.+?\*\*|`.+?`)')
+# A line with only an image: ![alt text](path)
+IMAGE_LINE = re.compile(r'^!\[[^\]]*\]\([^)]*\)$')
 
 
 def insert_markdown(text_widget, markdown_text):
@@ -20,13 +22,23 @@ def insert_markdown(text_widget, markdown_text):
     Inserts Markdown into a Text widget using the tags 'title', 'heading', 'bold' and 'code'.
 
     Only the Markdown used by the help files is supported: headings, fenced code blocks, lists, **bold** and `code`.
+    Image lines (screenshots) are left out together with the empty line after them.
 
     Test Functions:
         - test_insert_markdown_formats_headings_and_inline_markup
         - test_insert_markdown_keeps_code_block_literal
+        - test_insert_markdown_skips_images
     """
     in_code_block = False
+    after_image = False
     for line in markdown_text.splitlines():
+        if not in_code_block and IMAGE_LINE.match(line.strip()):
+            after_image = True
+            continue
+        if after_image:
+            after_image = False
+            if not line.strip():
+                continue
         if line.startswith('```'):
             in_code_block = not in_code_block
         elif in_code_block:
