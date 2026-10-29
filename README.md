@@ -133,11 +133,12 @@ Every time the application starts, it compares the running version with the late
 - **Skip** closes the popup. It is shown again at the next start as long as a newer version exists.
 - At startup nothing is shown when the version is up to date or when the check fails (no network); with debug messages on, the outcome is in the log.
 - **Help > Check for updates** runs the same check on request and always shows the result in the log.
+- Prereleases (release candidates and the nightly build) are never offered: GitHub does not return them as the latest release. A release candidate such as `1.1.0-rc.1` is offered release `1.1.0`; a nightly build such as `1.0.5+nightly.20261029.abc1234` is offered the next release, `1.0.6` or later.
 - The check runs in the background and is one request for the public release information; nothing about the CPA or the user is sent.
 - The server certificate is verified with the certificates trusted by the operating system.
 - Without network access an error is logged and nothing else happens. `[Errno 11001] getaddrinfo failed` (Windows) means `api.github.com` could not be found: there is no internet connection, or the network only reaches the internet through a proxy. On Windows the check is then repeated with the internet settings of Windows (WinINet), which handle a proxy the way the browser does: an automatic configuration script (PAC), automatic detection and a login with the Windows account. On other systems set the `HTTPS_PROXY` environment variable. When both attempts fail, the log shows both errors and points to the release page.
 
-The running version is shown in the title bar, for example `CPA Editor v1.0.2`, and is defined in `application/version.py`. It is the release the code belongs to: the same number as the release tag on GitHub. A release build takes the version from its tag: the workflow overwrites `application/version.py` for `v*` tags, so tag `v1.2.3` produces version `v1.2.3`. For running from source, update the file by hand when a release is made.
+The running version is shown in the title bar, for example `CPA Editor v1.0.2`, and is defined in `application/version.py`. It is the release the code belongs to: the same number as the release tag on GitHub. A release build takes the version from its tag: the workflow overwrites `application/version.py` for `v*` tags, so tag `v1.2.3` produces version `v1.2.3` and tag `v1.2.3-rc.1` version `v1.2.3-rc.1`. A nightly build is numbered after the latest release, for example `v1.0.5+nightly.20261029.abc1234`. For running from source, update the file by hand when a release is made.
 
 ## Tests
 
@@ -153,3 +154,15 @@ pyinstaller --noconfirm cpaEditor.spec
 ```
 
 The executable is written to `dist/CpaEditor.exe`. The GitHub workflow `Build Windows executable` runs the same build for pull requests and for `v*` tags.
+
+### Releases, prereleases and nightly builds
+
+- **Release**: push a tag such as `v1.2.3`. The workflow publishes a release with `CpaEditor.exe`; it becomes the latest release and is offered as an update.
+- **Prerelease**: push a tag with a label, such as `v1.2.3-rc.1`. The release is marked as prerelease and is not offered as an update.
+- **Nightly build**: every night the default branch is built and published as the prerelease `nightly` (tag `nightly`), replacing the previous one. Nothing is built when the branch did not change. To build another branch, run the workflow by hand (**Actions > Build Windows executable > Run workflow**) with **Publish this build as the nightly prerelease** checked, or:
+
+```bash
+gh workflow run build-windows.yml --ref <branch> -f nightly=true
+```
+
+The nightly build is at https://github.com/gidie12/cpaEditor/releases/tag/nightly and is not offered as an update.

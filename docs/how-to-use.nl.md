@@ -118,6 +118,7 @@ Na het vervangen van een certificaat kun je op het tabblad **General** met **Set
 - **Help > Readme** opent de technische readme (installatie, tests, build).
 - Elke keer dat de applicatie start, zoekt zij de nieuwste versie op GitHub op. Is er een nieuwere versie, dan toont een pop-up beide versies met de knoppen **Download** en **Skip**. **Download** opent de download in je browser; **Skip** sluit de pop-up, en die verschijnt opnieuw als je de applicatie de volgende keer start. Er verschijnt niets als je de nieuwste versie al hebt of als er geen internetverbinding is.
 - **Help > Check for updates** doet dezelfde controle op het moment dat jij dat wilt en toont het resultaat in het logvenster. Meldt de controle dat `api.github.com` niet gevonden kon worden (`getaddrinfo failed`), dan is er geen internetverbinding of kon de proxy van je netwerk niet gebruikt worden; open dan de releasepagina uit de melding in je browser. Op Windows worden de proxy-instellingen van Windows automatisch gebruikt, dus achter een bedrijfsproxy werkt de controle normaal gesproken gewoon.
+- Testversies (prereleases en de nightly build) worden nooit als update aangeboden. Gebruik je zo'n versie, dan krijg je de volgende gewone release aangeboden.
 - Alleen de versie wordt opgezocht; er wordt niets over je CPA verstuurd. De applicatie installeert zelf niets: vervang het oude programma door het gedownloade. De versie die je gebruikt staat in de titelbalk van het venster.
 
 ## Tips
