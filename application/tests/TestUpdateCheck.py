@@ -9,13 +9,28 @@ import tkinter as tk
 
 from application import CpaEditorApp as cpa_editor_app
 from application.helper_classes import updateCheck
-from application.helper_classes.updateCheck import (LATEST_RELEASE_DOWNLOAD_URL, LATEST_RELEASE_PAGE_URL,
-                                                    check_for_update, describe_network_error, get_latest_version,
-                                                    is_newer, is_prerelease, parse_version)
+from application.helper_classes.updateCheck import (LATEST_RELEASE_PAGE_URL, check_for_update, describe_network_error,
+                                                    executable_name, get_latest_version, is_newer, is_prerelease,
+                                                    parse_version, release_download_url)
 from application.version import __version__
 
 
 class TestUpdateCheck(unittest.TestCase):
+
+    def test_executable_name(self):
+        """Test: executable_name"""
+        self.assertEqual(executable_name('1.0.2'), 'CpaEditor-1.0.2.exe')
+        self.assertEqual(executable_name('1.2.3-rc.1'), 'CpaEditor-1.2.3-rc.1.exe')
+
+    def test_release_download_url(self):
+        """Test: release_download_url"""
+        self.assertEqual(release_download_url('1.0.2'),
+                         'https://github.com/gidie12/cpaEditor/releases/download/v1.0.2/CpaEditor-1.0.2.exe')
+
+    def test_release_download_url_falls_back_to_release_page(self):
+        """Test: release_download_url_falls_back_to_release_page"""
+        for version in ('1.2.3-rc.1', '1.0.5+nightly.20261029.abc1234', '1.0/../../evil', '', None):
+            self.assertEqual(release_download_url(version), LATEST_RELEASE_PAGE_URL)
 
     def test_parse_version(self):
         """Test: parse_version"""
@@ -161,10 +176,11 @@ class TestUpdateCheckInApp(unittest.TestCase):
         """Test: help_menu_checks_for_updates"""
         menu_bar = self.app.nametowidget(self.app.cget('menu'))
         help_menu = self.app.nametowidget(menu_bar.entrycget(0, 'menu'))
-        self.assertEqual(help_menu.entrycget(tk.END, 'label'), "Check for updates")
+        index = help_menu.index("Check for updates")
+        self.assertEqual(help_menu.entrycget(index, 'label'), "Check for updates")
         result = {'current': __version__, 'latest': __version__, 'update_available': False}
         with patch.object(cpa_editor_app, 'check_for_update', return_value=result) as check:
-            help_menu.invoke(tk.END)
+            help_menu.invoke(index)
             self.assertEqual(self.app.update_check_results.get(timeout=5), (False, result))
         check.assert_called_once_with(__version__)
 
@@ -192,7 +208,8 @@ class TestUpdateCheckInApp(unittest.TestCase):
     def test_show_update_result_download(self):
         """Test: show_update_result_download"""
         result = {'current': '1.1.0', 'latest': '1.2.0', 'update_available': True}
-        for host, url in (('windows', LATEST_RELEASE_DOWNLOAD_URL), ('mac', LATEST_RELEASE_PAGE_URL)):
+        download_url = 'https://github.com/gidie12/cpaEditor/releases/download/v1.2.0/CpaEditor-1.2.0.exe'
+        for host, url in (('windows', download_url), ('mac', LATEST_RELEASE_PAGE_URL)):
             self.app.host = host
             self.answer_dialog("Download")
             with patch.object(cpa_editor_app.webbrowser, 'open') as open_browser:

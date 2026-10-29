@@ -20,7 +20,11 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Use **Load CPA** to open a CPA file and **Save CPA** to write the edited CPA to a file. The CPA is saved as UTF-8 with an XML declaration; the extension `.xml` is added when none is given.
+Use **Load CPA** to open a CPA file and **Save CPA** to write the edited CPA to a file. The CPA is saved as UTF-8 with an XML declaration; the extension `.xml` is added when none is given. The CPAId is proposed as file name. When the CPAId has not been changed since the CPA was loaded, a popup asks whether to save anyway; **No** stops the save, so you can change the CPAId on the **General** tab first.
+
+**Show Changes** opens a window with the differences between the loaded CPA and the CPA as it is now: removed lines in red, added lines in green, with the changed words darker. Long lines are wrapped and unchanged lines around a change are grey. The CPA as it was loaded stays the base, also after saving.
+
+**Save CPA** first shows the same changes in a window with **Save...** and **Cancel**; the file name is asked only after **Save...**. Without changes the window is skipped.
 
 A step-by-step guide is available in English (`docs/how-to-use.en.md`) and Dutch (`docs/how-to-use.nl.md`). Inside the application the guides and this readme are in the **Help** menu.
 
@@ -110,9 +114,13 @@ On the **Certificates** tab, a certificate that no element of the CPA refers to 
 
 On the **Certificates** tab, right-click a **KeyInfo** row and choose **Download Certificate** to save its certificates as a PEM file. The file contains every certificate of that certId in the order of the CPA (leaf first) and can be uploaded again with **Upload Certificate**. The default file name is the certId.
 
+## Log
+
+The log below the tabs shows what the application did. Drag the line between the tabs and the log up or down to make the log larger or smaller; the log keeps that height when the window is resized.
+
 ## Debug messages
 
-The checkbox **Show debug messages** below the log, next to the Save and Load buttons, switches debug messages in the log on and off. It is off by default and is not remembered after closing the application. Info, warning and error messages are always shown.
+The checkbox **Show debug messages** below the log, next to the Save, Load and Show Changes buttons, switches debug messages in the log on and off. It is off by default and is not remembered after closing the application. Info, warning and error messages are always shown.
 
 With debug messages on, **Set from certificates** also lists every certificate with its common name and end date, ordered from first to last to expire:
 
@@ -129,7 +137,7 @@ A certificate that is used under more than one certId is listed once per certId.
 
 Every time the application starts, it compares the running version with the latest release on GitHub (`gidie12/cpaEditor`). When a newer version exists, a popup shows both versions with the buttons **Download** and **Skip**.
 
-- **Download** opens the download in the browser: on Windows the `CpaEditor.exe` of the latest release, on other systems the release page. The application itself does not download, install or run anything.
+- **Download** opens the download in the browser: on Windows the executable of the latest release (for example `CpaEditor-1.2.0.exe`), on other systems the release page. The application itself does not download, install or run anything.
 - **Skip** closes the popup. It is shown again at the next start as long as a newer version exists.
 - At startup nothing is shown when the version is up to date or when the check fails (no network); with debug messages on, the outcome is in the log.
 - **Help > Check for updates** runs the same check on request and always shows the result in the log.
@@ -139,6 +147,12 @@ Every time the application starts, it compares the running version with the late
 - Without network access an error is logged and nothing else happens. `[Errno 11001] getaddrinfo failed` (Windows) means `api.github.com` could not be found: there is no internet connection, or the network only reaches the internet through a proxy. On Windows the check is then repeated with the internet settings of Windows (WinINet), which handle a proxy the way the browser does: an automatic configuration script (PAC), automatic detection and a login with the Windows account. On other systems set the `HTTPS_PROXY` environment variable. When both attempts fail, the log shows both errors and points to the release page.
 
 The running version is shown in the title bar, for example `CPA Editor v1.0.2`, and is defined in `application/version.py`. It is the release the code belongs to: the same number as the release tag on GitHub. A release build takes the version from its tag: the workflow overwrites `application/version.py` for `v*` tags, so tag `v1.2.3` produces version `v1.2.3` and tag `v1.2.3-rc.1` version `v1.2.3-rc.1`. A nightly build is numbered after the latest release, for example `v1.0.5+nightly.20261029.abc1234`. For running from source, update the file by hand when a release is made.
+
+The Windows build puts this version in the name of the executable, for example `CpaEditor-1.0.2.exe`, and writes it into the file (**Properties > Details** in Windows Explorer): **File version** and **Product version** show the full version text, and the numeric file version leaves out the prerelease or nightly label (`1.0.5+nightly.20261029.abc1234` becomes `1.0.5.0`).
+
+## Report a bug
+
+**Help > Report a bug** opens a new bug report on GitHub (`gidie12/cpaEditor`) in the browser, with the version and the operating system already filled in. The form asks what you did, what you expected, what happened instead and for the lines of the log. A GitHub account is needed to send it. The application sends nothing itself; do not attach the CPA, it holds data of your partners. The form is defined in `.github/ISSUE_TEMPLATE/bug_report.yml`.
 
 ## Tests
 
@@ -153,11 +167,11 @@ pip install -r requirements-build.txt
 pyinstaller --noconfirm cpaEditor.spec
 ```
 
-The executable is written to `dist/CpaEditor.exe`. The GitHub workflow `Build Windows executable` runs the same build for pull requests and for `v*` tags.
+The executable is written to `dist/`, named after the version in `application/version.py`, for example `dist/CpaEditor-1.0.2.exe`. The GitHub workflow `Build Windows executable` runs the same build for pull requests and for `v*` tags.
 
 ### Releases, prereleases and nightly builds
 
-- **Release**: push a tag such as `v1.2.3`. The workflow publishes a release with `CpaEditor.exe`; it becomes the latest release and is offered as an update.
+- **Release**: push a tag such as `v1.2.3`. The workflow publishes a release with `CpaEditor-1.2.3.exe` and a copy named `CpaEditor.exe` for the update check of versions up to 1.0.5; it becomes the latest release and is offered as an update.
 - **Prerelease**: push a tag with a label, such as `v1.2.3-rc.1`. The release is marked as prerelease and is not offered as an update.
 - **Nightly build**: every night the default branch is built and published as the prerelease `nightly` (tag `nightly`), replacing the previous one. Nothing is built when the branch did not change. To build another branch, run the workflow by hand (**Actions > Build Windows executable > Run workflow**) with **Publish this build as the nightly prerelease** checked, or:
 

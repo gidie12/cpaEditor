@@ -102,12 +102,22 @@ Na het vervangen van een certificaat kun je op het tabblad **General** met **Set
 ## 4. De CPA opslaan
 
 - Klik linksonder in het venster op **Save CPA**.
+- Wil je eerst je wijzigingen controleren, klik dan op **Show Changes**. Een venster toont de verschillen met de CPA zoals die is geladen: verwijderde regels in rood, toegevoegde regels in groen, met de gewijzigde woorden donkerder. Ongewijzigde regels rond een wijziging zijn grijs. Is er niets gewijzigd, dan staat in het logvenster `No changes since the CPA was loaded`.
+- De CPAId wordt als bestandsnaam voorgesteld. Is de CPAId sinds het laden niet gewijzigd, dan vraagt een popup of je toch wilt opslaan: een gewijzigde CPA krijgt normaal een nieuwe CPAId. Klik op **No** om te stoppen en de CPAId op het tabblad **General** te wijzigen, of op **Yes** om met dezelfde CPAId op te slaan.
+- Na **Save CPA** worden eerst de wijzigingen getoond. Controleer ze en klik op **Save...** om verder te gaan, of op **Cancel** om te stoppen zonder op te slaan. Is er niets gewijzigd, dan wordt dit venster overgeslagen.
 - Kies een bestandsnaam en een locatie. Gebruik een nieuwe naam om het oorspronkelijke bestand te bewaren. Het bestand krijgt de extensie `.xml` als je er geen typt.
 - In het logvenster staat `CPA saved to` gevolgd door de bestandsnaam als het bestand is geschreven. Mislukt het opslaan, dan verschijnt een foutmelding en blijft een bestaand bestand ongewijzigd.
+
+## Een bug melden
+
+- Kies **Help > Report a bug**. De browser opent een bugmelding op GitHub waarin de versie en je besturingssysteem al zijn ingevuld. Je hebt een GitHub-account nodig om de melding te versturen.
+- Beschrijf wat je deed, wat je verwachtte en wat er gebeurde, en plak de regels uit het logvenster rond het probleem. Vink eerst **Show debug messages** aan en herhaal de stappen voor meer detail.
+- Voeg de CPA niet toe en plak geen certificaten: een CPA bevat gegevens van je partners. Beschrijf in plaats daarvan het deel dat ertoe doet, zonder namen, party ids en adressen.
 
 ## Logvenster en debugmeldingen
 
 - Het logvenster boven de knoppen laat zien wat de applicatie heeft gedaan en welke fouten zijn opgetreden.
+- Sleep de lijn tussen de tabbladen en het logvenster omhoog om het logvenster groter te maken, of omlaag om het kleiner te maken.
 - Vink **Show debug messages** aan voor meer detail, bijvoorbeeld elk gewijzigd veld. Dit staat uit als de applicatie start.
 - Met debugmeldingen aan toont **Set from certificates** ook alle certificaten met hun common name en einddatum, het certificaat dat het eerst verloopt bovenaan.
 
@@ -119,7 +129,7 @@ Na het vervangen van een certificaat kun je op het tabblad **General** met **Set
 - Elke keer dat de applicatie start, zoekt zij de nieuwste versie op GitHub op. Is er een nieuwere versie, dan toont een pop-up beide versies met de knoppen **Download** en **Skip**. **Download** opent de download in je browser; **Skip** sluit de pop-up, en die verschijnt opnieuw als je de applicatie de volgende keer start. Er verschijnt niets als je de nieuwste versie al hebt of als er geen internetverbinding is.
 - **Help > Check for updates** doet dezelfde controle op het moment dat jij dat wilt en toont het resultaat in het logvenster. Meldt de controle dat `api.github.com` niet gevonden kon worden (`getaddrinfo failed`), dan is er geen internetverbinding of kon de proxy van je netwerk niet gebruikt worden; open dan de releasepagina uit de melding in je browser. Op Windows worden de proxy-instellingen van Windows automatisch gebruikt, dus achter een bedrijfsproxy werkt de controle normaal gesproken gewoon.
 - Testversies (prereleases en de nightly build) worden nooit als update aangeboden. Gebruik je zo'n versie, dan krijg je de volgende gewone release aangeboden.
-- Alleen de versie wordt opgezocht; er wordt niets over je CPA verstuurd. De applicatie installeert zelf niets: vervang het oude programma door het gedownloade. De versie die je gebruikt staat in de titelbalk van het venster.
+- Alleen de versie wordt opgezocht; er wordt niets over je CPA verstuurd. De applicatie installeert zelf niets: vervang het oude programma door het gedownloade. De versie die je gebruikt staat in de titelbalk van het venster. Op Windows zie je de versie ook zonder het programma te starten: de versie staat in de bestandsnaam (bijvoorbeeld `CpaEditor-1.0.2.exe`), of klik met de rechtermuisknop op het bestand, kies **Eigenschappen** en open het tabblad **Details**.
 
 ## Tips
 

@@ -1,0 +1,50 @@
+name: Bug report
+description: Something in the CPA Editor does not work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug. Do not attach a CPA or paste private keys or certificates: a CPA holds
+        data of your partners. Describe the part of the CPA that matters instead (for example the element and
+        attribute names), and leave out names, party ids and addresses.
+  # The ids version and os are filled in by Help > Report a bug of the application (see application/helper_classes/bugReport.py)
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Shown in the title bar of the window, for example 1.0.2.
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      description: For example Windows 11 or macOS 15.6.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: What did you do?
+      description: The steps that lead to the bug, for example the tab, the field and the button.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: The lines of the log at the bottom of the window around the bug. Tick Show debug messages first for more detail.
+      render: text
