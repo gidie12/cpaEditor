@@ -38,7 +38,7 @@ A step-by-step guide is available in English (`docs/how-to-use.en.md`) and Dutch
 - **Certificates**: certificates and KeyInfo of both partners, details of each certificate (common name, expiry date, issuer), unused certificates in grey, upload of a new certificate chain, download of a certificate chain as PEM file
 - **CPA Validation**: validates the CPA against the schema
 
-Every partner has the same colour on all tabs: the first partner of the CPA (partner A) light blue and the second (partner B) light red, on the partner rows of the Collaboration Role, Transport and Certificates tabs and on the partner fields of the General tab.
+Every partner has the same colour on all tabs: the first partner of the CPA (partner A) light blue and the second (partner B) light red, on the partner rows of the Collaboration Role, Transport and Certificates tabs.
 
 Loading another CPA replaces the content of all tabs, including the validation result and any selected item.
 

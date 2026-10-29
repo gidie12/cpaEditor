@@ -47,15 +47,6 @@ class TestPartnerColors(unittest.TestCase):
         self.assertEqual(sorted(set(self.partner_row_colors(self.app.transport_tab.tree_editor))), sorted(expected))
         self.assertEqual(self.partner_row_colors(self.app.certificates_tab.tree_editor), expected)
 
-    def test_general_tab_partner_labels(self):
-        """Test: general_tab_partner_labels"""
-        general = self.app.general_tab
-        for label, index in ((general.label_partner_name_partner_a, 0), (general.label_party_id_partner_a, 0),
-                             (general.label_party_id_type_partner_a, 0), (general.label_partner_name_partner_b, 1),
-                             (general.label_party_id_partner_b, 1), (general.label_party_id_type_partner_b, 1)):
-            self.assertEqual(label.cget('bg'), PARTNER_COLORS[index])
-            self.assertEqual(label.cget('fg'), PARTNER_TEXT_COLOR)
-
 
 if __name__ == '__main__':
     unittest.main()

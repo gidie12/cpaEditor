@@ -15,11 +15,6 @@ def partner_color(index):
     return PARTNER_COLORS[index % len(PARTNER_COLORS)]
 
 
-def partner_label_colors(index):
-    """Returns the colours of a Label of the partner at this position, for example 'Party Id Partner A:'."""
-    return {'bg': partner_color(index), 'fg': PARTNER_TEXT_COLOR, 'padx': 4}
-
-
 def configure_partner_tag(tree, tag, index):
     """Gives the rows of a Treeview with this tag the colours of the partner at this position."""
     tree.tag_configure(tag, background=partner_color(index), foreground=PARTNER_TEXT_COLOR)
