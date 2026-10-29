@@ -23,8 +23,8 @@ class CollaborationRole(tk.Frame):
     Test Functions: see TestCollaborationRoleTab.
     """
 
-    COLUMNS = (('action', "Action", 160), ('channel', "Channel", 260), ('package', "Package", 160),
-               ('other_party', "OtherPartyActionBinding", 300), ('status', "Status", 140))
+    COLUMNS = (('action', "Action", 140), ('channel', "Channel", 220), ('package', "Package", 140),
+               ('other_party', "OtherPartyActionBinding", 260), ('status', "Status", 90))
 
     def __init__(self, master, logger, **kw):
         super().__init__(master, **kw)
@@ -55,7 +55,9 @@ class CollaborationRole(tk.Frame):
             header_tag = f"partner_{index}"
             partner_item = self.tree_editor.insert("", "end", text=f"Partner {get_party_name(party_info)}",
                                                    open=open_state.get(party_info, True), tags=(header_tag,))
-            self.tree_editor.tag_configure(header_tag, background=PARTNER_COLORS[index % len(PARTNER_COLORS)])
+            # Dark text: the light background must also be readable in dark mode
+            self.tree_editor.tag_configure(header_tag, background=PARTNER_COLORS[index % len(PARTNER_COLORS)],
+                                           foreground='black')
             self.xml_element_mapping[partner_item] = ('partner', party_info)
             for collaboration_role in party_info.findall(cpa('CollaborationRole')):
                 self.insert_collaboration_role(partner_item, collaboration_role, search, open_state)
@@ -77,8 +79,8 @@ class CollaborationRole(tk.Frame):
         service_type = f" [{role['service_type']}]" if role['service_type'] else ''
         role_item = self.tree_editor.insert(
             partner_item, "end", open=open_state.get(collaboration_role, True),
-            text=f"Service {role['service_name']}{service_type}   Role {role['role_name']}   "
-                 f"Process {role['process_name']} {role['process_version']}")
+            text=f"{role['service_name']}{service_type} · Role {role['role_name']} · "
+                 f"{role['process_name']} {role['process_version']}")
         self.xml_element_mapping[role_item] = ('role', collaboration_role)
         for action in actions:
             if not search or search in role_text or self.action_matches(action, search):
@@ -307,14 +309,17 @@ class CollaborationRole(tk.Frame):
         self.tree_editor = ttk.Treeview(tree_frame, columns=[name for name, _, _ in self.COLUMNS],
                                         selectmode="browse")
         self.tree_editor.heading("#0", text="Partner / Service / Direction")
-        self.tree_editor.column("#0", width=420, stretch=True)
+        self.tree_editor.column("#0", width=330, stretch=True)
         for name, heading, width in self.COLUMNS:
             self.tree_editor.heading(name, text=heading)
             self.tree_editor.column(name, width=width, stretch=True)
         self.tree_editor.tag_configure('problem', foreground='red')
         self.vsb = ttk.Scrollbar(tree_frame, orient="vertical", command=self.tree_editor.yview)
-        self.tree_editor.configure(yscrollcommand=self.vsb.set)
+        # Horizontal scrollbar: the columns may be wider than the tree pane
+        self.hsb = ttk.Scrollbar(tree_frame, orient="horizontal", command=self.tree_editor.xview)
+        self.tree_editor.configure(yscrollcommand=self.vsb.set, xscrollcommand=self.hsb.set)
         self.vsb.pack(side=tk.RIGHT, fill=tk.Y)
+        self.hsb.pack(side=tk.BOTTOM, fill=tk.X)
         self.tree_editor.pack(fill=tk.BOTH, expand=True)
         panes.add(tree_frame, weight=3)
 

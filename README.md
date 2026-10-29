@@ -48,6 +48,8 @@ The screenshots show the test CPA `application/tests/resources/cpas/full_test_cp
 
 ![Collaboration Role tab](docs/images/collaboration_role.png)
 
+![Add Service action dialog](docs/images/service_action_dialog.png)
+
 **Transport**
 
 ![Transport tab](docs/images/transport.png)

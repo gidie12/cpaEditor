@@ -50,7 +50,7 @@ class TestCollaborationRoleTab(unittest.TestCase):
         """Test: the tree shows partner, service and one row per action with its values in the right columns"""
         rows = self.rows()
         self.assertEqual(rows[0], ("Partner A", ()))
-        self.assertEqual(rows[1][0], "Service Order [urn:test]   Role Sender   Process Process 1.0")
+        self.assertEqual(rows[1][0], "Order [urn:test] · Role Sender · Process 1.0")
         self.assertEqual(rows[2], ("▶ Send", ('Place', 'A_reliable', 'pkg', 'B_S1_R_Place_PV_1', 'OK')))
         self.assertEqual(rows[3], ("◀ Receive", ('Confirm', 'A_default', 'pkg', 'B_S1_S_Confirm_PV_1', 'OK')))
         self.assertEqual([text for text, _ in rows if text.startswith('Partner')], ["Partner A", "Partner B"])
@@ -71,9 +71,9 @@ class TestCollaborationRoleTab(unittest.TestCase):
         actions = [values[0] for text, values in self.rows() if values]
         self.assertEqual(actions, ['Confirm', 'Confirm'])
         self.tab.filter_text.set('invoice')
-        self.assertEqual([text for text, _ in self.rows() if text.startswith('Service')],
-                         ["Service Invoice [urn:test]   Role Sender   Process Process 1.0",
-                          "Service Invoice [urn:test]   Role Receiver   Process Process 1.0"])
+        self.assertEqual([text for text, _ in self.rows() if '· Role' in text],
+                         ["Invoice [urn:test] · Role Sender · Process 1.0",
+                          "Invoice [urn:test] · Role Receiver · Process 1.0"])
         self.tab.filter_text.set('')
         self.assertEqual(len(self.rows()), 10)
 

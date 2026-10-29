@@ -42,6 +42,9 @@ Elk tabblad toont een deel van de CPA. Wijzigingen blijven in het geheugen staan
   - Package, channel en characteristics worden ingevuld vanuit de CPA; kies zo nodig andere waarden in de lijsten.
   - **Also add the opposite action** (standaard aan) voegt de bijbehorende actie toe bij de andere partij: een Send krijgt een Receive en andersom. Beide `OtherPartyActionBinding`-elementen verwijzen dan naar elkaar. De service van de andere partij wordt gevonden via de bestaande verwijzingen, anders via dezelfde servicenaam; kies zo nodig een andere in de lijst.
   - **Add** controleert of de id's geldig zijn en nog niet gebruikt worden. Bij een probleem blijft het venster open met een rode melding.
+
+  ![Add Service action venster](images/service_action_dialog.png)
+
 - **Add Collaboration Role** voegt een nieuwe service toe aan de partij van de geselecteerde rij, standaard ook bij de andere partij (met een eigen rolnaam). De velden worden ingevuld vanuit een bestaande Collaboration Role; **Generate UUID** vult de proces-uuid in.
 - **Delete** (werkbalk, rechtsklik of de Delete-toets) verwijdert de geselecteerde actie of Collaboration Role na bevestiging. Bij een actie met een gespiegelde actie verwijdert **Yes** beide en **No** alleen de geselecteerde. Een partij houdt minstens één Collaboration Role.
 - Wijzigingen worden in de geladen CPA gemaakt; gebruik **Save CPA** om ze naar een bestand te schrijven.
