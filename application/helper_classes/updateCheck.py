@@ -11,14 +11,40 @@ import truststore
 # GitHub never returns a prerelease (release candidate, nightly build) or draft as the latest release, so those
 # are never offered as an update
 LATEST_RELEASE_API_URL = 'https://api.github.com/repos/gidie12/cpaEditor/releases/latest'
-# Fixed addresses of the download: nothing from the response of the update check is ever opened
+# Fixed addresses of the download: of the response of the update check only a version of digits and dots is used
 LATEST_RELEASE_PAGE_URL = 'https://github.com/gidie12/cpaEditor/releases/latest'
-# The Windows executable that the release workflow attaches to every release
-LATEST_RELEASE_DOWNLOAD_URL = 'https://github.com/gidie12/cpaEditor/releases/latest/download/CpaEditor.exe'
+# The Windows executable that the release workflow attaches to every release; its name holds the version
+RELEASE_DOWNLOAD_URL = 'https://github.com/gidie12/cpaEditor/releases/download/v{version}/{executable}'
+RELEASE_VERSION_PATTERN = re.compile(r'\d+(?:\.\d+)*')
 
 
 # A dotted number, optionally followed by a prerelease label ('-rc.1') and build information ('+nightly.20261029')
 VERSION_PATTERN = re.compile(r'v?(\d+(?:\.\d+)*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?')
+
+
+def executable_name(version):
+    """
+    Returns the file name of the Windows executable of a version, for example 'CpaEditor-1.0.2.exe'.
+
+    Test Functions:
+        - test_executable_name
+    """
+    return f'CpaEditor-{version}.exe'
+
+
+def release_download_url(version):
+    """
+    Returns the download address of the Windows executable of a release, or the page of the latest release when the
+    version is not a plain dotted number.
+
+    Test Functions:
+        - test_release_download_url
+        - test_release_download_url_falls_back_to_release_page
+    """
+    version = str(version)
+    if not RELEASE_VERSION_PATTERN.fullmatch(version):
+        return LATEST_RELEASE_PAGE_URL
+    return RELEASE_DOWNLOAD_URL.format(version=version, executable=executable_name(version))
 
 
 def parse_version(version):

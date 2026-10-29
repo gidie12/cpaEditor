@@ -1,5 +1,6 @@
 import logging
 import queue
+import re
 import threading
 import time
 import webbrowser
@@ -8,22 +9,23 @@ import webbrowser
 import lxml.etree as Et
 
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, messagebox
 
 import platform
 
 
 from application.app_classes.certificates_tab import Certificates
 from application.app_classes.collaboration_role import CollaborationRole
+from application.app_classes.diff_window import DiffWindow, cpa_diff, cpa_text
 from application.app_classes.general_tab import General
 from application.app_classes.help_window import HelpWindow, HOW_TO_USE_FILE_EN, HOW_TO_USE_FILE_NL, README_FILE
 from application.app_classes.transport_tab import Transport
 from application.app_classes.validator_tab import Validator
 from application.app_classes.xml_editor_tab import XMLEditor
 from application.app_classes.comment_tab import Comment
+from application.helper_classes.bugReport import bug_report_url, system_description
 from application.helper_classes.textHandler import TextHandler
-from application.helper_classes.updateCheck import (LATEST_RELEASE_DOWNLOAD_URL, LATEST_RELEASE_PAGE_URL,
-                                                    check_for_update)
+from application.helper_classes.updateCheck import LATEST_RELEASE_PAGE_URL, check_for_update, release_download_url
 from application.version import __version__
 from application.app_classes.settings_tab import Setting
 logger = logging.getLogger(__name__)
@@ -57,10 +59,20 @@ class CpaEditorApp(tk.Tk):
         self.save_button = None
         self.root = None
         self.xml_tree = None
+        self.log_frame = None
+        self.loaded_cpa_id = None
+        self.loaded_cpa_text = None
+        self.changes_button = None
+        self.diff_window = None
         self.current_tab_index = 0
         self.comments_in_file_list = []
         self.width_tabs = 1650
         self.height_tabs = 800
+        # The tabs and the log share the height: drag the handle between them to make the log larger or smaller.
+        # Created before the notebook and the log, so it does not cover them
+        # A classic PanedWindow: the sash of the ttk one is invisible on macOS and shows no resize cursor
+        self.log_pane = tk.PanedWindow(self, orient=tk.VERTICAL, sashwidth=8, sashrelief=tk.RAISED, sashpad=2,
+                                       sashcursor='sb_v_double_arrow', opaqueresize=True, borderwidth=0)
         self.tab_control = tk.ttk.Notebook(self, width=self.width_tabs, height=self.height_tabs)
         self.tab_control.focus_set()  # Set focus to the Notebook widget initially
         self.title(f"CPA Editor v{__version__}")
@@ -72,13 +84,15 @@ class CpaEditorApp(tk.Tk):
         self.grid_propagate(False)  # Prevent automatic resizing of content_frame
 
         self.host = 'windows' if platform.system() == 'Windows' else 'mac' if platform.system() == 'Darwin' else ''
-        # Only the notebook row/column absorbs size changes, so the log output and
-        # the save/load buttons below it always stay visible
+        # Only the row of the tabs and the log absorbs size changes, so the save/load buttons below it always
+        # stay visible; within that row the tabs grow and the log keeps the height it was dragged to
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(9, weight=1)
-        self.tab_control.grid(row=0, column=0, rowspan=15, columnspan=10, sticky="nsew")
+        self.log_pane.grid(row=0, column=0, columnspan=10, sticky="nsew")
+        self.log_pane.add(self.tab_control, stretch='always', minsize=150)
         self.root_window()
         self.create_menu()
+        self.show_log()
         self.create_tabs()
         self.tab_control.bind("<<NotebookTabChanged>>", self.on_tab_change)
         self.reload_tabs = {
@@ -110,14 +124,78 @@ class CpaEditorApp(tk.Tk):
         if self.root is None:
             logger.error("No CPA loaded, nothing to save")
             return
+        cpa_id = self.get_cpa_id()
+        if cpa_id == self.loaded_cpa_id:
+            logger.warning(f"CPAId '{cpa_id}' has not been changed since the CPA was loaded")
+            # A changed CPA normally gets a new CPAId: ask before saving it under the old one
+            if not messagebox.askyesno("CPAId not changed",
+                                       f"The CPAId '{cpa_id}' has not been changed since the CPA was loaded.\n\n"
+                                       "Save the CPA anyway?", icon=messagebox.WARNING, parent=self):
+                logger.info("Saving cancelled: change the CPAId on the General tab")
+                return
+        if not self.confirm_changes():
+            logger.info("Saving cancelled")
+            return
         # Ask for the name only: the file is created in save_cpa_data, after the CPA is known to be writable
-        filename = filedialog.asksaveasfilename(defaultextension=".xml", filetypes=[('xml files', '.xml')])
+        filename = filedialog.asksaveasfilename(defaultextension=".xml", filetypes=[('xml files', '.xml')],
+                                                initialfile=self.cpa_file_name(cpa_id))
         if filename:
             self.save_cpa_data(filename)
 
+    def show_changes(self):
+        if self.root is None:
+            logger.error("No CPA loaded, no changes to show")
+            return
+        diff_lines = cpa_diff(self.loaded_cpa_text, cpa_text(self.root))
+        if not diff_lines:
+            logger.info("No changes since the CPA was loaded")
+            return
+        # One diff window: it is opened again with the changes of this moment
+        if self.diff_window is not None and self.diff_window.winfo_exists():
+            self.diff_window.destroy()
+        self.diff_window = DiffWindow(self, diff_lines)
+        self.diff_window.focus_set()
+
+    def confirm_changes(self):
+        """Shows the changes since the CPA was loaded and returns True when the user chooses to save them."""
+        diff_lines = cpa_diff(self.loaded_cpa_text, cpa_text(self.root))
+        if not diff_lines:
+            logger.info("No changes since the CPA was loaded")
+            return True
+        if self.diff_window is not None and self.diff_window.winfo_exists():
+            self.diff_window.destroy()
+        self.diff_window = DiffWindow(self, diff_lines, confirm=True)
+        self.diff_window.transient(self)
+        self.diff_window.save_button.focus_set()
+        self.diff_window.grab_set()
+        self.wait_window(self.diff_window)
+        return self.diff_window.confirmed
+
+    def get_cpa_id(self):
+        return self.root.get(f'{{{self.namespace_uri}}}cpaid')
+
+    @staticmethod
+    def cpa_file_name(cpa_id):
+        # The CPAId is the default file name; characters a file name cannot hold become an underscore
+        if not cpa_id:
+            return ''
+        return re.sub(r'[\\/:*?"<>|]', '_', cpa_id) + '.xml'
+
+    def show_log(self):
+        # The tabs ask for more height than the window has, which would leave no room for the log: start with
+        # the log at its own height (five lines)
+        self.update_idletasks()
+        self.log_pane.sash_place(0, 0, max(0, self.log_pane.winfo_height() - self.log_frame.winfo_reqheight()))
+
     def root_window(self):
-        self.log_output = tk.Text(self, height=5, wrap="word")
-        self.log_output.grid(sticky="we", row=20, column=0, columnspan=10, padx=5, pady=5)
+        log_frame = ttk.Frame(self)
+        self.log_output = tk.Text(log_frame, height=5, wrap="word")
+        log_scrollbar = ttk.Scrollbar(log_frame, orient="vertical", command=self.log_output.yview)
+        self.log_output.configure(yscrollcommand=log_scrollbar.set)
+        log_scrollbar.pack(side=tk.RIGHT, fill=tk.Y, pady=5)
+        self.log_output.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0), pady=5)
+        self.log_pane.add(log_frame, stretch='never', minsize=40)
+        self.log_frame = log_frame
 
         text_handler = TextHandler(self.log_output)
         text_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
@@ -130,9 +208,12 @@ class CpaEditorApp(tk.Tk):
         self.load_button = ttk.Button(self,text="Load CPA", command=self.load_xml_file_dialog)
         self.load_button.grid(sticky='w', row=21, column=1, padx=5, pady=5)
 
+        self.changes_button = ttk.Button(self, text="Show Changes", command=self.show_changes)
+        self.changes_button.grid(sticky='w', row=21, column=2, padx=5, pady=5)
+
         self.debug_checkbutton = ttk.Checkbutton(self, text="Show debug messages", variable=self.debug_enabled,
                                                  command=self.toggle_debug_messages)
-        self.debug_checkbutton.grid(sticky='w', row=21, column=2, padx=5, pady=5)
+        self.debug_checkbutton.grid(sticky='w', row=21, column=3, padx=5, pady=5)
 
     def create_menu(self):
         menu_bar = tk.Menu(self)
@@ -144,8 +225,14 @@ class CpaEditorApp(tk.Tk):
             help_menu.add_command(label=label, command=lambda label=label, help_file=help_file: self.show_help(help_file, label))
         help_menu.add_separator()
         help_menu.add_command(label="Check for updates", command=self.check_for_updates)
+        help_menu.add_command(label="Report a bug", command=self.report_bug)
         menu_bar.add_cascade(label="Help", menu=help_menu)
         self.config(menu=menu_bar)
+
+    def report_bug(self):
+        # The browser opens a new GitHub issue; the application itself sends nothing
+        webbrowser.open(bug_report_url(__version__, system_description()))
+        logger.info("Opened a new bug report in the browser: do not attach the CPA, it holds data of your partners")
 
     def check_for_updates(self, automatic=False):
         """
@@ -177,7 +264,8 @@ class CpaEditorApp(tk.Tk):
             logger.info(f"Version v{result['latest']} is available, this is version v{result['current']}")
             if self.ask_download(result):
                 # The browser does the download: the application itself never downloads or runs a file
-                webbrowser.open(LATEST_RELEASE_DOWNLOAD_URL if self.host == 'windows' else LATEST_RELEASE_PAGE_URL)
+                webbrowser.open(release_download_url(result['latest']) if self.host == 'windows'
+                                else LATEST_RELEASE_PAGE_URL)
         else:
             (quiet_log or logger.info)(f"You are using the latest version (v{result['current']})")
 
@@ -254,6 +342,10 @@ class CpaEditorApp(tk.Tk):
             # Set the namespace prefix for the namespace URI
             Et.register_namespace("tns", self.namespace_uri)
             Et.register_namespace("xlink", "http://www.w3.org/1999/xlink")
+            # Remembered to warn on save when the CPAId was not changed
+            self.loaded_cpa_id = self.get_cpa_id()
+            # The loaded CPA is kept as text to show the changes against it
+            self.loaded_cpa_text = cpa_text(self.root)
 
             if len(self.root):
                 # Load the data into the GUI fields

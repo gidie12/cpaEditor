@@ -100,12 +100,22 @@ After replacing a certificate you can use **Set from certificates** on the **Gen
 ## 4. Save the CPA
 
 - Click **Save CPA** at the bottom left of the window.
+- To check your changes first, click **Show Changes**. A window shows the differences with the CPA as it was loaded: removed lines in red, added lines in green, with the changed words darker. Unchanged lines around a change are grey. When nothing has changed, the log says `No changes since the CPA was loaded`.
+- The CPAId is proposed as file name. When the CPAId has not been changed since the CPA was loaded, a popup asks whether to save anyway: a changed CPA normally gets a new CPAId. Click **No** to stop and change the CPAId on the **General** tab, or **Yes** to save with the same CPAId.
+- After clicking **Save CPA** the changes are shown first. Check them and click **Save...** to continue, or **Cancel** to stop without saving. When nothing has changed, this window is skipped.
 - Choose a file name and location. Use a new name to keep the original file. The file gets the extension `.xml` when you do not type one.
 - The log shows `CPA saved to` followed by the file name when the file is written. When saving fails, an error is shown and an existing file is left unchanged.
+
+## Report a bug
+
+- Choose **Help > Report a bug**. The browser opens a bug report on GitHub with the version and your operating system already filled in. You need a GitHub account to send it.
+- Describe what you did, what you expected and what happened instead, and paste the lines of the log around the problem. Tick **Show debug messages** and repeat the steps first for more detail.
+- Do not attach the CPA or paste certificates: a CPA holds data of your partners. Describe the part that matters instead, without names, party ids and addresses.
 
 ## Log and debug messages
 
 - The log above the buttons shows what the application did and which errors occurred.
+- Drag the line between the tabs and the log up to make the log larger, or down to make it smaller.
 - Tick **Show debug messages** to see more detail, for example every changed field. This is off when the application starts.
 - With debug messages on, **Set from certificates** also lists every certificate with its common name and end date, the first to expire at the top.
 
@@ -117,7 +127,7 @@ After replacing a certificate you can use **Set from certificates** on the **Gen
 - Every time the application starts, it looks up the latest version on GitHub. When a newer version exists, a popup shows both versions with the buttons **Download** and **Skip**. **Download** opens the download in your browser; **Skip** closes the popup, and it is shown again the next time you start the application. Nothing is shown when you already have the latest version or when there is no internet connection.
 - **Help > Check for updates** does the same check when you ask for it and shows the result in the log. When it reports that `api.github.com` could not be found (`getaddrinfo failed`), there is no internet connection or the proxy of your network could not be used; open the release page from the message in your browser instead. On Windows the proxy settings of Windows are used automatically, so behind a company proxy the check normally just works.
 - Test versions (prereleases and the nightly build) are never offered as an update. When you use one, you are offered the next normal release.
-- Only the version is looked up; nothing about your CPA is sent. The application does not install anything itself: replace the old program with the downloaded one. The version you are using is shown in the title bar of the window.
+- Only the version is looked up; nothing about your CPA is sent. The application does not install anything itself: replace the old program with the downloaded one. The version you are using is shown in the title bar of the window. On Windows you can also see it without starting the program: the version is in the file name (for example `CpaEditor-1.0.2.exe`), or right-click the file, choose **Properties** and open the **Details** tab.
 
 ## Tips
 

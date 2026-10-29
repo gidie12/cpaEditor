@@ -77,11 +77,12 @@ jobs:
           echo "__version__ = \"$version\"" > application/version.py
         env:
           NIGHTLY: ${{ github.event_name == 'schedule' || inputs.nightly == true }}
+      # The executable is named after the version, for example dist/CpaEditor-1.0.2.exe
       - run: pyinstaller --noconfirm cpaEditor.spec
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: CpaEditor-windows
-          path: dist/CpaEditor.exe
+          path: dist/CpaEditor-*.exe
           if-no-files-found: error
 
   release:
@@ -97,12 +98,14 @@ jobs:
           path: dist
       # A tag with a label (v1.2.3-rc.1) is a prerelease: GitHub never shows it as the latest release, so the update
       # check of the application does not offer it
+      # Versions up to 1.0.2 download releases/latest/download/CpaEditor.exe, so a release also has a copy by that name
       - name: Publish release
         run: |
+          cp dist/CpaEditor-*.exe dist/CpaEditor.exe
           if [[ "$TAG" == *-* ]]; then
-            gh release create "$TAG" dist/CpaEditor.exe --generate-notes --prerelease --latest=false
+            gh release create "$TAG" dist/CpaEditor-*.exe dist/CpaEditor.exe --generate-notes --prerelease --latest=false
           else
-            gh release create "$TAG" dist/CpaEditor.exe --generate-notes
+            gh release create "$TAG" dist/CpaEditor-*.exe dist/CpaEditor.exe --generate-notes
           fi
         env:
           GH_TOKEN: ${{ github.token }}
@@ -126,7 +129,7 @@ jobs:
       - name: Publish nightly prerelease
         run: |
           gh release delete nightly --cleanup-tag --yes || true
-          gh release create nightly dist/CpaEditor.exe --prerelease --latest=false --target "$SHA" \
+          gh release create nightly dist/CpaEditor-*.exe --prerelease --latest=false --target "$SHA" \
             --title "Nightly build" \
             --notes "Untested build of \`$BRANCH\` at $SHA, made on $(date -u +%Y-%m-%d). Not offered as an update by the CPA Editor; use a release for production."
         env:

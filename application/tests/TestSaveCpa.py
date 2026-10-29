@@ -20,6 +20,14 @@ class TestSaveCpa(unittest.TestCase):
             self.app = cpa_editor_app.CpaEditorApp()
         self.directory = tempfile.TemporaryDirectory()
         self.file_path = os.path.join(self.directory.name, 'saved.xml')
+        # The popup about an unchanged CPAId is answered with Yes unless a test says otherwise
+        patcher = patch.object(cpa_editor_app.messagebox, 'askyesno', return_value=True)
+        self.ask_unchanged_cpa_id = patcher.start()
+        self.addCleanup(patcher.stop)
+        # The changes are confirmed with Save; TestShowChanges tests the window itself
+        patcher = patch.object(self.app, 'confirm_changes', return_value=True)
+        self.confirm_changes = patcher.start()
+        self.addCleanup(patcher.stop)
 
     def tearDown(self):
         self.directory.cleanup()
@@ -48,6 +56,63 @@ class TestSaveCpa(unittest.TestCase):
                          'Café Ünïcode')
         self.assertEqual(len(list(saved_root.iter())), len(list(self.app.root.iter())))
         self.assertIn(f"INFO - CPA saved to {self.file_path}", self.last_log_line())
+
+    def log_text(self):
+        return self.app.log_output.get('1.0', tk.END)
+
+    def test_save_dialog_proposes_cpa_id_as_file_name(self):
+        """Test: save_dialog_proposes_cpa_id_as_file_name"""
+        self.app.load_cpa_data(CPA_FILE)
+        self.app.root.set('{' + CPA_NAMESPACE + '}cpaid', 'partner_a/partner_b:v2')
+        with patch.object(cpa_editor_app.filedialog, 'asksaveasfilename', return_value='') as dialog:
+            self.app.save_button.invoke()
+        self.assertEqual(dialog.call_args.kwargs['initialfile'], 'partner_a_partner_b_v2.xml')
+        self.assertNotIn("has not been changed", self.log_text())
+        self.ask_unchanged_cpa_id.assert_not_called()
+
+    def test_save_warns_when_cpa_id_not_changed(self):
+        """Test: save_warns_when_cpa_id_not_changed"""
+        self.app.load_cpa_data(CPA_FILE)
+        with patch.object(cpa_editor_app.filedialog, 'asksaveasfilename', return_value='') as dialog:
+            self.app.save_button.invoke()
+        self.assertEqual(dialog.call_args.kwargs['initialfile'], 'template_cpa_v01.xml')
+        self.assertIn("WARNING - CPAId 'template_cpa_v01' has not been changed since the CPA was loaded",
+                      self.last_log_line())
+        self.ask_unchanged_cpa_id.assert_called_once()
+        self.assertEqual(self.ask_unchanged_cpa_id.call_args.args[0], "CPAId not changed")
+        self.assertIn("'template_cpa_v01'", self.ask_unchanged_cpa_id.call_args.args[1])
+
+    def test_save_stops_when_unchanged_cpa_id_is_not_confirmed(self):
+        """Test: save_stops_when_unchanged_cpa_id_is_not_confirmed"""
+        self.app.load_cpa_data(CPA_FILE)
+        self.ask_unchanged_cpa_id.return_value = False
+        with patch.object(cpa_editor_app.filedialog, 'asksaveasfilename') as dialog:
+            self.app.save_button.invoke()
+        dialog.assert_not_called()
+        self.assertFalse(os.path.exists(self.file_path))
+        self.assertIn("INFO - Saving cancelled: change the CPAId on the General tab", self.last_log_line())
+
+    def test_save_warns_after_cpa_id_changed_in_general_tab(self):
+        """Test: save_warns_after_cpa_id_changed_in_general_tab"""
+        self.app.load_cpa_data(CPA_FILE)
+        entry = self.app.general_tab.entry_cpa_id
+        entry.delete(0, tk.END)
+        entry.insert(0, 'new_cpa_v02')
+        self.app.general_tab.on_field_change('CPAId', type('Event', (), {'widget': entry}))
+        with patch.object(cpa_editor_app.filedialog, 'asksaveasfilename', return_value='') as dialog:
+            self.app.save_button.invoke()
+        self.assertEqual(dialog.call_args.kwargs['initialfile'], 'new_cpa_v02.xml')
+        self.assertNotIn("has not been changed", self.log_text())
+        self.ask_unchanged_cpa_id.assert_not_called()
+
+    def test_save_stops_when_changes_are_not_confirmed(self):
+        """Test: save_stops_when_changes_are_not_confirmed"""
+        self.app.load_cpa_data(CPA_FILE)
+        self.confirm_changes.return_value = False
+        with patch.object(cpa_editor_app.filedialog, 'asksaveasfilename') as dialog:
+            self.app.save_button.invoke()
+        dialog.assert_not_called()
+        self.assertIn("INFO - Saving cancelled", self.last_log_line())
 
     def test_saved_cpa_can_be_loaded_again(self):
         """Test: saved_cpa_can_be_loaded_again"""
@@ -83,7 +148,7 @@ class TestSaveCpa(unittest.TestCase):
         with patch.object(cpa_editor_app.filedialog, 'asksaveasfilename', return_value=''):
             self.app.save_button.invoke()
         self.assertFalse(os.path.exists(self.file_path))
-        self.assertIn("CPA data loaded successfully.", self.last_log_line())
+        self.assertNotIn("CPA saved to", self.log_text())
 
     def test_failed_save_keeps_existing_file(self):
         """Test: failed_save_keeps_existing_file"""
