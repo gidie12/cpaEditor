@@ -5,6 +5,5 @@ xmlschema==2.4.0
 MarkupPy==1.14
 truststore==0.10.4
 
-# Only used by the helper scripts (documentation generator, CollaborationRoleGenerator)
+# Only used by the documentation generator script
 Markdown==3.11
-Jinja2==3.1.6

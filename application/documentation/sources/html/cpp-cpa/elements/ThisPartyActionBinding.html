@@ -14,3 +14,8 @@
 <li><a href="ChannelId.html">ChannelId</a> (unbounded)</li>
 <li>Any other elements (optional, unbounded)</li>
 </ul>
+<h2>In the CPA Editor</h2>
+<ul>
+<li><strong>Add Service action</strong> on the <strong>Collaboration Role</strong> tab proposes the <code>id</code> from an action with the same direction in the same service: its action name is replaced by the new action name, so the naming convention of the CPA is kept (for example <code>BROKER_S1_BrokerX_Ketenpartner_S_ProcessAntwoord_PV_0.1</code> becomes <code>..._S_ProcessStatus_PV_0.1</code>). Without such an action the id is <code>&lt;partyName&gt;_&lt;service&gt;_&lt;S or R&gt;_&lt;action&gt;</code>. The id is made unique in the CPA and can be changed before <strong>Add</strong>.</li>
+<li>The <code>packageId</code> is chosen from the <code>Packaging</code> elements of the CPA and the <a href="ChannelId.html">ChannelId</a> from the <code>DeliveryChannel</code> elements of the partner.</li>
+</ul>

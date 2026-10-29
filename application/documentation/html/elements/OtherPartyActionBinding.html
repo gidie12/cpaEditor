@@ -1,12 +1,17 @@
-<h1>Other Party Action Binding</h1>
+<h1>OtherPartyActionBinding</h1>
 <h2>Description</h2>
-<p>The <code>OtherPartyActionBinding</code> element is used to define the binding of actions for the other party in a collaboration protocol agreement.</p>
-<h2>Attributes</h2>
-<ul>
-<li><code>actionId</code>: The unique identifier for the action.</li>
-<li><code>description</code>: A brief description of the action.</li>
-<li><code>role</code>: The role associated with the action.</li>
-</ul>
+<p>The <code>OtherPartyActionBinding</code> element contains the <code>id</code> of the <a href="ThisPartyActionBinding.html">ThisPartyActionBinding</a> of the other partner that belongs to this action (type <code>IDREF</code>). A <a href="CanSend.html">CanSend</a> of one partner refers to the <a href="CanReceive.html">CanReceive</a> of the other partner, and the other way round.</p>
 <h2>Example</h2>
-<p>```xml
-<OtherPartyActionBinding actionId="67890" description="Receive Order" role="Receiver" /></p>
+<pre><code class="language-xml">&lt;tns:CanSend&gt;
+    &lt;tns:ThisPartyActionBinding tns:id=&quot;A_S1_S_Order_PV_1&quot; tns:action=&quot;Order&quot; tns:packageId=&quot;defaultPackage&quot;&gt;
+        ...
+    &lt;/tns:ThisPartyActionBinding&gt;
+    &lt;tns:OtherPartyActionBinding&gt;B_S1_R_Order_PV_1&lt;/tns:OtherPartyActionBinding&gt;
+&lt;/tns:CanSend&gt;
+</code></pre>
+<h2>In the CPA Editor</h2>
+<ul>
+<li>Shown in the column <strong>OtherPartyActionBinding</strong> on the <strong>Collaboration Role</strong> tab.</li>
+<li><strong>Add Service action</strong> fills it in for both actions when the mirrored action is added.</li>
+<li>An action is marked red when this element is missing, refers to an id that is not an action of the other partner, refers to an action with the same direction, or when that action does not refer back.</li>
+</ul>

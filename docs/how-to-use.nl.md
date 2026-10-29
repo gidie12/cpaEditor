@@ -32,7 +32,22 @@ Elk tabblad toont een deel van de CPA. Wijzigingen blijven in het geheugen staan
 
 ![Collaboration Role tabblad](images/collaboration_role.png)
 
-- Toont de collaboration roles van beide partijen als boom. Dit tabblad is om te bekijken; gebruik het tabblad **XML editor** om deze waarden te wijzigen.
+- Het tabblad heet **Collaboration Role (experimental)**: het toevoegen, wijzigen en verwijderen van Service actions en Collaboration Roles is nieuw. Controleer het resultaat op het tabblad **CPA Validation** voordat je de CPA opslaat.
+- Toont per partij elke service (één rij per CollaborationRole, met servicetype, rol en proces) en daaronder de acties. **▶ Send** is een `CanSend`, **◀ Receive** een `CanReceive`. De kolommen tonen de actie, het channel, het package en de `OtherPartyActionBinding`.
+- De kolom **Status** toont `OK` of het aantal problemen; een actie met een probleem is rood. Een probleem is een channel dat geen `DeliveryChannel` van de partij is, een package dat niet in de CPA staat, of een `OtherPartyActionBinding` die ontbreekt, niet naar de tegenovergestelde actie van de andere partij wijst, of waar niet naar terug wordt verwezen.
+- Typ in **Filter** om alleen de services en acties te tonen waarvan de naam of het id de tekst bevat.
+- Klik op een actie om die rechts te zien. Wijzig de actie, het package, het channel of de `BusinessTransactionCharacteristics` en klik op **Save Changes**. De lijst onder de knop noemt de problemen van de actie. Het id kan niet gewijzigd worden, zodat de andere partij ernaar blijft verwijzen.
+- **Add Service action** (werkbalk, of rechtsklik op een service of actie) voegt een actie toe aan de geselecteerde service:
+  - Kies **Send** of **Receive** en typ de actie. Het id wordt voorgesteld op basis van een actie met dezelfde richting in die service, zodat de naamgeving van de CPA behouden blijft; je kunt het aanpassen.
+  - Package, channel en characteristics worden ingevuld vanuit de CPA; kies zo nodig andere waarden in de lijsten.
+  - **Also add the opposite action** (standaard aan) voegt de bijbehorende actie toe bij de andere partij: een Send krijgt een Receive en andersom. Beide `OtherPartyActionBinding`-elementen verwijzen dan naar elkaar. De service van de andere partij wordt gevonden via de bestaande verwijzingen, anders via dezelfde servicenaam; kies zo nodig een andere in de lijst.
+  - **Add** controleert of de id's geldig zijn en nog niet gebruikt worden. Bij een probleem blijft het venster open met een rode melding.
+
+  ![Add Service action venster](images/service_action_dialog.png)
+
+- **Add Collaboration Role** voegt een nieuwe service toe aan de partij van de geselecteerde rij, standaard ook bij de andere partij (met een eigen rolnaam). De velden worden ingevuld vanuit een bestaande Collaboration Role; **Generate UUID** vult de proces-uuid in.
+- **Delete** (werkbalk, rechtsklik of de Delete-toets) verwijdert de geselecteerde actie of Collaboration Role na bevestiging. Bij een actie met een gespiegelde actie verwijdert **Yes** beide en **No** alleen de geselecteerde. Een partij houdt minstens één Collaboration Role.
+- Wijzigingen worden in de geladen CPA gemaakt; gebruik **Save CPA** om ze naar een bestand te schrijven.
 
 ### Transport
 
@@ -103,6 +118,7 @@ Na het vervangen van een certificaat kun je op het tabblad **General** met **Set
 - **Help > Readme** opent de technische readme (installatie, tests, build).
 - Elke keer dat de applicatie start, zoekt zij de nieuwste versie op GitHub op. Is er een nieuwere versie, dan toont een pop-up beide versies met de knoppen **Download** en **Skip**. **Download** opent de download in je browser; **Skip** sluit de pop-up, en die verschijnt opnieuw als je de applicatie de volgende keer start. Er verschijnt niets als je de nieuwste versie al hebt of als er geen internetverbinding is.
 - **Help > Check for updates** doet dezelfde controle op het moment dat jij dat wilt en toont het resultaat in het logvenster. Meldt de controle dat `api.github.com` niet gevonden kon worden (`getaddrinfo failed`), dan is er geen internetverbinding of kon de proxy van je netwerk niet gebruikt worden; open dan de releasepagina uit de melding in je browser. Op Windows worden de proxy-instellingen van Windows automatisch gebruikt, dus achter een bedrijfsproxy werkt de controle normaal gesproken gewoon.
+- Testversies (prereleases en de nightly build) worden nooit als update aangeboden. Gebruik je zo'n versie, dan krijg je de volgende gewone release aangeboden.
 - Alleen de versie wordt opgezocht; er wordt niets over je CPA verstuurd. De applicatie installeert zelf niets: vervang het oude programma door het gedownloade. De versie die je gebruikt staat in de titelbalk van het venster.
 
 ## Tips

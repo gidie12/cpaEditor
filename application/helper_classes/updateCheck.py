@@ -8,6 +8,8 @@ import urllib.request
 
 import truststore
 
+# GitHub never returns a prerelease (release candidate, nightly build) or draft as the latest release, so those
+# are never offered as an update
 LATEST_RELEASE_API_URL = 'https://api.github.com/repos/gidie12/cpaEditor/releases/latest'
 # Fixed addresses of the download: nothing from the response of the update check is ever opened
 LATEST_RELEASE_PAGE_URL = 'https://github.com/gidie12/cpaEditor/releases/latest'
@@ -15,9 +17,16 @@ LATEST_RELEASE_PAGE_URL = 'https://github.com/gidie12/cpaEditor/releases/latest'
 LATEST_RELEASE_DOWNLOAD_URL = 'https://github.com/gidie12/cpaEditor/releases/latest/download/CpaEditor.exe'
 
 
+# A dotted number, optionally followed by a prerelease label ('-rc.1') and build information ('+nightly.20261029')
+VERSION_PATTERN = re.compile(r'v?(\d+(?:\.\d+)*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?')
+
+
 def parse_version(version):
     """
     Converts a version such as 'v1.0.2' or '1.0.2' to a tuple that can be compared.
+
+    A prerelease label ('1.1.0-rc.1') and build information ('1.0.5+nightly.20261029.abc1234') are allowed but not
+    part of the tuple; see is_prerelease.
 
     Returns:
         tuple: The numeric parts of the version, for example (1, 0, 2).
@@ -29,22 +38,39 @@ def parse_version(version):
         - test_parse_version
         - test_parse_version_invalid
     """
-    match = re.fullmatch(r'v?(\d+(?:\.\d+)*)', str(version).strip())
+    match = VERSION_PATTERN.fullmatch(str(version).strip())
     if not match:
         raise ValueError(f"Not a version number: {version!r}")
     return tuple(int(part) for part in match.group(1).split('.'))
+
+
+def is_prerelease(version):
+    """
+    Tells whether a version has a prerelease label, for example '1.1.0-rc.1'. Build information alone
+    ('1.0.5+nightly.20261029') is not a prerelease label: a nightly build is the released version plus changes.
+
+    Test Functions:
+        - test_is_prerelease
+    """
+    match = VERSION_PATTERN.fullmatch(str(version).strip())
+    return bool(match and match.group(2))
 
 
 def is_newer(latest_version, current_version):
     """
     Tells whether latest_version is newer than current_version; '1.1' and '1.1.0' are the same version.
 
+    A release is newer than a prerelease of the same version: '1.1.0' is newer than '1.1.0-rc.1'.
+
     Test Functions:
         - test_is_newer
+        - test_is_newer_with_prerelease_and_nightly
     """
     latest, current = parse_version(latest_version), parse_version(current_version)
     length = max(len(latest), len(current))
     pad = lambda version: version + (0,) * (length - len(version))
+    if pad(latest) == pad(current):
+        return is_prerelease(current_version) and not is_prerelease(latest_version)
     return pad(latest) > pad(current)
 
 

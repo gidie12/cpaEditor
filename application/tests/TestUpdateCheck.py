@@ -11,7 +11,7 @@ from application import CpaEditorApp as cpa_editor_app
 from application.helper_classes import updateCheck
 from application.helper_classes.updateCheck import (LATEST_RELEASE_DOWNLOAD_URL, LATEST_RELEASE_PAGE_URL,
                                                     check_for_update, describe_network_error, get_latest_version,
-                                                    is_newer, parse_version)
+                                                    is_newer, is_prerelease, parse_version)
 from application.version import __version__
 
 
@@ -22,10 +22,19 @@ class TestUpdateCheck(unittest.TestCase):
         self.assertEqual(parse_version('v1.0.2'), (1, 0, 2))
         self.assertEqual(parse_version('1.10'), (1, 10))
         self.assertEqual(parse_version(__version__), parse_version('v' + __version__))
+        self.assertEqual(parse_version('v1.1.0-rc.1'), (1, 1, 0))
+        self.assertEqual(parse_version('1.0.5+nightly.20261029.abc1234'), (1, 0, 5))
+
+    def test_is_prerelease(self):
+        """Test: is_prerelease"""
+        self.assertTrue(is_prerelease('v1.1.0-rc.1'))
+        self.assertTrue(is_prerelease('1.1.0-beta+build.5'))
+        self.assertFalse(is_prerelease('1.0.5+nightly.20261029.abc1234'))
+        self.assertFalse(is_prerelease('v1.0.5'))
 
     def test_parse_version_invalid(self):
         """Test: parse_version_invalid"""
-        for version in ('', 'latest', '1.0-beta', 'v1..2'):
+        for version in ('', 'latest', '1.0-', 'v1..2', '1.0+', 'beta-1.0'):
             with self.assertRaises(ValueError):
                 parse_version(version)
 
@@ -35,6 +44,13 @@ class TestUpdateCheck(unittest.TestCase):
         self.assertTrue(is_newer('v2.0', '1.9.9'))
         self.assertFalse(is_newer('v1.1', '1.1.0'))
         self.assertFalse(is_newer('v1.0.2', '1.1.0'))
+
+    def test_is_newer_with_prerelease_and_nightly(self):
+        """Test: a release candidate gets its release, a nightly build only the next release"""
+        self.assertTrue(is_newer('v1.1.0', '1.1.0-rc.1'))
+        self.assertFalse(is_newer('v1.0.5', '1.1.0-rc.1'))
+        self.assertFalse(is_newer('v1.0.5', '1.0.5+nightly.20261029.abc1234'))
+        self.assertTrue(is_newer('v1.0.6', '1.0.5+nightly.20261029.abc1234'))
 
     def test_get_latest_version_reads_tag(self):
         """Test: get_latest_version_reads_tag"""
