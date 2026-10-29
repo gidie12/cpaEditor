@@ -30,7 +30,19 @@ Each tab shows one part of the CPA. Changes are kept in memory until you save th
 
 ![Collaboration Role tab](images/collaboration_role.png)
 
-- Shows the collaboration roles of both partners as a tree. This tab is for viewing; use the **XML editor** tab to change these values.
+- The tab is called **Collaboration Role (experimental)**: adding, changing and deleting Service actions and Collaboration Roles is new. Check the result on the **CPA Validation** tab before you save the CPA.
+- Shows per partner each service (one row per CollaborationRole, with service type, role and process) and below it its actions. **▶ Send** is a `CanSend`, **◀ Receive** a `CanReceive`. The columns show the action, channel, package and `OtherPartyActionBinding`.
+- The column **Status** shows `OK` or the number of problems; an action with a problem is red. A problem is a channel that is not a `DeliveryChannel` of the partner, a package that is not in the CPA, or an `OtherPartyActionBinding` that is missing, does not point to the opposite action of the other partner, or is not pointed back to.
+- Type in **Filter** to show only the services and actions whose name or id contains the text.
+- Click an action to see it on the right. Change the action, package, channel or the `BusinessTransactionCharacteristics` and click **Save Changes**. The list under the button names the problems of the action. The id cannot be changed, so the other partner keeps referring to it.
+- **Add Service action** (toolbar, or right-click a service or action) adds an action to the selected service:
+  - Choose **Send** or **Receive** and type the action. The id is proposed from an action with the same direction in that service, so the naming convention of the CPA is kept; you can change it.
+  - Package, channel and characteristics are filled in from the CPA; choose other values in the lists if needed.
+  - **Also add the opposite action** (on by default) adds the matching action at the other partner: a Send gets a Receive and the other way round. Both `OtherPartyActionBinding` elements then refer to each other. The service of the other partner is found through the existing links, else by the same service name; choose another one in the list if needed.
+  - **Add** checks that the ids are valid and not used yet. On a problem the dialog stays open with a red message.
+- **Add Collaboration Role** adds a new service to the partner of the selected row, by default also at the other partner (with its own role name). The fields are filled in from an existing Collaboration Role; **Generate UUID** fills in the process uuid.
+- **Delete** (toolbar, right-click or the Delete key) deletes the selected action or Collaboration Role after confirmation. For an action with a mirrored action, **Yes** deletes both and **No** only the selected one. A partner keeps at least one Collaboration Role.
+- Changes are made in the loaded CPA; use **Save CPA** to write them to a file.
 
 ### Transport
 

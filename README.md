@@ -27,7 +27,7 @@ A step-by-step guide is available in English (`docs/how-to-use.en.md`) and Dutch
 ## Tabs
 
 - **General**: CPA id, status, party names, party ids, start date and end date
-- **Collaboration Role**: collaboration roles of both partners
+- **Collaboration Role (experimental)**: per partner the services with their Send and Receive actions (action, channel, package, OtherPartyActionBinding); wrong references are marked red. Add, change and delete Service actions (with the mirrored action at the other partner) and Collaboration Roles
 - **Transport**: transport elements of both partners
 - **Comment**: comments in the CPA
 - **XML editor**: the complete CPA as an editable tree

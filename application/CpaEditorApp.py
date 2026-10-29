@@ -320,7 +320,7 @@ class CpaEditorApp(tk.Tk):
 
 
         self.tab_control.add(self.general_tab, text="General")
-        self.tab_control.add(self.collaboration_role_tab, text="Collaboration Role")
+        self.tab_control.add(self.collaboration_role_tab, text="Collaboration Role (experimental)")
         self.tab_control.add(self.transport_tab, text="Transport")
         self.tab_control.add(self.comment_tab, text="Comment")
         self.tab_control.add(self.xml_editor_tab, text="XML editor")

@@ -13,3 +13,8 @@
 <li><code>timeToPerform</code>: The time to perform (duration).</li>
 <li><code>retryCount</code>: The retry count (integer).</li>
 </ul>
+<h2>In the CPA Editor</h2>
+<ul>
+<li>On the <strong>Collaboration Role</strong> tab the attributes <code>isAuthenticated</code>, <code>isAuthorizationRequired</code>, <code>isIntelligibleCheckRequired</code>, <code>isNonRepudiationReceiptRequired</code>, <code>isNonRepudiationRequired</code>, <code>isConfidential</code>, <code>isTamperProof</code> and <code>timeToPerform</code> can be changed for the selected action. Boolean attributes are <code>true</code> or <code>false</code>, the persistence levels <code>none</code>, <code>transient</code>, <code>persistent</code> or <code>transient-and-persistent</code>. An empty value removes the attribute.</li>
+<li>A new action gets the values of the first action of the same service, else <code>transient</code> / <code>true</code> / <code>false</code> / <code>PT1H</code> as defaults.</li>
+</ul>

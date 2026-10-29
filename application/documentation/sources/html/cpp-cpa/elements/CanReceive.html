@@ -5,3 +5,10 @@
 <li><code>OtherPartyActionBinding</code> (optional)</li>
 <li><code>CanSend</code> (optional, unbounded)</li>
 </ul>
+<h2>In the CPA Editor</h2>
+<ul>
+<li>Shown on the <strong>Collaboration Role</strong> tab as a <strong>◀ Receive</strong> row with the action, channel, package, <a href="OtherPartyActionBinding.html">OtherPartyActionBinding</a> and status.</li>
+<li>Select the row to change the action, package, channel and <a href="BusinessTransactionCharacteristics.html">BusinessTransactionCharacteristics</a> on the right; <strong>Save Changes</strong> applies them. The <code>id</code> does not change, so the other partner keeps referring to it.</li>
+<li><strong>Add Service action</strong> adds a CanReceive; with <strong>Also add the opposite action</strong> the other partner gets the matching <a href="CanSend.html">CanSend</a> and both refer to each other.</li>
+<li><strong>Delete action</strong> asks whether the mirrored CanSend of the other partner is deleted as well.</li>
+</ul>
