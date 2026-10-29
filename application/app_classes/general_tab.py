@@ -8,6 +8,7 @@ from application.helper_classes.certificateExpiry import CPA_DATE_FORMAT, get_ce
 from application.helper_classes.cpaCreator import CPACreator
 from application.helper_classes.cpaDates import describe_cpa_date
 from application.helper_classes.cpaParser import CPAParser
+from application.helper_classes.partnerColors import partner_label_colors
 from application.helper_classes.resizeApplication import update_entry_width
 
 
@@ -80,37 +81,37 @@ class General(tk.Frame):
         self.entry_cpa_status.grid(sticky="w", row=0, column=3, padx=5, pady=5)
 
 
-        self.label_partner_name_partner_a = tk.Label(self, text="Party Name Partner A:")
+        self.label_partner_name_partner_a = tk.Label(self, text="Party Name Partner A:", **partner_label_colors(0))
         self.entry_partner_name_partner_a = tk.Entry(self)
         self.entry_fields.append(self.entry_partner_name_partner_a)
         self.label_partner_name_partner_a.grid(sticky="w", row=1, column=0, padx=5, pady=5)
         self.entry_partner_name_partner_a.grid(sticky="we",row=1, column=1, padx=5, pady=5)
 
-        self.label_partner_name_partner_b = tk.Label(self, text="Party Name Partner B:")
+        self.label_partner_name_partner_b = tk.Label(self, text="Party Name Partner B:", **partner_label_colors(1))
         self.entry_partner_name_partner_b = tk.Entry(self)
         self.entry_fields.append(self.entry_partner_name_partner_b)
         self.label_partner_name_partner_b.grid(sticky="w", row=1, column=2, padx=5, pady=5)
         self.entry_partner_name_partner_b.grid(sticky="we", row=1, column=3, padx=5, pady=5)
 
-        self.label_party_id_partner_a = tk.Label(self, text="Party Id Partner A:")
+        self.label_party_id_partner_a = tk.Label(self, text="Party Id Partner A:", **partner_label_colors(0))
         self.entry_party_id_partner_a = tk.Entry(self)
         self.entry_fields.append(self.entry_party_id_partner_a)
         self.label_party_id_partner_a.grid(sticky="w", row=2, column=0, padx=5, pady=5)
         self.entry_party_id_partner_a.grid(sticky="we", row=2, column=1, padx=5, pady=5)
 
-        self.label_party_id_partner_b = tk.Label(self, text="Party Id Partner B:")
+        self.label_party_id_partner_b = tk.Label(self, text="Party Id Partner B:", **partner_label_colors(1))
         self.entry_party_id_partner_b = tk.Entry(self)
         self.entry_fields.append(self.entry_party_id_partner_b)
         self.label_party_id_partner_b.grid(sticky="w", row=2, column=2, padx=5, pady=5)
         self.entry_party_id_partner_b.grid(sticky="we", row=2, column=3, padx=5, pady=5)
 
-        self.label_party_id_type_partner_a = tk.Label(self, text="Party Id Type Partner A:")
+        self.label_party_id_type_partner_a = tk.Label(self, text="Party Id Type Partner A:", **partner_label_colors(0))
         self.entry_party_id_type_partner_a = tk.Entry(self)
         self.entry_fields.append(self.entry_party_id_type_partner_a)
         self.label_party_id_type_partner_a.grid(sticky="w", row=3, column=0, padx=5, pady=5)
         self.entry_party_id_type_partner_a.grid(sticky="we", row=3, column=1, padx=5, pady=5)
 
-        self.label_party_id_type_partner_b = tk.Label(self, text="Party Id Type Partner B:")
+        self.label_party_id_type_partner_b = tk.Label(self, text="Party Id Type Partner B:", **partner_label_colors(1))
         self.entry_party_id_type_partner_b = tk.Entry(self)
         self.entry_fields.append(self.entry_party_id_type_partner_b)
         self.label_party_id_type_partner_b.grid(sticky="w", row=3, column=2, padx=5, pady=5)

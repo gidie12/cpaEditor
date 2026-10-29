@@ -14,6 +14,8 @@ Loading another CPA replaces everything on screen. Changes that are not saved ar
 
 Each tab shows one part of the CPA. Changes are kept in memory until you save the CPA (see step 4).
 
+A partner has the same colour on every tab: partner A light blue, partner B light red.
+
 ### General
 
 ![General tab](images/general.png)
