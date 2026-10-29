@@ -98,7 +98,7 @@ jobs:
           path: dist
       # A tag with a label (v1.2.3-rc.1) is a prerelease: GitHub never shows it as the latest release, so the update
       # check of the application does not offer it
-      # Versions up to 1.0.2 download releases/latest/download/CpaEditor.exe, so a release also has a copy by that name
+      # Versions up to 1.0.5 download releases/latest/download/CpaEditor.exe, so a release also has a copy by that name
       - name: Publish release
         run: |
           cp dist/CpaEditor-*.exe dist/CpaEditor.exe

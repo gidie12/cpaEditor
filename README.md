@@ -171,7 +171,7 @@ The executable is written to `dist/`, named after the version in `application/ve
 
 ### Releases, prereleases and nightly builds
 
-- **Release**: push a tag such as `v1.2.3`. The workflow publishes a release with `CpaEditor-1.2.3.exe` and a copy named `CpaEditor.exe` for the update check of versions up to 1.0.2; it becomes the latest release and is offered as an update.
+- **Release**: push a tag such as `v1.2.3`. The workflow publishes a release with `CpaEditor-1.2.3.exe` and a copy named `CpaEditor.exe` for the update check of versions up to 1.0.5; it becomes the latest release and is offered as an update.
 - **Prerelease**: push a tag with a label, such as `v1.2.3-rc.1`. The release is marked as prerelease and is not offered as an update.
 - **Nightly build**: every night the default branch is built and published as the prerelease `nightly` (tag `nightly`), replacing the previous one. Nothing is built when the branch did not change. To build another branch, run the workflow by hand (**Actions > Build Windows executable > Run workflow**) with **Publish this build as the nightly prerelease** checked, or:
 
