@@ -11,6 +11,7 @@ from cryptography.x509 import load_der_x509_certificate, load_pem_x509_certifica
 from application.helper_classes.cpaParser import CPAParser
 from application.helper_classes.certificateExpiry import CPA_DATE_FORMAT, get_key_info_certificates
 from application.helper_classes.certificateUsage import get_certificate_usages
+from application.helper_classes.partnerColors import configure_partner_tag
 
 
 def create_rsa_key_value_elements(cert):
@@ -198,11 +199,12 @@ class Certificates(tk.Frame):
 
         usages = get_certificate_usages(self.master.root)
 
-        for partner, certificate_party_elements in ((partner_a, certificate_party_a_elements),
-                                                    (partner_b, certificate_party_b_elements)):
+        for partner_index, (partner, certificate_party_elements) in enumerate(
+                ((partner_a, certificate_party_a_elements), (partner_b, certificate_party_b_elements))):
             if certificate_party_elements:
                 partner_keyinfo_certid_list = self.generate_partner_keyinfo_certid_list(certificate_party_elements, namespace_certificate_id)
-                self.populate_tree(partner, partner_keyinfo_certid_list, clear_tree=False, usages=usages)
+                self.populate_tree(partner, partner_keyinfo_certid_list, clear_tree=False, usages=usages,
+                                   partner_index=partner_index)
 
     def generate_partner_keyinfo_certid_list(self, certificate_party_elements, namespace_certificate_id):
         """
@@ -283,14 +285,17 @@ class Certificates(tk.Frame):
             self.clipboard_append(text)
             self.update()
 
-    def populate_tree(self, partner, data, clear_tree=True, usages=None):
+    def populate_tree(self, partner, data, clear_tree=True, usages=None, partner_index=0):
         # Clear existing tree items
         if clear_tree:
             self.clear_tree()
         usages = usages or {}
 
         # Populate the tree with certificate and key info data
-        partner = self.tree_editor.insert("", "end", text=f"Partner {partner}", values=(), open=True)
+        partner_tag = f"partner_{partner_index}"
+        partner = self.tree_editor.insert("", "end", text=f"Partner {partner}", values=(), open=True,
+                                          tags=(partner_tag,))
+        configure_partner_tag(self.tree_editor, partner_tag, partner_index)
         for cert_id, items in data.items():
             cert_id_item = self.tree_editor.insert(partner, "end", text="CertId", values=(cert_id,),
                                                    tags=() if cert_id in usages else ("unused",))

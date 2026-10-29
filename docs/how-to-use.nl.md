@@ -16,6 +16,8 @@ Als je een andere CPA laadt, wordt alles op het scherm vervangen. Wijzigingen di
 
 Elk tabblad toont een deel van de CPA. Wijzigingen blijven in het geheugen staan totdat je de CPA opslaat (zie stap 4).
 
+Een partner heeft op de tabbladen Collaboration Role, Transport en Certificates dezelfde kleur: partner A lichtblauw, partner B lichtrood.
+
 ### General
 
 ![General tabblad](images/general.png)

@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 
 # CPA files come from external parties: never expand entities or load DTDs (XXE)
 SAFE_XML_PARSER = Et.XMLParser(resolve_entities=False, no_network=True, load_dtd=False)
+# The tabs keep at least this height when the log is made larger
+LOG_PANE_MIN_TABS_HEIGHT = 150
 
 class CpaEditorApp(tk.Tk):
     def __init__(self):
@@ -89,7 +91,7 @@ class CpaEditorApp(tk.Tk):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(9, weight=1)
         self.log_pane.grid(row=0, column=0, columnspan=10, sticky="nsew")
-        self.log_pane.add(self.tab_control, stretch='always', minsize=150)
+        self.log_pane.add(self.tab_control, stretch='always', minsize=LOG_PANE_MIN_TABS_HEIGHT)
         self.root_window()
         self.create_menu()
         self.show_log()
@@ -183,9 +185,21 @@ class CpaEditorApp(tk.Tk):
 
     def show_log(self):
         # The tabs ask for more height than the window has, which would leave no room for the log: start with
-        # the log at its own height (five lines)
+        # the log at its own height (five lines). On Windows the window is not shown yet at startup and the pane
+        # is only 1 pixel high, so the sash is placed once the pane has its real height
+        self.log_pane.bind('<Configure>', self.place_log_sash, add='+')
         self.update_idletasks()
-        self.log_pane.sash_place(0, 0, max(0, self.log_pane.winfo_height() - self.log_frame.winfo_reqheight()))
+        self.place_log_sash()
+
+    def place_log_sash(self, event=None):
+        pane_height = self.log_pane.winfo_height()
+        log_height = self.log_frame.winfo_reqheight()
+        # Not shown yet: placing the sash now would give the whole height to the log
+        if pane_height < log_height + LOG_PANE_MIN_TABS_HEIGHT:
+            return
+        self.log_pane.sash_place(0, 0, pane_height - log_height)
+        # Only at startup: afterwards the log keeps the height it was dragged to
+        self.log_pane.unbind('<Configure>')
 
     def root_window(self):
         log_frame = ttk.Frame(self)
