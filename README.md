@@ -6,7 +6,7 @@ Desktop application (Tkinter) for viewing and editing ebXML CPA files (Collabora
 
 ## Setup
 
-Python 3.11 is used for development and for the Windows build.
+Python 3.11 is used for development and for the Windows and macOS builds.
 
 ```bash
 python3 -m venv .venv
@@ -139,7 +139,7 @@ A certificate that is used under more than one certId is listed once per certId.
 
 Every time the application starts, it compares the running version with the latest release on GitHub (`gidie12/cpaEditor`). When a newer version exists, a popup shows both versions with the buttons **Download** and **Skip**.
 
-- **Download** opens the download in the browser: on Windows the executable of the latest release (for example `CpaEditor-1.2.0.exe`), on other systems the release page. The application itself does not download, install or run anything.
+- **Download** opens the download in the browser: on Windows the executable of the latest release (for example `CpaEditor-1.2.0.exe`), on other systems the release page, which also has the macOS application. The application itself does not download, install or run anything.
 - **Skip** closes the popup. It is shown again at the next start as long as a newer version exists.
 - At startup nothing is shown when the version is up to date or when the check fails (no network); with debug messages on, the outcome is in the log.
 - **Help > Check for updates** runs the same check on request and always shows the result in the log.
@@ -169,13 +169,15 @@ pip install -r requirements-build.txt
 pyinstaller --noconfirm cpaEditor.spec
 ```
 
-The executable is written to `dist/`, named after the version in `application/version.py`, for example `dist/CpaEditor-1.0.2.exe`. The GitHub workflow `Build Windows executable` runs the same build for pull requests and for `v*` tags.
+The executable is written to `dist/`, named after the version in `application/version.py`, for example `dist/CpaEditor-1.0.2.exe`. The GitHub workflow `Build executables` runs the same build for pull requests and for `v*` tags.
+
+On macOS the same command writes `dist/CpaEditor.app`. The workflow zips it to `CpaEditor-<version>-macos.zip`, also part of every release. It is built for Apple silicon and is not signed with an Apple Developer ID, so macOS blocks it at the first start: right-click the application and choose **Open**, or choose **Open Anyway** in **System Settings > Privacy & Security**.
 
 ### Releases, prereleases and nightly builds
 
-- **Release**: push a tag such as `v1.2.3`. The workflow publishes a release with `CpaEditor-1.2.3.exe` and a copy named `CpaEditor.exe` for the update check of versions up to 1.0.5; it becomes the latest release and is offered as an update.
+- **Release**: push a tag such as `v1.2.3`. The workflow publishes a release with `CpaEditor-1.2.3.exe`; it becomes the latest release and is offered as an update.
 - **Prerelease**: push a tag with a label, such as `v1.2.3-rc.1`. The release is marked as prerelease and is not offered as an update.
-- **Nightly build**: every night the default branch is built and published as the prerelease `nightly` (tag `nightly`), replacing the previous one. Nothing is built when the branch did not change. To build another branch, run the workflow by hand (**Actions > Build Windows executable > Run workflow**) with **Publish this build as the nightly prerelease** checked, or:
+- **Nightly build**: every night the default branch is built and published as the prerelease `nightly` (tag `nightly`), replacing the previous one. Nothing is built when the branch did not change. To build another branch, run the workflow by hand (**Actions > Build executables > Run workflow**) with **Publish this build as the nightly prerelease** checked, or:
 
 ```bash
 gh workflow run build-windows.yml --ref <branch> -f nightly=true

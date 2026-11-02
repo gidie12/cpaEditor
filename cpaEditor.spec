@@ -6,7 +6,7 @@
 # (see .github/workflows/build-windows.yml).
 import sys
 
-from PyInstaller.compat import is_win
+from PyInstaller.compat import is_darwin, is_win
 from PyInstaller.utils.hooks import collect_data_files
 
 sys.path.insert(0, SPECPATH)
@@ -51,18 +51,39 @@ a = Analysis(
 )
 pyz = PYZ(a.pure)
 
-exe = EXE(
-    pyz,
-    a.scripts,
-    a.binaries,
-    a.datas,
-    [],
-    # The name holds the version, for example CpaEditor-1.0.2.exe; the update check downloads it by this name
-    name=executable_name(__version__).removesuffix('.exe'),
-    debug=False,
-    strip=False,
-    upx=False,
-    runtime_tmpdir=None,
-    console=False,
-    version=version_info,
-)
+if is_darwin:
+    # On macOS an application bundle: CpaEditor.app, zipped by the build workflow
+    exe = EXE(
+        pyz,
+        a.scripts,
+        [],
+        exclude_binaries=True,
+        name='CpaEditor',
+        debug=False,
+        strip=False,
+        upx=False,
+        console=False,
+    )
+    app_files = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name='CpaEditor')
+    app = BUNDLE(
+        app_files,
+        name='CpaEditor.app',
+        bundle_identifier='nl.hesselsitconsultancy.cpaeditor',
+        version=__version__,
+    )
+else:
+    exe = EXE(
+        pyz,
+        a.scripts,
+        a.binaries,
+        a.datas,
+        [],
+        # The name holds the version, for example CpaEditor-1.0.2.exe; the update check downloads it by this name
+        name=executable_name(__version__).removesuffix('.exe'),
+        debug=False,
+        strip=False,
+        upx=False,
+        runtime_tmpdir=None,
+        console=False,
+        version=version_info,
+    )
