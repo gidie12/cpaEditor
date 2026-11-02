@@ -98,14 +98,12 @@ jobs:
           path: dist
       # A tag with a label (v1.2.3-rc.1) is a prerelease: GitHub never shows it as the latest release, so the update
       # check of the application does not offer it
-      # Versions up to 1.0.5 download releases/latest/download/CpaEditor.exe, so a release also has a copy by that name
       - name: Publish release
         run: |
-          cp dist/CpaEditor-*.exe dist/CpaEditor.exe
           if [[ "$TAG" == *-* ]]; then
-            gh release create "$TAG" dist/CpaEditor-*.exe dist/CpaEditor.exe --generate-notes --prerelease --latest=false
+            gh release create "$TAG" dist/CpaEditor-*.exe --generate-notes --prerelease --latest=false
           else
-            gh release create "$TAG" dist/CpaEditor-*.exe dist/CpaEditor.exe --generate-notes
+            gh release create "$TAG" dist/CpaEditor-*.exe --generate-notes
           fi
         env:
           GH_TOKEN: ${{ github.token }}
