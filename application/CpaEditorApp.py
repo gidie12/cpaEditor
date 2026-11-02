@@ -10,6 +10,7 @@ import lxml.etree as Et
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
+from tkinter import font as tkfont
 
 import platform
 
@@ -33,7 +34,8 @@ logger = logging.getLogger(__name__)
 # CPA files come from external parties: never expand entities or load DTDs (XXE)
 SAFE_XML_PARSER = Et.XMLParser(resolve_entities=False, no_network=True, load_dtd=False)
 # The tabs keep at least this height when the log is made larger
-LOG_PANE_MIN_TABS_HEIGHT = 150
+LOG_MIN_TABS_HEIGHT = 150
+LOG_MIN_LINES = 2
 
 class CpaEditorApp(tk.Tk):
     def __init__(self):
@@ -62,6 +64,8 @@ class CpaEditorApp(tk.Tk):
         self.root = None
         self.xml_tree = None
         self.log_frame = None
+        self.log_sash = None
+        self.log_drag = None
         self.loaded_cpa_id = None
         self.loaded_cpa_text = None
         self.changes_button = None
@@ -70,11 +74,6 @@ class CpaEditorApp(tk.Tk):
         self.comments_in_file_list = []
         self.width_tabs = 1650
         self.height_tabs = 800
-        # The tabs and the log share the height: drag the handle between them to make the log larger or smaller.
-        # Created before the notebook and the log, so it does not cover them
-        # A classic PanedWindow: the sash of the ttk one is invisible on macOS and shows no resize cursor
-        self.log_pane = tk.PanedWindow(self, orient=tk.VERTICAL, sashwidth=8, sashrelief=tk.RAISED, sashpad=2,
-                                       sashcursor='sb_v_double_arrow', opaqueresize=True, borderwidth=0)
         self.tab_control = tk.ttk.Notebook(self, width=self.width_tabs, height=self.height_tabs)
         self.tab_control.focus_set()  # Set focus to the Notebook widget initially
         self.title(f"CPA Editor v{__version__}")
@@ -86,15 +85,13 @@ class CpaEditorApp(tk.Tk):
         self.grid_propagate(False)  # Prevent automatic resizing of content_frame
 
         self.host = 'windows' if platform.system() == 'Windows' else 'mac' if platform.system() == 'Darwin' else ''
-        # Only the row of the tabs and the log absorbs size changes, so the save/load buttons below it always
-        # stay visible; within that row the tabs grow and the log keeps the height it was dragged to
+        # Only the notebook row/column absorbs size changes, so the log output and
+        # the save/load buttons below it always stay visible
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(9, weight=1)
-        self.log_pane.grid(row=0, column=0, columnspan=10, sticky="nsew")
-        self.log_pane.add(self.tab_control, stretch='always', minsize=LOG_PANE_MIN_TABS_HEIGHT)
+        self.tab_control.grid(row=0, column=0, rowspan=15, columnspan=10, sticky="nsew")
         self.root_window()
         self.create_menu()
-        self.show_log()
         self.create_tabs()
         self.tab_control.bind("<<NotebookTabChanged>>", self.on_tab_change)
         self.reload_tabs = {
@@ -183,23 +180,17 @@ class CpaEditorApp(tk.Tk):
             return ''
         return re.sub(r'[\\/:*?"<>|]', '_', cpa_id) + '.xml'
 
-    def show_log(self):
-        # The tabs ask for more height than the window has, which would leave no room for the log: start with
-        # the log at its own height (five lines). On Windows the window is not shown yet at startup and the pane
-        # is only 1 pixel high, so the sash is placed once the pane has its real height
-        self.log_pane.bind('<Configure>', self.place_log_sash, add='+')
-        self.update_idletasks()
-        self.place_log_sash()
+    def start_log_drag(self, event):
+        line_height = tkfont.Font(font=self.log_output.cget('font')).metrics('linespace')
+        lines = int(self.log_output.cget('height'))
+        # The tabs give up the height the log takes, down to their minimum
+        max_lines = lines + max(0, self.tab_control.winfo_height() - LOG_MIN_TABS_HEIGHT) // line_height
+        self.log_drag = (event.y_root, lines, line_height, max_lines)
 
-    def place_log_sash(self, event=None):
-        pane_height = self.log_pane.winfo_height()
-        log_height = self.log_frame.winfo_reqheight()
-        # Not shown yet: placing the sash now would give the whole height to the log
-        if pane_height < log_height + LOG_PANE_MIN_TABS_HEIGHT:
-            return
-        self.log_pane.sash_place(0, 0, pane_height - log_height)
-        # Only at startup: afterwards the log keeps the height it was dragged to
-        self.log_pane.unbind('<Configure>')
+    def drag_log(self, event):
+        start_y, start_lines, line_height, max_lines = self.log_drag
+        lines = start_lines + round((start_y - event.y_root) / line_height)
+        self.log_output.configure(height=min(max(lines, LOG_MIN_LINES), max_lines))
 
     def root_window(self):
         log_frame = ttk.Frame(self)
@@ -208,8 +199,15 @@ class CpaEditorApp(tk.Tk):
         self.log_output.configure(yscrollcommand=log_scrollbar.set)
         log_scrollbar.pack(side=tk.RIGHT, fill=tk.Y, pady=5)
         self.log_output.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0), pady=5)
-        self.log_pane.add(log_frame, stretch='never', minsize=40)
+        log_frame.grid(sticky="we", row=20, column=0, columnspan=10)
         self.log_frame = log_frame
+
+        # Drag this bar to make the log larger or smaller. Not a PanedWindow: with the tabs in one, Windows draws a
+        # white bar over the tab titles
+        self.log_sash = tk.Frame(self, height=8, relief=tk.RAISED, borderwidth=1, cursor='sb_v_double_arrow')
+        self.log_sash.grid(sticky="we", row=19, column=0, columnspan=10)
+        self.log_sash.bind('<ButtonPress-1>', self.start_log_drag)
+        self.log_sash.bind('<B1-Motion>', self.drag_log)
 
         text_handler = TextHandler(self.log_output)
         text_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
