@@ -8,8 +8,8 @@ from application.helper_classes.collaborationRoles import (
     describe_collaboration_role, find_action_by_binding_id, get_action_elements, get_channel_ids,
     get_collaboration_role_of, get_other_party_info, get_package_ids, get_party_info_of, get_party_infos,
     get_party_name, get_service_binding, update_action, validate_action)
+from application.helper_classes.partnerColors import configure_partner_tag
 
-PARTNER_COLORS = ('#cfe2ff', '#f8d7da')
 DIRECTION_SYMBOLS = {SEND: '▶', RECEIVE: '◀'}
 EXPERIMENTAL_NOTICE = ("Experimental: adding, changing and deleting Service actions and Collaboration Roles is new. "
                        "Check the result on the CPA Validation tab before you save the CPA.")
@@ -55,9 +55,7 @@ class CollaborationRole(tk.Frame):
             header_tag = f"partner_{index}"
             partner_item = self.tree_editor.insert("", "end", text=f"Partner {get_party_name(party_info)}",
                                                    open=open_state.get(party_info, True), tags=(header_tag,))
-            # Dark text: the light background must also be readable in dark mode
-            self.tree_editor.tag_configure(header_tag, background=PARTNER_COLORS[index % len(PARTNER_COLORS)],
-                                           foreground='black')
+            configure_partner_tag(self.tree_editor, header_tag, index)
             self.xml_element_mapping[partner_item] = ('partner', party_info)
             for collaboration_role in party_info.findall(cpa('CollaborationRole')):
                 self.insert_collaboration_role(partner_item, collaboration_role, search, open_state)

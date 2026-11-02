@@ -26,6 +26,31 @@ class TestLogOutput(unittest.TestCase):
         # Room for the five lines of the log, although the tabs ask for more height than the window has
         self.assertGreater(self.app.log_output.winfo_height(), 40)
 
+    def test_log_does_not_fill_window_shown_late(self):
+        """Test: log_does_not_fill_window_shown_late"""
+        # On Windows the window is not shown yet when the log is placed: the pane is 1 pixel high
+        pane = self.app.log_pane
+        with patch.object(pane, 'winfo_height', return_value=1):
+            self.app.show_log()
+        self.app.update()
+        pane.event_generate('<Configure>')
+        self.app.update()
+        self.assertGreater(self.app.tab_control.winfo_height(), 500)
+        self.assertLess(self.app.log_output.winfo_height(), 150)
+        self.assertEqual(pane.bind('<Configure>'), '')
+
+    def test_log_keeps_dragged_height_after_resize(self):
+        """Test: log_keeps_dragged_height_after_resize"""
+        self.app.show_log()
+        self.app.update()
+        pane_height = self.app.log_pane.winfo_height()
+        self.app.log_pane.sash_place(0, 0, pane_height - 300)
+        self.app.update()
+        height = self.app.log_output.winfo_height()
+        self.app.geometry('1200x700')
+        self.app.update()
+        self.assertEqual(self.app.log_output.winfo_height(), height)
+
     def test_log_can_be_made_larger_and_smaller(self):
         """Test: log_can_be_made_larger_and_smaller"""
         pane_height = self.app.log_pane.winfo_height()

@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import simpledialog
 from application.helper_classes.cpaParser import CPAParser
+from application.helper_classes.partnerColors import configure_partner_tag
 
 class Transport(tk.Frame):
     def __init__(self, master, logger, **kw):
@@ -58,13 +59,13 @@ class Transport(tk.Frame):
         if self.transport_items_partner_a:
             for item in self.transport_items_partner_a:
                 self.populate_tree(self.tree_editor, parent=item, header_value=f'Partner {self.partner_a}',
-                                   headers=True, color_background="blue", parent_tag=f"{self.partner_a}")
+                                   headers=True, partner_index=0, parent_tag=f"{self.partner_a}")
 
         # Populate Treeview with data for Partner B
         if self.transport_items_partner_b:
             for item in self.transport_items_partner_b:
                 self.populate_tree(self.tree_editor, parent=item, header_value=f'Partner {self.partner_b}',
-                                   headers=True, color_background="red", parent_tag=f"{self.partner_b}")
+                                   headers=True, partner_index=1, parent_tag=f"{self.partner_b}")
 
     def reset_edit_fields(self):
         """Forget the selected item: it belongs to the Treeview content that was just replaced."""
@@ -82,11 +83,11 @@ class Transport(tk.Frame):
         self.tree_editor.delete(*self.tree_editor.get_children())
 
     def populate_tree(self, tree, parent=None, parent_id="", tag_indices=None, header_value=None, headers=False,
-                      color_background="", parent_tag=""):
+                      partner_index=0, parent_tag=""):
         """Recursively populate the Treeview with XML elements and attributes."""
         if headers:
             # Insert a header for each transport partner (A or B)
-            self.insert_header(tree, header_value, color_background)
+            self.insert_header(tree, header_value, partner_index)
 
         if parent is not None:
             tag = self.clean_tag_name(parent.tag)  # Clean tag name (removes namespace)
@@ -105,11 +106,11 @@ class Transport(tk.Frame):
             for child in parent:
                 self.populate_tree(tree, child, parent_id=item_id, tag_indices=tag_indices, parent_tag=(parent_tag,))
 
-    def insert_header(self, tree, header_value, color_background):
-        """Insert a header row in the Treeview."""
+    def insert_header(self, tree, header_value, partner_index):
+        """Insert a header row in the Treeview, in the colour of the partner (as on the Collaboration Role tab)."""
         header_tag = f"header_color_{uuid.uuid4()}"
         item_id = tree.insert("", "end", text=header_value, open=True, tags=(f"{header_tag}",))
-        tree.tag_configure(f"{header_tag}", background=color_background)
+        configure_partner_tag(tree, header_tag, partner_index)
         self.xml_element_mapping[item_id] = None
 
     def clean_tag_name(self, tag):
