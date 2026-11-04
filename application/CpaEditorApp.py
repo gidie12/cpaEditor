@@ -50,6 +50,7 @@ class CpaEditorApp(tk.Tk):
         self.update_dialog = None
         self.startup_update_check = None
         self.update_check_poll = None
+        self.startup_redraw = None
         self.log_output = None
         self.certificates_tab = None
         self.validator_tab = None
@@ -112,6 +113,8 @@ class CpaEditorApp(tk.Tk):
         self.validation_errors = ''
         # Look for a newer version once the window is shown
         self.startup_update_check = self.after(1000, lambda: self.check_for_updates(automatic=True))
+        # Once the window is shown, have it painted again: see redraw_window
+        self.startup_redraw = self.after(500, self.redraw_window)
         self.mainloop()
 
 
@@ -285,10 +288,31 @@ class CpaEditorApp(tk.Tk):
 
     def destroy(self):
         # Timers of the update check must not fire after the window is gone
-        for timer in (self.startup_update_check, self.update_check_poll):
+        for timer in (self.startup_update_check, self.update_check_poll, self.startup_redraw):
             if timer is not None:
                 self.after_cancel(timer)
         super().destroy()
+
+    def redraw_window(self):
+        """
+        Has Windows paint the whole window again.
+
+        On Windows a white bar could stay over the tab titles after startup, until another tab was selected: what was
+        drawn while the window was laid out was not painted over. Elsewhere nothing is needed.
+
+        Test Functions:
+            - test_redraw_window_repaints_on_windows
+            - test_redraw_window_does_nothing_elsewhere
+        """
+        self.startup_redraw = None
+        if self.host != 'windows':
+            return
+        import ctypes
+        rdw_invalidate, rdw_erase, rdw_allchildren = 0x0001, 0x0004, 0x0080
+        user32 = ctypes.windll.user32
+        # The frame window of Tk is the parent of the window that winfo_id names
+        user32.RedrawWindow(user32.GetParent(self.winfo_id()), None, None,
+                            rdw_invalidate | rdw_erase | rdw_allchildren)
 
     def ask_download(self, result):
         """Asks in a popup whether to download the newer version; returns True for Download and False for Skip."""
