@@ -1,0 +1,90 @@
+{
+ "root": {
+  "type": "root",
+  "common_name": "Root",
+  "subject": "CN=Root",
+  "issuer": "CN=Root",
+  "serial": "1001",
+  "serial_decimal": "4097",
+  "not_before": "2020-01-01T00:00:00Z",
+  "not_after": "2040-01-01T00:00:00Z",
+  "der_base64": "MIIBITCBx6ADAgECAgIQATAKBggqhkjOPQQDAjAPMQ0wCwYDVQQDDARSb290MB4XDTIwMDEwMTAwMDAwMFoXDTQwMDEwMTAwMDAwMFowDzENMAsGA1UEAwwEUm9vdDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABMu2FDpqEy9bG7keIVm4Hpw4b+SR62U4GzxLzww7gXL1EQh80u0x59LEXCnH1266PgVRncNV5ce0PRfmaoTv6cKjEzARMA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDSQAwRgIhAOP7iCwhsb6moSuOOnE3V10mPRJpDWV77Uk2BmRkN1GYAiEA9vH+g7sgDjruIH17b3F/nnZ2BN9JrKdXpDPW9wT5Dzc="
+ },
+ "intermediate": {
+  "type": "intermediate",
+  "common_name": "Intermediate",
+  "subject": "CN=Intermediate",
+  "issuer": "CN=Root",
+  "serial": "1002",
+  "serial_decimal": "4098",
+  "not_before": "2020-01-01T00:00:00Z",
+  "not_after": "2030-06-15T12:30:05Z",
+  "der_base64": "MIIBKDCBz6ADAgECAgIQAjAKBggqhkjOPQQDAjAPMQ0wCwYDVQQDDARSb290MB4XDTIwMDEwMTAwMDAwMFoXDTMwMDYxNTEyMzAwNVowFzEVMBMGA1UEAwwMSW50ZXJtZWRpYXRlMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEteZhhan0pGAMKfmiXna4MoBJICnPsej4dh3KoXmfWWQS6/WwnsDUoqZuK/85fMCs5Ix9GV0YaYk6Tg/dnDuW0aMTMBEwDwYDVR0TAQH/BAUwAwEB/zAKBggqhkjOPQQDAgNIADBFAiEA/CdEY9vyUzPzU2p/cW6Ye/S4jaxLwWLYTtSsH+REDDgCIG4oVTxlzPfTd8ihe7qi7XnFyh1p1Y+qJHhlX9uuSs1Q"
+ },
+ "leaf": {
+  "type": "leaf",
+  "common_name": "Leaf",
+  "subject": "CN=Leaf",
+  "issuer": "CN=Intermediate",
+  "serial": "1003",
+  "serial_decimal": "4099",
+  "not_before": "2020-01-01T00:00:00Z",
+  "not_after": "2035-01-01T00:00:00Z",
+  "der_base64": "MIIBJjCBzKADAgECAgIQAzAKBggqhkjOPQQDAjAXMRUwEwYDVQQDDAxJbnRlcm1lZGlhdGUwHhcNMjAwMTAxMDAwMDAwWhcNMzUwMTAxMDAwMDAwWjAPMQ0wCwYDVQQDDARMZWFmMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqVxXjWULUSCNYtataRwkdQm14IHa//NwJZNPapdlGg5ApIhQiUvoY+ipIxTIuiDCnilWvRyHNukDHiVif3EMSKMQMA4wDAYDVR0TAQH/BAIwADAKBggqhkjOPQQDAgNJADBGAiEAvEYhZkq3CyvM/j3nwCyHZnd/VZMakIJy34vTtgzayV4CIQC2g/93Ka92iloVOlo3xc3pOZZSp1b1i97DYXpErVUIjQ=="
+ },
+ "leaf_of_root": {
+  "type": "leaf",
+  "common_name": "Leaf",
+  "subject": "CN=Leaf",
+  "issuer": "CN=Root",
+  "serial": "F0E1D2C3B4A5968778695A4B3C2D1E0F",
+  "serial_decimal": "320187260592966088227705887823340838415",
+  "not_before": "2020-01-01T00:00:00Z",
+  "not_after": "2035-06-15T12:30:05Z",
+  "der_base64": "MIIBLDCB06ADAgECAhEA8OHSw7Sllod4aVpLPC0eDzAKBggqhkjOPQQDAjAPMQ0wCwYDVQQDDARSb290MB4XDTIwMDEwMTAwMDAwMFoXDTM1MDYxNTEyMzAwNVowDzENMAsGA1UEAwwETGVhZjBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABIXtB7I3ojEDtceTjxYx1P2t6ltzkO7e8xnS90XdPnRVvn6t6sc5AJNm3YW4RPFppcPtWh+xyUkGotOtcCASI8OjEDAOMAwGA1UdEwEB/wQCMAAwCgYIKoZIzj0EAwIDSAAwRQIgctY1/WzRyN2ZsR7zSLrH4BuVCSMmRR7eNgaRbHZQtr4CIQC2u0vxQyg890YhK62Og09qd1y/REekraOaAxepTagzug=="
+ },
+ "old": {
+  "type": "leaf",
+  "common_name": "Old",
+  "subject": "CN=Old",
+  "issuer": "CN=Old",
+  "serial": "80",
+  "serial_decimal": "128",
+  "not_before": "2020-01-01T00:00:00Z",
+  "not_after": "2021-01-01T00:00:00Z",
+  "der_base64": "MIIBGzCBwqADAgECAgIAgDAKBggqhkjOPQQDAjAOMQwwCgYDVQQDDANPbGQwHhcNMjAwMTAxMDAwMDAwWhcNMjEwMTAxMDAwMDAwWjAOMQwwCgYDVQQDDANPbGQwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAARvMpluJU2n4h6W2BsLBCNrDhDQ0iGVj3E9JHf8lRMh9fgDMdUS2z2Dh7p5qzIUMKT9LM+GRFTWd51FbEv4c+3ioxAwDjAMBgNVHRMBAf8EAjAAMAoGCCqGSM49BAMCA0gAMEUCIDPrxxfGBVwBGghGSDTnKHdoa7aYoT890g50xwPu1YCXAiEAjoACdTAzapBny6gQF1BPOj/8SE+p+QxQrcOSTgOfSTw="
+ },
+ "new": {
+  "type": "leaf",
+  "common_name": "New",
+  "subject": "CN=New",
+  "issuer": "CN=New",
+  "serial": "7FFFFFFFFFFFFFFF",
+  "serial_decimal": "9223372036854775807",
+  "not_before": "2020-01-01T00:00:00Z",
+  "not_after": "2045-01-01T00:00:00Z",
+  "der_base64": "MIICnDCCAYSgAwIBAgIIf/////////8wDQYJKoZIhvcNAQELBQAwDjEMMAoGA1UEAwwDTmV3MB4XDTIwMDEwMTAwMDAwMFoXDTQ1MDEwMTAwMDAwMFowDjEMMAoGA1UEAwwDTmV3MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1bV6Wr5qQFTpQUt71u/jf1nj/LRf9rSZkLlhggiuCAok7CumjW18znWqibbyqN82nzeC2Uyff5FgeA1pBsGnwQeU+qTPu091RJIBGbUzKoGBlciYjQx7PGldN8uS94lOe3Un27ru1KYM/6BETWjsvxWu1Q1LE/0Fk2CnQ75z4I8Wh/fxdHCJRU9CA8VwiSnzeH0wJKYdVcsh6uohLVzhX+1yQts+Nwul6ujWcVqACg9F++ayqYZd9TPU4y5onLT731xy6eGSXanirk9aKopKJlGmJ/QisTjUFO+n6kZ/dsDa1tSy+GPvsqwmHmHEJkUwmCBfarrC8ZK+njyMaDn8KQIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQAE6KqnannjkC45uQxEyUSENimFlupUHPyFzgxP5vzOI5oO/CJL6o2oIRVfHNB29WTQwy3T7AdP1kGK7TGSZ1TmFhUqX7FAGgjRzTgNJwOXzyonQGIPJjHF4GIILQi0tcWlhOn1JI5j6yV2rFT7rAjgLyeFptrSVFtNiOHNUpft4cUGTmAKnr4NBtejhy5BsNHve79mF+2xkEzkVV5Wyz8Q5avRXJgURoZkhuyx7l2zmnwdqcioItFkQxGHUL5euJO5r3Q6rb7W6tSOZ1WKIV5ac2k1aCUuNxmB6M08pslPoLmAG9ODDSmGQBOM+YT4b7polOkQp4sTnu+NN7El33Kf"
+ },
+ "nasty": {
+  "type": "intermediate",
+  "common_name": "Ünïcode CN",
+  "subject": "CN=Ünïcode CN,2.5.4.5=\\ ,2.5.4.45=#0012ab,1.2.3.4.5=other oid,1.2.840.113549.1.9.1=a@b.nl,UID=uid1,DC=example,STREET=\\#1 Street,L=\\ leading and trailing\\ ,OU=Unit+O=Org\\, \\\"Inc\\\" \\+ \\<x\\>\\;\\\\,ST=Zuid-Holland,C=NL",
+  "issuer": "CN=Root",
+  "serial": "FF",
+  "serial_decimal": "255",
+  "not_before": "2020-01-01T00:00:00Z",
+  "not_after": "2031-03-04T05:06:07Z",
+  "der_base64": "MIICMDCCAdWgAwIBAgICAP8wCgYIKoZIzj0EAwIwDzENMAsGA1UEAwwEUm9vdDAeFw0yMDAxMDEwMDAwMDBaFw0zMTAzMDQwNTA2MDdaMIIBGzELMAkGA1UEBhMCTkwxITAfBgNVBAgeGABaAHUAaQBkAC0ASABvAGwAbABhAG4AZDEoMAsGA1UECwwEVW5pdDAZBgNVBAoMEk9yZywgIkluYyIgKyA8eD47XDEfMB0GA1UEBwwWIGxlYWRpbmcgYW5kIHRyYWlsaW5nIDESMBAGA1UECQwJIzEgU3RyZWV0MRcwFQYKCZImiZPyLGQBGRYHZXhhbXBsZTEUMBIGCgmSJomT8ixkAQEMBHVpZDExFTATBgkqhkiG9w0BCQEWBmFAYi5ubDETMBEGBCoDBAUMCW90aGVyIG9pZDEMMAoGA1UELQMDABKrMQowCAYDVQQFEwEgMRUwEwYDVQQDDAzDnG7Dr2NvZGUgQ04wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAR6orm1OfO+fkAVbxsMvhDq+GTCr/DmVCnUTkCB4inbboEKUMmTj/vfKsYAr346Hb3nctaeHwXLmHzFWTsHEoONoxMwETAPBgNVHRMBAf8EBTADAQH/MAoGCCqGSM49BAMCA0kAMEYCIQDNegDLfqALzMB6RhidElvVHZxgxZiEtWt25NOI5gCsRwIhAN9JksC8He5Lke8wtI2UJg91rQWW/NcI9+u/rEjDUkfh"
+ },
+ "no_cn": {
+  "type": "leaf",
+  "common_name": "O=Only Org",
+  "subject": "O=Only Org",
+  "issuer": "O=Only Org",
+  "serial": "1",
+  "serial_decimal": "1",
+  "not_before": "2020-01-01T00:00:00Z",
+  "not_after": "2032-01-01T00:00:00Z",
+  "der_base64": "MIIBEjCBuaADAgECAgEBMAoGCCqGSM49BAMCMBMxETAPBgNVBAoMCE9ubHkgT3JnMB4XDTIwMDEwMTAwMDAwMFoXDTMyMDEwMTAwMDAwMFowEzERMA8GA1UECgwIT25seSBPcmcwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAARBnmG5kuHKjafbwYQiIzAgdTWkYWVEj7aR7whh8VCTyAxFk3x7M2LBmU54bV8V36nUQQIGNr8aHeZa0Abl4F+1MAoGCCqGSM49BAMCA0gAMEUCIQCLoJa0caVllICaUUa34TgCn5ufffqHVcbT1CEKxqizlAIgGPh7WxIkNAupkdojq2Fp0y9tWbH/sq2WsCfV8AC/sgw="
+ }
+}

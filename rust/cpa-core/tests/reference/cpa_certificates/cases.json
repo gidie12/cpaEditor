@@ -1,0 +1,422 @@
+[
+ {
+  "name": "general_test_cpa",
+  "source": "test_cpa.xml",
+  "ops": [
+   {
+    "op": "set_general",
+    "field": "CpaId",
+    "value": "cpa_rust_parity"
+   },
+   {
+    "op": "set_general",
+    "field": "Status",
+    "value": "signed"
+   },
+   {
+    "op": "set_general",
+    "field": "PartyName",
+    "index": 0,
+    "value": "Café Ünïcode"
+   },
+   {
+    "op": "set_general",
+    "field": "PartyName",
+    "index": 1,
+    "value": "Partner <B> & \"co\"\tline"
+   },
+   {
+    "op": "set_general",
+    "field": "PartyId",
+    "index": 0,
+    "value": "123456789"
+   },
+   {
+    "op": "set_general",
+    "field": "PartyId",
+    "index": 1,
+    "value": "B&B <id>"
+   },
+   {
+    "op": "set_general",
+    "field": "PartyIdType",
+    "index": 0,
+    "value": "urn:oasis:names:tc:ebcore:partyid-type:unregistered"
+   },
+   {
+    "op": "set_general",
+    "field": "PartyIdType",
+    "index": 1,
+    "value": "urn:x"
+   },
+   {
+    "op": "set_general",
+    "field": "StartDate",
+    "value": "2026-01-01T00:00:00Z"
+   },
+   {
+    "op": "set_general",
+    "field": "EndDate",
+    "value": "2027-12-31T23:59:59Z"
+   }
+  ],
+  "expected": "general_test_cpa.xml"
+ },
+ {
+  "name": "general_test",
+  "source": "test.xml",
+  "ops": [
+   {
+    "op": "set_general",
+    "field": "Status",
+    "value": "proposed"
+   },
+   {
+    "op": "set_general",
+    "field": "PartyId",
+    "index": 1,
+    "value": ""
+   },
+   {
+    "op": "set_general",
+    "field": "EndDate",
+    "value": "2030-06-15T12:30:05Z"
+   }
+  ],
+  "expected": "general_test.xml"
+ },
+ {
+  "name": "comments_full_cpa_p",
+  "source": "full_cpa_p.xml",
+  "ops": [
+   {
+    "op": "set_comment",
+    "index": 0,
+    "text": "Changed & <checked>"
+   },
+   {
+    "op": "delete_comment",
+    "index": 1
+   },
+   {
+    "op": "add_comment",
+    "text": "New comment",
+    "lang": "nl-NL"
+   },
+   {
+    "op": "add_comment",
+    "text": "Second comment",
+    "lang": "en-US"
+   },
+   {
+    "op": "delete_comment",
+    "index": 3
+   }
+  ],
+  "expected": "comments_full_cpa_p.xml"
+ },
+ {
+  "name": "comments_test_cpa",
+  "source": "test_cpa.xml",
+  "ops": [
+   {
+    "op": "delete_comment",
+    "index": 0
+   },
+   {
+    "op": "add_comment",
+    "text": "Added",
+    "lang": "nl-NL"
+   }
+  ],
+  "expected": "comments_test_cpa.xml"
+ },
+ {
+  "name": "comments_without_comments",
+  "source": "full_cpa_p_without_comments.xml",
+  "ops": [
+   {
+    "op": "add_comment",
+    "text": "Only comment",
+    "lang": "nl-NL"
+   }
+  ],
+  "expected": "comments_without_comments.xml"
+ },
+ {
+  "name": "key_info_test_cpa",
+  "source": "test_cpa.xml",
+  "ops": [
+   {
+    "op": "replace_key_info",
+    "pem": "../application/tests/resources/certs/leaf/certs/Leaf Certificate 1_full_chain.pem",
+    "element": [
+     4,
+     4
+    ]
+   },
+   {
+    "op": "replace_key_info",
+    "pem": "../application/tests/resources/certs/leaf/certs/Leaf Certificate 2.pem",
+    "element": [
+     5,
+     4
+    ]
+   }
+  ],
+  "expected": "key_info_test_cpa.xml"
+ },
+ {
+  "name": "key_info_full_test_cpa",
+  "source": "full_test_cpa.xml",
+  "ops": [
+   {
+    "op": "replace_key_info",
+    "pem": "../application/tests/resources/certs/leaf/certs/Leaf Certificate 1_full_chain.pem",
+    "element": [
+     5,
+     4
+    ]
+   },
+   {
+    "op": "editor_delete_element",
+    "element": [
+     4,
+     4,
+     0
+    ]
+   },
+   {
+    "op": "replace_key_info",
+    "pem": "../application/tests/resources/certs/leaf/certs/Leaf Certificate 2.pem",
+    "element": [
+     4,
+     4
+    ]
+   }
+  ],
+  "expected": "key_info_full_test_cpa.xml"
+ },
+ {
+  "name": "key_info_new_cpa123",
+  "source": "new_cpa123.xml",
+  "ops": [
+   {
+    "op": "replace_key_info",
+    "pem": "../application/tests/resources/certs/leaf/certs/Leaf Certificate 1_full_chain.pem",
+    "element": [
+     4,
+     3
+    ]
+   },
+   {
+    "op": "replace_key_info",
+    "pem": "cpa-core/tests/reference/cpa_certificates/new_rsa.pem",
+    "element": [
+     4,
+     4
+    ]
+   }
+  ],
+  "expected": "key_info_new_cpa123.xml"
+ },
+ {
+  "name": "transport_full_test_cpa",
+  "source": "full_test_cpa.xml",
+  "ops": [
+   {
+    "op": "set_cpa_attribute",
+    "local": "uri",
+    "value": "https://example.org/new?a=1&b=\"2\"",
+    "element": [
+     4,
+     9,
+     1,
+     1
+    ]
+   },
+   {
+    "op": "set_cpa_attribute",
+    "local": "transportId",
+    "value": "Renamed_Transport",
+    "element": [
+     5,
+     9
+    ]
+   },
+   {
+    "op": "set_element_text",
+    "value": "HTTPS & more",
+    "element": [
+     5,
+     9,
+     0,
+     0
+    ]
+   },
+   {
+    "op": "set_cpa_attribute",
+    "local": "version",
+    "value": "1.1",
+    "element": [
+     4,
+     9,
+     0,
+     0
+    ]
+   },
+   {
+    "op": "clone_element",
+    "element": [
+     5,
+     9
+    ]
+   },
+   {
+    "op": "clone_element",
+    "element": [
+     4,
+     9,
+     1,
+     1
+    ]
+   }
+  ],
+  "expected": "transport_full_test_cpa.xml"
+ },
+ {
+  "name": "clone_new_cpa123",
+  "source": "new_cpa123.xml",
+  "ops": [
+   {
+    "op": "clone_element",
+    "element": [
+     4,
+     3,
+     0
+    ]
+   },
+   {
+    "op": "clone_element",
+    "element": [
+     4,
+     8
+    ]
+   },
+   {
+    "op": "clone_element",
+    "element": [
+     0
+    ]
+   }
+  ],
+  "expected": "clone_new_cpa123.xml"
+ },
+ {
+  "name": "xml_editor_full_test_cpa",
+  "source": "full_test_cpa.xml",
+  "ops": [
+   {
+    "op": "editor_set_attribute",
+    "name": "{http://www.oasis-open.org/committees/ebxml-cppa/schema/cpp-cpa-2_0.xsd}cpaid",
+    "value": "edited",
+    "element": []
+   },
+   {
+    "op": "editor_add_attribute",
+    "name": "extra",
+    "value": "x",
+    "element": [
+     0
+    ]
+   },
+   {
+    "op": "editor_add_attribute",
+    "name": "{http://www.oasis-open.org/committees/ebxml-cppa/schema/cpp-cpa-2_0.xsd}foo",
+    "value": "y<",
+    "element": [
+     0
+    ]
+   },
+   {
+    "op": "editor_add_element",
+    "name": "Comment",
+    "value": "added by editor",
+    "element": []
+   },
+   {
+    "op": "editor_add_element",
+    "name": "Start",
+    "value": "2020-01-01T00:00:00Z",
+    "element": []
+   },
+   {
+    "op": "editor_add_element",
+    "name": "Note",
+    "value": "",
+    "element": [
+     0
+    ]
+   },
+   {
+    "op": "editor_add_element",
+    "name": "Certificate",
+    "value": "new",
+    "element": [
+     5
+    ]
+   },
+   {
+    "op": "set_element_text",
+    "value": "text before children",
+    "element": [
+     5
+    ]
+   },
+   {
+    "op": "editor_delete_element",
+    "element": [
+     7
+    ]
+   },
+   {
+    "op": "editor_delete_element",
+    "element": [
+     8
+    ]
+   },
+   {
+    "op": "editor_delete_attribute",
+    "name": "{http://www.w3.org/2001/XMLSchema-instance}schemaLocation",
+    "element": []
+   },
+   {
+    "op": "editor_delete_attribute",
+    "name": "extra",
+    "element": [
+     0
+    ]
+   }
+  ],
+  "expected": "xml_editor_full_test_cpa.xml"
+ },
+ {
+  "name": "xml_editor_example",
+  "source": "example.xml",
+  "ops": [
+   {
+    "op": "editor_add_element",
+    "name": "Comment",
+    "value": "x",
+    "element": []
+   },
+   {
+    "op": "editor_set_attribute",
+    "name": "plain",
+    "value": "v",
+    "element": []
+   }
+  ],
+  "expected": "xml_editor_example.xml"
+ }
+]
