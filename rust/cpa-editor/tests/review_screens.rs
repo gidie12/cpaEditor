@@ -20,6 +20,7 @@ fn harness(file: Option<PathBuf>, theme: egui::Theme) -> Harness<'static, CpaEdi
         .with_size([1500.0, 900.0])
         .with_pixels_per_point(1.0)
         .with_theme(theme)
+        .with_render_cursor(false)
         .build_eframe(move |cc| CpaEditorApp::new(cc, file, false))
 }
 

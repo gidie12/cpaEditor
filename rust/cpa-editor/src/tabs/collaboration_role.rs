@@ -39,11 +39,8 @@ enum MenuAction {
 }
 
 /// Send points right (out of the partner), Receive points left (into the partner).
-fn arrow(direction: Direction) -> theme::Arrow {
-    match direction {
-        Direction::Send => theme::Arrow::Right,
-        Direction::Receive => theme::Arrow::Left,
-    }
+fn points_right(direction: Direction) -> bool {
+    direction == Direction::Send
 }
 
 fn key(node: NodeId) -> RowKey {
@@ -63,6 +60,18 @@ struct Detail {
     package_options: Vec<String>,
     channel_options: Vec<String>,
     problems: Vec<String>,
+    /// Action, package, channel and characteristics as shown, to see whether the user changed something.
+    original: (String, String, String, Characteristics),
+}
+
+impl Detail {
+    fn current(&self) -> (String, String, String, Characteristics) {
+        (self.action_name.clone(), self.package_id.clone(), self.channel_id.clone(), self.characteristics.clone())
+    }
+
+    fn is_changed(&self) -> bool {
+        self.action.is_some() && self.current() != self.original
+    }
 }
 
 #[derive(Clone)]
@@ -91,12 +100,12 @@ impl Default for CollaborationRoleTab {
             tree: TreeTable::new(
                 "collaboration_role",
                 &[
-                    ("Partner / Service / Direction", 330.0),
-                    ("Action", 140.0),
-                    ("Channel", 220.0),
-                    ("Package", 140.0),
+                    ("Partner / Service / Direction", 270.0),
+                    ("Action", 130.0),
+                    ("Channel", 170.0),
+                    ("Package", 120.0),
+                    ("Status", 100.0),
                     ("OtherPartyActionBinding", 260.0),
-                    ("Status", 90.0),
                 ],
             ),
             rows: Vec::new(),
@@ -172,15 +181,15 @@ impl CollaborationRoleTab {
                 action.action.clone(),
                 action.channel_ids.join(", "),
                 action.package_id.clone(),
-                action.other_party_binding.clone(),
                 status,
+                action.other_party_binding.clone(),
             ],
         );
         let color = match action.direction {
             Direction::Send => theme::ACCENT_LIGHT,
             Direction::Receive => theme::ACCENT_RECEIVE,
         };
-        row = row.icon(arrow(action.direction), color);
+        row = row.icon(points_right(action.direction), color);
         if !problems.is_empty() {
             row = row.text_color(PROBLEM_COLOR);
         }
@@ -228,6 +237,7 @@ impl CollaborationRoleTab {
         self.detail.package_options = roles::package_ids(document);
         self.detail.channel_options = party_info.map(|p| roles::channel_ids(document, p)).unwrap_or_default();
         self.detail.problems = roles::validate_action(document, element);
+        self.detail.original = self.detail.current();
     }
 
     /// Rebuilds the tree, selects the row of the node and shows it in the detail panel.
@@ -367,7 +377,7 @@ impl CollaborationRoleTab {
             ui.add_space(8.0);
             let can_add_action = matches!(selected, Some(Kind::Role | Kind::Action));
             let add = ui
-                .add_enabled(can_add_action, egui::Button::new("+ Service action"))
+                .add_enabled(can_add_action, egui::Button::new("+ Service Action"))
                 .on_disabled_hover_text("Select a service or an action first");
             if add.clicked() {
                 action = Some(MenuAction::AddAction);
@@ -404,7 +414,7 @@ impl CollaborationRoleTab {
         ui.add_space(2.0);
         ui.horizontal(|ui| {
             if self.detail.problems.is_empty() {
-                theme::badge(ui, "OK", theme::ok_color(ui));
+                theme::badge(ui, "No problems", theme::ok_color(ui));
             } else {
                 let count = self.detail.problems.len();
                 let text = if count == 1 { "1 problem".to_string() } else { format!("{count} problems") };
@@ -416,6 +426,7 @@ impl CollaborationRoleTab {
             ui.label(RichText::new(format!("• {problem}")).color(theme::error_color(ui)));
         }
         ui.add_space(8.0);
+        ui.add_space(-6.0);
         theme::section(ui, "Binding");
         form_grid("action_detail").show(ui, |ui| {
             ui.label("Action");
@@ -432,9 +443,20 @@ impl CollaborationRoleTab {
         ui.add_space(8.0);
         characteristics_frame(ui, "detail", &mut self.detail.characteristics, true);
         ui.add_space(12.0);
-        if ui.add(theme::primary_button("Save changes")).clicked() {
-            self.save_changes(shared);
-        }
+        let changed = self.detail.is_changed();
+        ui.horizontal(|ui| {
+            if theme::action_button(ui, "Save changes", true, changed).clicked() {
+                self.save_changes(shared);
+            }
+            if ui.add_enabled(changed, egui::Button::new("Discard")).clicked() {
+                if let Some(document) = shared.document.as_ref() {
+                    self.show_action(document);
+                }
+            }
+            if !changed {
+                ui.label(RichText::new("No changes").weak());
+            }
+        });
     }
 
     fn run(&mut self, action: MenuAction, document: &Document) {
@@ -551,7 +573,7 @@ impl Tab for CollaborationRoleTab {
         let max_width = ui.available_width() * 0.5;
         egui::Panel::right("collaboration_role_detail")
             .resizable(true)
-            .default_size(460.0)
+            .default_size(440.0)
             .min_size(340.0)
             .max_size(max_width)
             .show(ui, |ui| {

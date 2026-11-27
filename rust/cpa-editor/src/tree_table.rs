@@ -7,7 +7,7 @@
 use std::collections::HashSet;
 
 use eframe::egui::{
-    self, pos2, vec2, Align2, Color32, CursorIcon, FontId, Rect, Response, Sense, Stroke, TextStyle, Ui,
+    self, pos2, vec2, Color32, CursorIcon, FontId, Rect, Response, Sense, Stroke, TextStyle, Ui,
 };
 
 /// Identifies a row across frames, for example the index of its XML node.
@@ -26,8 +26,8 @@ pub struct TreeRow {
     pub header_bar: Option<Color32>,
     /// Weak text after the text of the first column.
     pub secondary: Option<String>,
-    /// An arrow painted before the text of the first column.
-    pub icon: Option<(crate::theme::Arrow, Color32)>,
+    /// A direction arrow (true = right) painted before the text of the first column.
+    pub icon: Option<(bool, Color32)>,
 }
 
 impl TreeRow {
@@ -56,8 +56,8 @@ impl TreeRow {
         self
     }
 
-    pub fn icon(mut self, arrow: crate::theme::Arrow, color: Color32) -> Self {
-        self.icon = Some((arrow, color));
+    pub fn icon(mut self, right: bool, color: Color32) -> Self {
+        self.icon = Some((right, color));
         self
     }
 
@@ -125,6 +125,12 @@ impl TreeTable {
         let font = TextStyle::Body.resolve(ui.style());
         let header_font = FontId { size: font.size + 1.0, ..font.clone() };
         let visuals = ui.visuals().clone();
+        // The last column takes the remaining width, so its text ends with an ellipsis instead of running out of view
+        let available = ui.available_width();
+        if let Some(((_, last), others)) = self.columns.split_last_mut() {
+            let others: f32 = others.iter().map(|(_, width)| width).sum();
+            *last = (available - others).max(120.0);
+        }
         let total_width: f32 = self.columns.iter().map(|(_, width)| width).sum();
 
         egui::ScrollArea::horizontal().id_salt(self.id.with("h")).auto_shrink([false, false]).show(ui, |ui| {
@@ -234,10 +240,10 @@ impl TreeTable {
                             }
                         }
                         x += INDENT;
-                        if let Some((arrow, color)) = row.icon {
+                        if let Some((right, color)) = row.icon {
                             let color = if selected { text_color } else { color };
-                            crate::theme::paint_arrow(ui.painter(), pos2(x + 5.0, rect.center().y), 9.0, arrow, color);
-                            x += 16.0;
+                            crate::theme::paint_direction(ui.painter(), pos2(x + 7.0, rect.center().y), 13.0, right, color);
+                            x += 20.0;
                         }
 
                         // The cells, each clipped to its column
@@ -314,13 +320,11 @@ impl TreeTable {
         for column in 0..self.columns.len() {
             let width = self.columns[column].1;
             let clip = Rect::from_min_max(pos2(left, rect.top()), pos2(left + width - 4.0, rect.bottom()));
-            ui.painter().with_clip_rect(clip).text(
-                pos2(left + 6.0, rect.center().y),
-                Align2::LEFT_CENTER,
-                &self.columns[column].0,
-                font.clone(),
-                color,
-            );
+            let mut job = egui::text::LayoutJob::simple_singleline(self.columns[column].0.clone(), font.clone(), color);
+            job.wrap = egui::text::TextWrapping::truncate_at_width((width - 10.0).max(0.0));
+            let painter = ui.painter().with_clip_rect(clip);
+            let galley = painter.layout_job(job);
+            painter.galley(pos2(left + 6.0, rect.center().y - galley.size().y / 2.0), galley, color);
             left += width;
             // A handle on the right border to drag the column wider or narrower
             let handle = Rect::from_center_size(pos2(left, rect.center().y), vec2(8.0, ROW_HEIGHT));

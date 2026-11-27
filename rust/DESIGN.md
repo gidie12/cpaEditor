@@ -13,8 +13,10 @@ helpers there instead of their own colours and sizes.
 - Fields and drop-down lists always have a visible 1 px border; disabled text keeps at least 3:1 contrast.
 
 ## Buttons
-- One **primary** button per screen for the main action (`theme::primary_button`): accent fill, white bold text,
-  minimum 96×28. Save CPA is primary in the bottom bar; Validate CPA on the validation screen.
+- At most one **primary** button in view (`theme::primary_button`, or `theme::action_button` with `primary`):
+  accent fill, white bold text, minimum 96×28. The primary button is the next step: Save CPA… only with unsaved
+  changes, Save changes only when the form differs from the CPA, Validate CPA before the first run. Otherwise these
+  are standard buttons. A disabled button is never primary.
 - **Danger** buttons (`theme::danger_button`) for delete actions: red text, disabled without a selection, separated
   from the add buttons and followed by a confirmation dialog.
 - Other buttons are standard egui buttons.
@@ -29,12 +31,19 @@ helpers there instead of their own colours and sizes.
 - A detail panel without a selection shows a centred empty state (weak text explaining what to select), never a
   disabled form.
 - Forms use one `Grid` with two columns: labels left, fields stretch to the same right edge.
-- The log is a collapsible, resizable bottom panel ("Log (n)"), with the file actions above it.
+- The log is a collapsible, resizable bottom panel ("Log (n)"), with the file actions above it; an empty log is
+  closed.
+- One verb per action: "Open CPA…" everywhere (menu, bottom bar, empty states).
 
 ## Trees and tables
 - Text that does not fit ends with "…"; the full text is in the tooltip.
 - Group rows (partners) are header rows: bold, slightly larger, a 3 px coloured bar on the left; no full light fill
-  in dark mode. Light fills are reserved for the selection.
+  in dark mode. Light fills are reserved for the selection. Partner colours are blue and violet, never a status
+  colour (red, amber, green).
+- The last column takes the remaining width; put the longest column last.
+- Send and Receive are shown with a drawn arrow (shaft and head), not a filled triangle, which means open/close.
+- The default egui fonts have only basic characters: no ▶ ⏷ ● ✓ ⚠ → ←. Draw shapes with `theme::paint_arrow` /
+  `theme::paint_direction` instead.
 - Secondary information in a row is weak text after the primary text.
 
 ## Empty states

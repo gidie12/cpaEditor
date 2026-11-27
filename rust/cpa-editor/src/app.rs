@@ -150,7 +150,7 @@ impl CpaEditorApp {
 
     fn bottom_panel(&mut self, ui: &mut egui::Ui) {
         // A collapsed log has its own panel id, so the height of the open log is kept
-        let panel = if self.log_open {
+        let panel = if self.log_open && !self.shared.log.lines().is_empty() {
             egui::Panel::bottom("log").resizable(true).default_size(150.0).min_size(90.0)
         } else {
             egui::Panel::bottom("log_closed").resizable(false)
@@ -158,12 +158,12 @@ impl CpaEditorApp {
         panel.show(ui, |ui| {
             ui.add_space(6.0);
             ui.horizontal(|ui| {
-                if ui.button("Load CPA…").on_hover_text(ui.ctx().format_shortcut(&OPEN_SHORTCUT)).clicked() {
+                if ui.button("Open CPA…").on_hover_text(ui.ctx().format_shortcut(&OPEN_SHORTCUT)).clicked() {
                     self.load_cpa_dialog();
                 }
+                // Primary only with unsaved changes: then saving is the next step
                 let can_save = self.shared.document.is_some();
-                let save = ui
-                    .add_enabled(can_save, theme::primary_button("Save CPA…"))
+                let save = theme::action_button(ui, "Save CPA…", self.shared.is_dirty(), can_save)
                     .on_hover_text(ui.ctx().format_shortcut(&SAVE_SHORTCUT));
                 if save.clicked() {
                     self.save_cpa_dialog();
@@ -176,9 +176,7 @@ impl CpaEditorApp {
                             ui.label(RichText::new("• Unsaved changes").color(theme::warning_color(ui)));
                         }
                     }
-                    None => {
-                        ui.label(RichText::new("No CPA loaded").weak());
-                    }
+                    None => {}
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     ui.checkbox(&mut self.shared.log.show_debug, "Show debug messages");
@@ -186,10 +184,12 @@ impl CpaEditorApp {
             });
             ui.add_space(4.0);
             let count = self.shared.log.lines().len();
+            // An empty log stays closed
+            let log_open = self.log_open && count > 0;
             let header = ui
                 .horizontal(|ui| {
                     let (icon, _) = ui.allocate_exact_size(egui::vec2(14.0, 18.0), egui::Sense::hover());
-                    let arrow = if self.log_open { theme::Arrow::Down } else { theme::Arrow::Right };
+                    let arrow = if log_open { theme::Arrow::Down } else { theme::Arrow::Right };
                     theme::paint_arrow(ui.painter(), icon.center(), 8.0, arrow, ui.visuals().text_color());
                     ui.add(egui::Button::new(RichText::new(format!("Log ({count})")).strong()).frame(false))
                 })
@@ -197,7 +197,7 @@ impl CpaEditorApp {
             if header.clicked() {
                 self.log_open = !self.log_open;
             }
-            if !self.log_open {
+            if !log_open {
                 return;
             }
             let scroll_to_end = std::mem::take(&mut self.shared.log.scroll_to_end);

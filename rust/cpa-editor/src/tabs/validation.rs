@@ -2,15 +2,22 @@
 
 use chrono::{DateTime, Local};
 use cpa_core::validation::validate_document;
+use cpa_core::xml::Document;
 use eframe::egui::{self, RichText, Ui};
 
 use super::{no_cpa, Shared, Tab};
 use crate::theme;
 
+/// One schema error: the message and where it is (a line number or an element path), when known.
+struct Problem {
+    message: String,
+    location: Option<String>,
+}
+
 /// The outcome of the last validation.
 enum Outcome {
     Valid,
-    Errors(Vec<String>),
+    Errors(Vec<Problem>),
     /// The validation itself failed, e.g. a schema that could not be loaded.
     Failed(String),
 }
@@ -27,12 +34,23 @@ impl ValidationTab {
         let Some(document) = &shared.document else { return };
         let outcome = match validate_document(document) {
             Ok(errors) if errors.is_empty() => {
-                shared.log.info("Validation found no problems");
+                shared.log.info("Validation found no errors");
                 Outcome::Valid
             }
             Ok(errors) => {
-                shared.log.info(format!("Validation found {} problem(s)", errors.len()));
-                Outcome::Errors(errors.iter().map(|e| e.to_string()).collect())
+                shared.log.info(format!("Validation found {}", count_text(errors.len())));
+                let problems = errors
+                    .iter()
+                    .map(|e| Problem {
+                        location: if e.line > 0 {
+                            Some(format!("Line {}", e.line))
+                        } else {
+                            idref_location(document, &e.message)
+                        },
+                        message: e.message.clone(),
+                    })
+                    .collect();
+                Outcome::Errors(problems)
             }
             Err(e) => {
                 shared.log.error(&e);
@@ -73,19 +91,16 @@ impl Tab for ValidationTab {
         let mut run = false;
         ui.add_space(4.0);
         ui.horizontal(|ui| {
-            run = ui.add(theme::primary_button("Validate again")).clicked();
+            run = theme::action_button(ui, "Validate again", false, true).clicked();
             ui.add_space(8.0);
             match outcome {
                 Outcome::Valid => theme::badge(ui, "Valid", theme::ok_color(ui)),
-                Outcome::Errors(errors) => {
-                    let text = if errors.len() == 1 { "1 error".to_string() } else { format!("{} errors", errors.len()) };
-                    theme::badge(ui, &text, theme::error_color(ui));
-                }
+                Outcome::Errors(errors) => theme::badge(ui, &count_text(errors.len()), theme::error_color(ui)),
                 Outcome::Failed(_) => theme::badge(ui, "Validation failed", theme::error_color(ui)),
             }
             ui.label(RichText::new(format!("Last run {}", time.format("%H:%M:%S"))).weak());
             if *revision != shared.revision {
-                ui.label(RichText::new("· the CPA has changed since").color(theme::warning_color(ui)));
+                ui.label(RichText::new("· Changed since the last run, validate again").color(theme::warning_color(ui)));
             }
         });
         ui.add_space(8.0);
@@ -97,43 +112,61 @@ impl Tab for ValidationTab {
                 ui.label(RichText::new(message).color(theme::error_color(ui)));
             }
             Outcome::Errors(errors) => {
-                egui::Frame::new()
-                    .fill(ui.visuals().extreme_bg_color)
-                    .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
-                    .corner_radius(4)
-                    .inner_margin(8)
-                    .show(ui, |ui| {
-                        let with_lines = errors.iter().any(|e| e.starts_with("Line "));
-                        egui::ScrollArea::vertical().auto_shrink([false, true]).show(ui, |ui| {
-                            for (index, error) in errors.iter().enumerate() {
-                                // "Line N: message": the line number in its own column
-                                let (line, message) = match error.split_once(": ") {
-                                    Some((line, message)) if line.starts_with("Line ") => (line, message),
-                                    _ => ("", error.as_str()),
-                                };
-                                ui.horizontal_top(|ui| {
-                                    if with_lines {
-                                        ui.add_sized(
-                                            [70.0, 18.0],
-                                            egui::Label::new(RichText::new(line).monospace().weak()),
-                                        );
-                                    }
-                                    ui.add(
-                                        egui::Label::new(RichText::new(message).color(theme::error_color(ui)))
-                                            .wrap()
-                                            .selectable(true),
-                                    );
-                                });
-                                if index + 1 < errors.len() {
-                                    ui.separator();
-                                }
-                            }
-                        });
-                    });
+                ui.label(RichText::new("Fix these errors before you save the CPA.").weak());
+                ui.add_space(4.0);
+                egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
+                    for problem in errors {
+                        error_card(ui, problem);
+                        ui.add_space(6.0);
+                    }
+                });
             }
         }
         if run {
             self.validate(shared);
         }
     }
+}
+
+fn count_text(count: usize) -> String {
+    if count == 1 {
+        "1 error".to_string()
+    } else {
+        format!("{count} errors")
+    }
+}
+
+/// One error as a card: a red bar, the message in normal text and the location in weak monospace.
+fn error_card(ui: &mut Ui, problem: &Problem) {
+    let error = theme::error_color(ui);
+    let response = egui::Frame::new()
+        .fill(ui.visuals().extreme_bg_color)
+        .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
+        .corner_radius(4)
+        .inner_margin(egui::Margin { left: 14, right: 10, top: 8, bottom: 8 })
+        .show(ui, |ui| {
+            ui.set_width(ui.available_width());
+            let text = RichText::new(&problem.message).color(ui.visuals().strong_text_color());
+            ui.add(egui::Label::new(text).wrap().selectable(true));
+            if let Some(location) = &problem.location {
+                ui.add(egui::Label::new(RichText::new(location).monospace().weak()).wrap().selectable(true));
+            }
+        })
+        .response;
+    let rect = response.rect;
+    let bar = egui::Rect::from_min_size(rect.min, egui::vec2(3.0, rect.height()));
+    ui.painter().rect_filled(bar, egui::CornerRadius { nw: 4, sw: 4, ne: 0, se: 0 }, error);
+}
+
+/// Where a dangling IDREF is used: the path of the element whose attribute holds the missing id.
+fn idref_location(document: &Document, message: &str) -> Option<String> {
+    let id = message.strip_prefix("IDREF '")?.split('\'').next()?;
+    let root = document.root()?;
+    let (element, attribute) = document.descendants(root).filter(|&n| document.is_element(n)).find_map(|n| {
+        document.attributes(n).iter().find(|a| a.value == id).map(|a| (n, a.name.local.clone()))
+    })?;
+    let mut names: Vec<&str> =
+        document.ancestors(element).filter(|&n| document.is_element(n)).map(|n| document.local_name(n)).collect();
+    names.reverse();
+    Some(format!("Used in {} @{attribute}", names.join(" / ")))
 }
