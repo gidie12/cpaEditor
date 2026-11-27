@@ -9,6 +9,7 @@ use eframe::egui::Ui;
 
 use crate::log::Log;
 
+pub mod certificates;
 pub mod collaboration_role;
 pub mod validation;
 

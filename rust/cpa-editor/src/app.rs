@@ -7,6 +7,7 @@ use eframe::egui::{self, Key, KeyboardShortcut, Modifiers, RichText, Stroke};
 
 use crate::help_window::{HelpWindows, UpdateCheck};
 use crate::log::Level;
+use crate::tabs::certificates::CertificatesTab;
 use crate::tabs::collaboration_role::CollaborationRoleTab;
 use crate::tabs::validation::ValidationTab;
 use crate::tabs::{Placeholder, Shared, Tab};
@@ -41,7 +42,7 @@ impl CpaEditorApp {
                 Box::new(Placeholder("Transport")),
                 Box::new(Placeholder("Comment")),
                 Box::new(Placeholder("XML editor")),
-                Box::new(Placeholder("Certificates")),
+                Box::new(CertificatesTab::default()),
                 Box::new(ValidationTab::default()),
             ],
             current_tab: 0,
