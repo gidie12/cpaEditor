@@ -21,6 +21,13 @@ pub const XML_NAMESPACE: &str = "http://www.w3.org/XML/1998/namespace";
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct NodeId(usize);
 
+impl NodeId {
+    /// A number that identifies the node within its document, for example as key of a row in the GUI.
+    pub fn index(self) -> usize {
+        self.0
+    }
+}
+
 /// A name with its namespace URI. The prefix is the one of the parsed document; a new name gets the prefix that is
 /// in scope when the document is written.
 #[derive(Clone, Debug, PartialEq, Eq)]
