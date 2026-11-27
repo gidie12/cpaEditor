@@ -801,7 +801,7 @@ dependencies = [
 
 [[package]]
 name = "cpa-core"
-version = "2.0.0-beta.1"
+version = "2.0.0-beta.2"
 dependencies = [
  "base64 0.23.1",
  "chrono",
@@ -824,7 +824,7 @@ dependencies = [
 
 [[package]]
 name = "cpa-editor"
-version = "2.0.0-beta.1"
+version = "2.0.0-beta.2"
 dependencies = [
  "chrono",
  "cpa-core",
