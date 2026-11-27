@@ -44,4 +44,5 @@ Digikoppeling XSD or Schematron.
 ## Docs
 - README, EN/NL guides and schema reference pages for the Rust version.
   Include: General lists the other PartyIds of a partner (the first is edited, the others shown, change them in
-  the XML editor).
+  the XML editor). Certificates: "Remove all certificates…" strips certificates, transport TLS, trust anchors and
+  message signing/encryption; https endpoints become http (warning per endpoint in the log).

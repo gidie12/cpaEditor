@@ -626,6 +626,102 @@ pub fn end_date_message(end_date: &str, expiry: &CertificateExpiry) -> String {
     )
 }
 
+// ----------------------------------------------------------------------------------------------------------------
+// Stripping all certificates
+// ----------------------------------------------------------------------------------------------------------------
+
+/// The elements that hold a certificate reference which the schema requires, so they go together with the
+/// certificates. All of them are optional in their parent, so the CPA stays valid against the schema.
+const CERTIFICATE_HOLDERS: [&str; 8] = [
+    // TLS of a transport: without certificates the endpoints are plain HTTP
+    "TransportClientSecurity",
+    "TransportServerSecurity",
+    // Trusted CAs of a SecurityDetails (the SecurityDetails itself stays: securityId references keep working)
+    "TrustAnchors",
+    // Message signing and encryption of a DocExchange
+    "SenderNonRepudiation",
+    "ReceiverNonRepudiation",
+    "SenderDigitalEnvelope",
+    "ReceiverDigitalEnvelope",
+    // Optional certificate of a CollaborationRole
+    "ApplicationCertificateRef",
+];
+
+/// Removes an element with the whitespace before it and keeps the whitespace after it, so the next sibling or the
+/// closing tag of the parent keeps its indentation (lxml's `parent.remove` takes the whitespace after it instead,
+/// which leaves the closing tag of the parent indented one level too deep when the last child goes).
+fn remove_with_indentation(doc: &mut Document, element: NodeId) {
+    if let Some(parent) = doc.parent(element) {
+        let siblings = doc.children(parent).to_vec();
+        if let Some(position) = siblings.iter().position(|&s| s == element) {
+            let before: Vec<NodeId> = siblings[..position]
+                .iter()
+                .rev()
+                .copied()
+                .take_while(|&s| matches!(doc.kind(s), crate::xml::NodeKind::Text(text) if text.trim().is_empty()))
+                .collect();
+            for whitespace in before {
+                doc.detach(whitespace);
+            }
+        }
+    }
+    doc.detach(element);
+}
+
+/// What [`strip_certificates`] removed and changed.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct StripReport {
+    /// The certIds of the removed Certificate elements, in document order.
+    pub cert_ids: Vec<String>,
+    /// Per element name, how many were removed (only names with at least one), in the order of `CERTIFICATE_HOLDERS`.
+    pub removed: Vec<(&'static str, usize)>,
+    /// Endpoints whose uri changed from https to http: (transportId, old uri, new uri).
+    pub endpoints: Vec<(String, String, String)>,
+}
+
+/// Removes every Certificate element and everything that refers to one: the TLS settings of the transports, trust
+/// anchors, message signing and encryption, application certificates. The endpoints of the transports change from
+/// `https://` to `http://`, as a transport without TLS is plain HTTP. The result is valid against the schema when
+/// the CPA was.
+pub fn strip_certificates(doc: &mut Document) -> StripReport {
+    let mut report = StripReport::default();
+    let Some(root) = doc.root() else { return report };
+    let named = |doc: &Document, local: &str| -> Vec<NodeId> {
+        doc.descendants(root).filter(|&n| doc.is_named(n, Some(CPA_NAMESPACE), local)).collect()
+    };
+
+    let certificates = named(doc, "Certificate");
+    for &certificate in &certificates {
+        report.cert_ids.push(doc.attribute(certificate, Some(CPA_NAMESPACE), "certId").unwrap_or_default().to_string());
+    }
+    for certificate in certificates {
+        remove_with_indentation(doc, certificate);
+    }
+    for local in CERTIFICATE_HOLDERS {
+        let elements = named(doc, local);
+        if !elements.is_empty() {
+            report.removed.push((local, elements.len()));
+        }
+        for element in elements {
+            remove_with_indentation(doc, element);
+        }
+    }
+
+    for transport in named(doc, "Transport") {
+        let transport_id = doc.attribute(transport, Some(CPA_NAMESPACE), "transportId").unwrap_or_default().to_string();
+        let endpoints: Vec<NodeId> =
+            doc.descendants(transport).filter(|&n| doc.is_named(n, Some(CPA_NAMESPACE), "Endpoint")).collect();
+        for endpoint in endpoints {
+            let Some(uri) = doc.attribute(endpoint, Some(CPA_NAMESPACE), "uri").map(str::to_string) else { continue };
+            let Some(rest) = uri.strip_prefix("https://").or_else(|| uri.strip_prefix("HTTPS://")) else { continue };
+            let http = format!("http://{rest}");
+            doc.set_attribute(endpoint, Some(CPA_NAMESPACE), "uri", &http);
+            report.endpoints.push((transport_id.clone(), uri, http));
+        }
+    }
+    report
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -601,3 +601,28 @@ fn read_general_of_generated_cpa() {
     assert_eq!(fields.party_ids, ["", ""]);
     assert_eq!(fields.start_date, "2020-01-01T00:00:00Z");
 }
+
+/// Stripping removes every certificate and every reference to one, turns https endpoints into http, and keeps the
+/// CPA valid: the dangling AnchorCertificateRef of the test CPA goes with its TrustAnchors.
+#[test]
+fn strip_certificates_removes_certificates_and_references() {
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../application/tests/resources/cpas/full_test_cpa.xml");
+    let mut doc = cpa_core::xml::Document::parse_bytes(&std::fs::read(path).unwrap()).unwrap();
+    let report = cpa_core::certificates::strip_certificates(&mut doc);
+
+    assert_eq!(report.cert_ids.len(), 4, "{report:?}");
+    assert!(report.removed.iter().any(|(name, _)| *name == "TransportClientSecurity"), "{report:?}");
+    assert!(report.removed.iter().any(|(name, _)| *name == "TrustAnchors"), "{report:?}");
+    assert!(!report.endpoints.is_empty());
+    assert!(report.endpoints.iter().all(|(_, old, new)| old.starts_with("https://") && new.starts_with("http://")));
+
+    let xml = doc.to_xml();
+    for gone in ["<tns:Certificate ", "CertificateRef", "TransportServerSecurity", "TransportClientSecurity", "https://party"] {
+        assert!(!xml.contains(gone), "{gone} is still in the CPA");
+    }
+    assert!(xml.contains("<tns:SecurityDetails"), "SecurityDetails stays for its securityId references");
+    let errors = cpa_core::validation::validate_document(&doc).unwrap();
+    assert!(errors.is_empty(), "{errors:?}");
+    // A second time changes nothing
+    assert_eq!(cpa_core::certificates::strip_certificates(&mut doc), Default::default());
+}

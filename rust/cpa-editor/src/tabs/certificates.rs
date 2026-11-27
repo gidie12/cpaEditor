@@ -135,6 +135,8 @@ pub struct CertificatesTab {
     built_for: Option<u64>,
     generation: u64,
     confirm: Option<Confirm<PendingUpload>>,
+    /// The question before all certificates are stripped from the CPA.
+    confirm_strip: Option<Confirm<()>>,
 }
 
 impl Default for CertificatesTab {
@@ -151,6 +153,7 @@ impl Default for CertificatesTab {
             built_for: None,
             generation: 0,
             confirm: None,
+            confirm_strip: None,
         }
     }
 }
@@ -230,7 +233,9 @@ impl CertificatesTab {
     }
 
     /// The badges above the tree: how many certificates are expired or expire soon, and the next expiry.
-    fn summary_bar(&self, ui: &mut Ui) {
+    /// Returns true when "Remove all certificates…" was clicked.
+    fn summary_bar(&self, ui: &mut Ui) -> bool {
+        let mut strip = false;
         let mut expired = 0;
         let mut soon = 0;
         let mut total = 0;
@@ -270,7 +275,46 @@ impl CertificatesTab {
                 ));
             }
             ui.label(RichText::new(text).weak());
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let button = theme::danger(ui, "Remove all certificates…", true);
+                let tip = "Remove every certificate and the settings that need one; endpoints change from https to http";
+                strip = button.on_hover_text(tip).clicked();
+            });
         });
+        strip
+    }
+
+    /// Asks before stripping, with what will be removed and changed.
+    fn ask_strip(&mut self) {
+        let certificates = self.entries.len();
+        let text = format!(
+            "This removes {} from the CPA, and everything that needs a certificate:\n\n\
+             • the TLS settings of every transport: the endpoints change from https:// to http://\n\
+             • the trust anchors of the security details\n\
+             • message signing and encryption of the document exchanges\n\n\
+             The CPA stays valid. Nothing is written to the file until you save the CPA.",
+            plural(certificates, "certId with its certificates", "certIds with their certificates")
+        );
+        self.confirm_strip =
+            Some(Confirm { title: "Remove all certificates".into(), text, with_cancel: false, subject: () });
+    }
+
+    /// Strips the certificates and reports what changed in the log; every changed endpoint is a warning.
+    fn strip(&mut self, shared: &mut Shared) {
+        let Some(document) = shared.document.as_mut() else { return };
+        let report = cpa_core::certificates::strip_certificates(document);
+        shared.changed();
+        let ids = if report.cert_ids.is_empty() { "none".to_string() } else { report.cert_ids.join(", ") };
+        shared.log.info(format!("Removed {}: {ids}", plural(report.cert_ids.len(), "certificate", "certificates")));
+        for (name, count) in &report.removed {
+            shared.log.info(format!("Removed {count} {name}"));
+        }
+        for (transport, old, new) in &report.endpoints {
+            shared.log.warning(format!("Endpoint of transport {transport} is now plain HTTP: {old} -> {new}"));
+        }
+        if report.endpoints.is_empty() {
+            shared.log.info("No https endpoints to change");
+        }
     }
 
     /// `dirty`: the CPA has unsaved changes, so Save CPA… is the primary button and Upload is not.
@@ -569,7 +613,9 @@ impl Tab for CertificatesTab {
         }
 
         ui.add_space(2.0);
-        self.summary_bar(ui);
+        if self.summary_bar(ui) {
+            self.ask_strip();
+        }
         ui.add_space(6.0);
 
         let mut action = None;
@@ -610,6 +656,14 @@ impl Tab for CertificatesTab {
             self.run(action, ui, shared);
         }
 
+        if let Some(confirm) = &self.confirm_strip {
+            if let Some((answer, ())) = confirm.show(ui.ctx()) {
+                self.confirm_strip = None;
+                if answer == Answer::Yes {
+                    self.strip(shared);
+                }
+            }
+        }
         if let Some(confirm) = &self.confirm {
             if let Some((answer, pending)) = confirm.show(ui.ctx()) {
                 self.confirm = None;

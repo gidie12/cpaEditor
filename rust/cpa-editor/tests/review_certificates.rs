@@ -6,6 +6,7 @@
 //! The PNGs are written to `cpa-editor/tests/snapshots/review/certificates-*-r<round>.png`. The status of the
 //! certificates depends on the date: on 2026-11-27 every leaf certificate of full_test_cpa.xml is expired.
 
+use egui_kittest::kittest::Queryable;
 use std::path::{Path, PathBuf};
 
 use cpa_editor::app::CpaEditorApp;
@@ -54,6 +55,17 @@ fn review_certificates() {
             h.run_steps(2);
         }
         save(&mut h, &format!("certificates-selected-{suffix}"));
+
+        // Remove all certificates: the question, then the result on the Transport tab and in the log
+        h.get_by_label("Remove all certificates…").click();
+        h.run_steps(2);
+        save(&mut h, &format!("certificates-strip-confirm-{suffix}"));
+        h.get_by_role_and_label(egui::accesskit::Role::Button, "Remove all certificates").click();
+        h.run_steps(2);
+        save(&mut h, &format!("certificates-stripped-{suffix}"));
+        h.state_mut().select_tab(2);
+        h.run_steps(2);
+        save(&mut h, &format!("certificates-stripped-transport-{suffix}"));
 
         // A CPA without certificates
         let mut h = harness(resource("full_cpa_p.xml"), theme);
