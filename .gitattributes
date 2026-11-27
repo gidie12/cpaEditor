@@ -1,0 +1,3 @@
+# Test data of the Rust version is compared byte for byte: no line-ending conversion on Windows checkouts
+rust/cpa-core/tests/** -text
+rust/cpa-editor/tests/** -text
