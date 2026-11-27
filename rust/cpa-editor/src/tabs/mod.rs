@@ -13,7 +13,9 @@ pub mod certificates;
 pub mod collaboration_role;
 pub mod comment;
 pub mod general;
+pub mod transport;
 pub mod validation;
+pub mod xml_editor;
 
 /// State shared by all tabs.
 #[derive(Default)]

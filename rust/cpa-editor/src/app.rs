@@ -11,8 +11,10 @@ use crate::tabs::certificates::CertificatesTab;
 use crate::tabs::collaboration_role::CollaborationRoleTab;
 use crate::tabs::comment::CommentTab;
 use crate::tabs::general::GeneralTab;
+use crate::tabs::transport::TransportTab;
 use crate::tabs::validation::ValidationTab;
-use crate::tabs::{Placeholder, Shared, Tab};
+use crate::tabs::xml_editor::XmlEditorTab;
+use crate::tabs::{Shared, Tab};
 use crate::theme;
 
 const OPEN_SHORTCUT: KeyboardShortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::O);
@@ -41,9 +43,9 @@ impl CpaEditorApp {
             tabs: vec![
                 Box::new(GeneralTab::default()),
                 Box::new(CollaborationRoleTab::default()),
-                Box::new(Placeholder("Transport")),
+                Box::new(TransportTab::default()),
                 Box::new(CommentTab::default()),
-                Box::new(Placeholder("XML editor")),
+                Box::new(XmlEditorTab::default()),
                 Box::new(CertificatesTab::default()),
                 Box::new(ValidationTab::default()),
             ],
