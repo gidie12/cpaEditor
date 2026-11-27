@@ -485,6 +485,10 @@ pub struct NewCpaOptions {
     /// Status `proposed`: a new CPA still has to be agreed.
     pub reset_status: bool,
     pub strip_certificates: bool,
+    /// The PartyId of each partner in the new CPA (the first PartyId of the PartyInfo).
+    pub party_ids: Vec<String>,
+    /// Rename the ids: the code of each partner in the ids (see [`id_code`]) becomes its PartyId.
+    pub rename_ids: bool,
 }
 
 /// The proposed CPAId of a new CPA: a version number at the end goes up by one (`..._2` becomes `..._3`, the
@@ -510,12 +514,220 @@ pub fn new_cpa_defaults(doc: &Document) -> NewCpaOptions {
         (Some(start), Some(end)) if end > start => end - start,
         _ => chrono::Duration::days(365),
     };
+    let party_ids = current_party_ids(doc);
     NewCpaOptions {
-        cpa_id: next_cpa_id(fields.cpa_id.trim()),
+        cpa_id: next_cpa_id(&replace_codes(fields.cpa_id.trim(), &code_renames(doc, &party_ids))),
         start_date: crate::dates::format_cpa_date(now),
         end_date: crate::dates::format_cpa_date(now + length),
         reset_status: true,
         strip_certificates: false,
+        party_ids,
+        rename_ids: true,
+    }
+}
+
+/// The first PartyId of every partner, trimmed.
+pub fn current_party_ids(doc: &Document) -> Vec<String> {
+    party_infos(doc)
+        .iter()
+        .map(|&party| doc.find(party, Some(CPA_NAMESPACE), "PartyId").map(|id| doc.text_trimmed(id)).unwrap_or_default())
+        .collect()
+}
+
+/// Whether `text[start..end]` is a whole word: no letter or digit right before or after it (`_`, `-`, `.` and `:`
+/// separate words).
+fn whole_word(text: &str, start: usize, end: usize) -> bool {
+    let before = text[..start].chars().next_back();
+    let after = text[end..].chars().next();
+    !before.is_some_and(char::is_alphanumeric) && !after.is_some_and(char::is_alphanumeric)
+}
+
+/// Replaces every whole-word occurrence of the codes in one pass (the longest code first where they overlap), so a
+/// new value that equals another code is not replaced again.
+pub fn replace_codes(text: &str, renames: &[(String, String)]) -> String {
+    let mut ordered: Vec<&(String, String)> = renames.iter().filter(|(old, new)| !old.is_empty() && old != new).collect();
+    ordered.sort_by_key(|(old, _)| std::cmp::Reverse(old.len()));
+    let mut result = String::new();
+    let mut position = 0;
+    'scan: while position < text.len() {
+        for (old, new) in &ordered {
+            let end = position + old.len();
+            if text[position..].starts_with(old.as_str()) && whole_word(text, position, end) {
+                result.push_str(new);
+                position = end;
+                continue 'scan;
+            }
+        }
+        let character = text[position..].chars().next().unwrap_or_default();
+        result.push(character);
+        position += character.len_utf8().max(1);
+    }
+    result
+}
+
+/// The ID values of the elements of a partner.
+fn partner_ids(doc: &Document, party: NodeId) -> Vec<String> {
+    doc.descendants(party)
+        .filter_map(|node| {
+            let element = doc.element(node)?;
+            let local = &element.name.local;
+            let ids: Vec<String> = element
+                .attributes
+                .iter()
+                .filter(|a| a.name.namespace.as_deref() == Some(CPA_NAMESPACE))
+                .filter(|a| {
+                    crate::validation::ID_ATTRIBUTES
+                        .iter()
+                        .any(|(owner, name)| *name == a.name.local && owner.is_none_or(|owner| owner == local))
+                })
+                .map(|a| a.value.trim().to_string())
+                .collect();
+            Some(ids)
+        })
+        .flatten()
+        .collect()
+}
+
+/// The code of a partner in the ids, like `BROKER` in `BROKER_T_HTTPS` and `BROKER_DE_S__R_`: its PartyId when that
+/// is a word in most of its ids, otherwise the common start of its ids up to an underscore. None when its ids
+/// have no common code.
+pub fn id_code(doc: &Document, party_index: usize) -> Option<String> {
+    let party = *party_infos(doc).get(party_index)?;
+    let ids = partner_ids(doc, party);
+    if ids.is_empty() {
+        return None;
+    }
+    let party_id = current_party_ids(doc).get(party_index).cloned().unwrap_or_default();
+    if !party_id.is_empty() {
+        let with_party_id = ids
+            .iter()
+            .filter(|id| id.match_indices(party_id.as_str()).any(|(start, m)| whole_word(id, start, start + m.len())))
+            .count();
+        if with_party_id * 2 >= ids.len() {
+            return Some(party_id);
+        }
+    }
+    let first = &ids[0];
+    let mut common = first.len();
+    for id in &ids[1..] {
+        common = common.min(first.bytes().zip(id.bytes()).take_while(|(a, b)| a == b).count());
+    }
+    while !first.is_char_boundary(common) {
+        common -= 1;
+    }
+    // Up to the last underscore, which every id must have right after the code
+    let code = &first[..common];
+    let code = &code[..code.rfind('_')?];
+    (!code.is_empty() && ids.iter().all(|id| id[code.len()..].starts_with('_'))).then(|| code.to_string())
+}
+
+/// The renames of the codes in the ids: (code, new PartyId) per partner whose ids have a code.
+pub fn code_renames(doc: &Document, party_ids: &[String]) -> Vec<(String, String)> {
+    let old_ids = current_party_ids(doc);
+    let mut renames = Vec::new();
+    for (index, new) in party_ids.iter().enumerate() {
+        let new = new.trim().to_string();
+        if let Some(code) = id_code(doc, index) {
+            renames.push((code, new.clone()));
+        }
+        // The old PartyId itself (in a CPAId, for example) also becomes the new one
+        if let Some(old) = old_ids.get(index).filter(|old| !old.is_empty()) {
+            renames.push((old.clone(), new));
+        }
+    }
+    renames.sort();
+    renames.dedup();
+    renames
+}
+
+/// Every ID and IDREF value and the new value it gets when the ids are renamed, only those that change; sorted.
+/// Error when two ids would get the same name or a new id is not a valid name.
+pub fn id_renames(doc: &Document, party_ids: &[String]) -> Result<Vec<(String, String)>, String> {
+    let renames = code_renames(doc, party_ids);
+    let Some(root) = doc.root() else { return Ok(Vec::new()) };
+    let mut ids = std::collections::BTreeSet::new();
+    for index in 0..party_infos(doc).len() {
+        ids.extend(partner_ids(doc, party_infos(doc)[index]));
+    }
+    ids.extend(partner_ids(doc, root));
+    let mut changes = Vec::new();
+    let mut new_names = std::collections::HashMap::new();
+    for id in &ids {
+        let new = replace_codes(id, &renames);
+        if let Some(other) = new_names.insert(new.clone(), id.clone()) {
+            return Err(format!("{other} and {id} would both be renamed to {new}"));
+        }
+    }
+    // References to an id that does not exist are renamed the same way, so they keep pointing at the same name
+    let all: std::collections::BTreeSet<String> = ids.into_iter().chain(references(doc)).collect();
+    for id in &all {
+        let new = replace_codes(id, &renames);
+        if &new != id {
+            if !is_ncname(&new) {
+                return Err(format!(
+                    "{new} is not a valid id: an id starts with a letter or _ and has no spaces or colons"
+                ));
+            }
+            changes.push((id.clone(), new));
+        }
+    }
+    Ok(changes)
+}
+
+/// Every IDREF value in the CPA (attributes and element text), trimmed.
+fn references(doc: &Document) -> Vec<String> {
+    let Some(root) = doc.root() else { return Vec::new() };
+    let mut values = Vec::new();
+    for node in doc.descendants(root) {
+        let Some(element) = doc.element(node) else { continue };
+        if element.name.namespace.as_deref() != Some(CPA_NAMESPACE) {
+            continue;
+        }
+        for attribute in &element.attributes {
+            if attribute.name.namespace.as_deref() == Some(CPA_NAMESPACE)
+                && crate::validation::IDREF_ATTRIBUTES.contains(&attribute.name.local.as_str())
+            {
+                values.push(attribute.value.trim().to_string());
+            }
+        }
+        if crate::validation::IDREF_ELEMENTS.contains(&element.name.local.as_str()) {
+            values.push(doc.text_trimmed(node));
+        }
+    }
+    values
+}
+
+/// Renames the ids in the whole CPA: ID attributes, IDREF attributes and IDREF element text.
+fn rename_ids(doc: &mut Document, renames: &[(String, String)]) {
+    let map: std::collections::HashMap<&str, &str> = renames.iter().map(|(a, b)| (a.as_str(), b.as_str())).collect();
+    let Some(root) = doc.root() else { return };
+    let nodes: Vec<NodeId> = doc.descendants(root).collect();
+    for node in nodes {
+        let Some(element) = doc.element(node) else { continue };
+        if element.name.namespace.as_deref() != Some(CPA_NAMESPACE) {
+            continue;
+        }
+        let local = element.name.local.clone();
+        let changes: Vec<(String, String)> = element
+            .attributes
+            .iter()
+            .filter(|a| a.name.namespace.as_deref() == Some(CPA_NAMESPACE))
+            .filter(|a| {
+                crate::validation::IDREF_ATTRIBUTES.contains(&a.name.local.as_str())
+                    || crate::validation::ID_ATTRIBUTES.iter().any(|(_, name)| *name == a.name.local)
+            })
+            .filter_map(|a| map.get(a.value.trim()).map(|new| (a.name.local.clone(), new.to_string())))
+            .collect();
+        for (attribute, value) in changes {
+            doc.set_attribute(node, Some(CPA_NAMESPACE), &attribute, &value);
+        }
+        if crate::validation::IDREF_ELEMENTS.contains(&local.as_str()) {
+            // The whitespace around the value (a value on its own line) stays
+            let text = doc.text(node).unwrap_or_default();
+            if let Some(new) = map.get(text.trim()) {
+                doc.set_text(node, Some(&text.replacen(text.trim(), new, 1)));
+            }
+        }
     }
 }
 
@@ -543,6 +755,18 @@ pub fn check_new_cpa_options(doc: &Document, options: &NewCpaOptions) -> Vec<(Ge
             errors.push((GeneralField::EndDate, "The end date must be after the start date".to_string()));
         }
     }
+    for (index, party_id) in options.party_ids.iter().enumerate() {
+        if party_id.trim().is_empty() {
+            errors.push((GeneralField::PartyId(index), "Enter a PartyId".to_string()));
+        } else if let Err(e) = check_xml_text(party_id) {
+            errors.push((GeneralField::PartyId(index), e));
+        }
+    }
+    if options.rename_ids && errors.iter().all(|(field, _)| !matches!(field, GeneralField::PartyId(_))) {
+        if let Err(e) = id_renames(doc, &options.party_ids) {
+            errors.push((GeneralField::PartyId(0), e));
+        }
+    }
     errors
 }
 
@@ -561,6 +785,15 @@ pub fn new_cpa_from(
     set_general(&mut new, GeneralField::EndDate, options.end_date.trim())?;
     if options.reset_status {
         set_general(&mut new, GeneralField::Status, "proposed")?;
+    }
+    if options.rename_ids {
+        let renames = id_renames(doc, &options.party_ids)?;
+        rename_ids(&mut new, &renames);
+    }
+    for (index, party_id) in options.party_ids.iter().enumerate() {
+        if current_party_ids(doc).get(index).map(String::as_str) != Some(party_id.trim()) {
+            set_general(&mut new, GeneralField::PartyId(index), party_id.trim())?;
+        }
     }
     let report = options.strip_certificates.then(|| crate::certificates::strip_certificates(&mut new));
     Ok((new, report))

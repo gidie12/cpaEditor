@@ -58,6 +58,8 @@ Digikoppeling XSD or Schematron.
   Save CPA… first shows the same changes with Save…/Cancel. The loaded CPA stays the base after saving.
   File > New CPA from this one…: copy with a new CPA ID (version at the end +1), start now, same duration,
   status proposed, optionally without certificates; Show changes… lists the differences with the source CPA.
+  It also sets the PartyIds and renames the ids: the code of each partner in its ids (its PartyId, or the common
+  start of its ids such as BROKER_) becomes the new PartyId, in ids, references and the proposed CPA ID.
   Certificates: "Add certificate…" (summary bar and empty state) adds a Certificate element with a certId to a
   partner from a PEM chain, indented like the CPA, and can use it at once for TLS server/client of the partner's
   transports (http endpoints become https) and as trust anchor; "Link to transports…" does that for an existing

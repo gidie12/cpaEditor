@@ -65,7 +65,7 @@ pub fn validate_document(document: &Document) -> Result<Vec<ValidationError>, St
 
 /// Attributes of type ID per element in the CPA schema; `None` stands for any element (the global attribute
 /// tns:id).
-const ID_ATTRIBUTES: &[(Option<&str>, &str)] = &[
+pub(crate) const ID_ATTRIBUTES: &[(Option<&str>, &str)] = &[
     (None, "id"),
     (Some("DeliveryChannel"), "channelId"),
     (Some("Transport"), "transportId"),
@@ -75,13 +75,13 @@ const ID_ATTRIBUTES: &[(Option<&str>, &str)] = &[
 ];
 
 /// Attributes of type IDREF in the CPA schema, on every element where they are not an ID (see ID_ATTRIBUTES).
-const IDREF_ATTRIBUTES: &[&str] = &[
+pub(crate) const IDREF_ATTRIBUTES: &[&str] = &[
     "idref", "channelId", "packageId", "defaultMshChannelId", "defaultMshPackageId", "transportId",
     "docExchangeId", "certId", "securityId",
 ];
 
 /// Elements whose text is of type IDREF in the CPA schema.
-const IDREF_ELEMENTS: &[&str] = &["ChannelId", "OtherPartyActionBinding"];
+pub(crate) const IDREF_ELEMENTS: &[&str] = &["ChannelId", "OtherPartyActionBinding"];
 
 /// Reports every IDREF of the CPA whose ID does not exist.
 pub fn check_idrefs(document: &Document) -> Vec<ValidationError> {

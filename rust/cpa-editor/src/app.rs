@@ -136,6 +136,11 @@ impl CpaEditorApp {
     pub fn create_new_cpa(&mut self, options: &cpa_core::cpa::NewCpaOptions) {
         let Some(document) = &self.shared.document else { return };
         let source = cpa_core::cpa::read_general(document).cpa_id;
+        let renames = if options.rename_ids {
+            cpa_core::cpa::id_renames(document, &options.party_ids).unwrap_or_default()
+        } else {
+            Vec::new()
+        };
         match cpa_core::cpa::new_cpa_from(document, options) {
             Ok((new, report)) => {
                 self.shared.document = Some(new);
@@ -156,6 +161,12 @@ impl CpaEditorApp {
                 ));
                 if options.reset_status {
                     self.shared.log.info("Status set to proposed");
+                }
+                if !renames.is_empty() {
+                    self.shared.log.info(format!("Renamed {} ids and references with the PartyIds", renames.len()));
+                    for (old, new) in &renames {
+                        self.shared.log.debug(format!("Renamed {old} to {new}"));
+                    }
                 }
                 if let Some(report) = report {
                     crate::tabs::certificates::log_strip_report(&mut self.shared.log, &report);

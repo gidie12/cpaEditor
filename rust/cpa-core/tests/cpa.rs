@@ -381,3 +381,71 @@ fn new_cpa_from_copies_with_new_id_dates_and_status() {
 fn cpa_file_name_replaces_characters_a_file_name_cannot_hold() {
     assert_eq!(cpa_core::cpa::cpa_file_name("a/b:c*d"), "a_b_c_d.xml");
 }
+
+fn test_cpa(name: &str) -> cpa_core::xml::Document {
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../application/tests/resources/cpas").join(name);
+    cpa_core::xml::Document::parse_bytes(&std::fs::read(path).unwrap()).unwrap()
+}
+
+#[test]
+fn id_code_is_the_party_id_or_the_common_start_of_the_ids() {
+    use cpa_core::cpa::id_code;
+    let doc = test_cpa("full_test_cpa.xml");
+    assert_eq!(id_code(&doc, 0).as_deref(), Some("BROKER"));
+    assert_eq!(id_code(&doc, 1).as_deref(), Some("Ketenpartner"));
+    let doc = test_cpa("example.xml");
+    assert_eq!(id_code(&doc, 0).as_deref(), Some("DUMMYBROKER_O"));
+    assert_eq!(id_code(&doc, 1).as_deref(), Some("DUMMYPARTNER_O"));
+    let doc = test_cpa("full_cpa_p.xml");
+    assert_eq!(id_code(&doc, 0), None);
+}
+
+#[test]
+fn replace_codes_replaces_whole_words_in_one_pass() {
+    use cpa_core::cpa::replace_codes;
+    let swap = vec![("A".to_string(), "B".to_string()), ("B".to_string(), "A".to_string())];
+    assert_eq!(replace_codes("A_S1_B_X_AB", &swap), "B_S1_A_X_AB");
+    let renames = vec![("BROKER".to_string(), "OIN1".to_string())];
+    assert_eq!(replace_codes("BROKER_S1_BrokerX_BROKERS", &renames), "OIN1_S1_BrokerX_BROKERS");
+}
+
+#[test]
+fn new_cpa_renames_the_ids_with_the_party_ids() {
+    use cpa_core::cpa::{check_new_cpa_options, id_renames, new_cpa_defaults, new_cpa_from, read_general};
+    let doc = test_cpa("full_test_cpa.xml");
+    let mut options = new_cpa_defaults(&doc);
+    assert_eq!(options.party_ids, vec!["PARTNER_A".to_string(), "KETENPARTNER_1".to_string()]);
+    options.party_ids = vec!["OIN_A".into(), "OIN_B".into()];
+    let renames = id_renames(&doc, &options.party_ids).unwrap();
+    assert!(renames.contains(&("BROKER_T_HTTPS".into(), "OIN_A_T_HTTPS".into())));
+    assert!(renames.contains(&(
+        "BROKER_S1_BrokerX_Ketenpartner_S_ProcessAntwoord_PV_0.1".into(),
+        "OIN_A_S1_BrokerX_OIN_B_S_ProcessAntwoord_PV_0.1".into()
+    )));
+    let errors_before = cpa_core::validation::validate_document(&doc).unwrap().len();
+    let (new, _) = new_cpa_from(&doc, &options).unwrap();
+    let xml = new.to_xml();
+    let left: Vec<&str> = xml.lines().filter(|l| l.contains("BROKER_") || l.contains("Ketenpartner_")).collect();
+    assert!(left.is_empty(), "every code is renamed: {left:#?}");
+    assert!(xml.contains("tns:transportId=\"OIN_A_T_HTTPS\""));
+    assert!(xml.contains("tns:defaultMshChannelId=\"OIN_B_DC_T_Besteffort_S_Transport_R_\""));
+    let fields = read_general(&new);
+    assert_eq!(fields.party_ids, ["OIN_A".to_string(), "OIN_B".to_string()]);
+    // The same (dangling) reference as before, under its new name: references and ids stay consistent
+    assert_eq!(cpa_core::validation::validate_document(&new).unwrap().len(), errors_before);
+
+    // An id cannot start with a digit (an OIN as PartyId)
+    options.party_ids = vec!["00000001234567890000".into(), "OIN_B".into()];
+    let errors = check_new_cpa_options(&doc, &options);
+    assert!(errors.iter().any(|(_, e)| e.contains("not a valid id")), "{errors:?}");
+    options.rename_ids = false;
+    assert!(check_new_cpa_options(&doc, &options).is_empty());
+}
+
+#[test]
+fn new_cpa_id_follows_the_party_ids() {
+    let doc = test_cpa("example.xml");
+    let options = cpa_core::cpa::new_cpa_defaults(&doc);
+    // The code DUMMYBROKER_O in the ids becomes the PartyId DUMMYBRONT1, also in the proposed CPA ID
+    assert_eq!(options.cpa_id, "DUMMYBRONT1-DUMMYPARTNER_O_V002");
+}
