@@ -142,7 +142,7 @@ impl Default for CertificatesTab {
         CertificatesTab {
             tree: TreeTable::new(
                 "certificates",
-                &[("Partner / certId", 300.0), ("Status", 140.0), ("First expiry", 190.0), ("Leaf certificate", 200.0)],
+                &[("Partner / certId", 300.0), ("Status", 140.0), ("Chain expires", 190.0), ("Leaf certificate", 200.0)],
             ),
             rows: Vec::new(),
             entries: Vec::new(),
@@ -198,7 +198,8 @@ impl CertificatesTab {
             }
         }
         if self.entries.is_empty() {
-            shared.log.error("No certificates found in the CPA");
+            // A CPA without certificates is valid: the empty state says so, the log only notes it
+            shared.log.info("No certificates found in the CPA");
         }
         for error in errors {
             shared.log.error(error);
@@ -214,7 +215,7 @@ impl CertificatesTab {
         let cells = vec![
             entry.cert_id.clone(),
             status.map(Status::text).unwrap_or_else(|| "No certificate".to_string()),
-            entry.first_expiring().map(|c| format_cpa_date(c.not_after)).unwrap_or_default(),
+            entry.first_expiring().map(|c| display_date(c.not_after)).unwrap_or_default(),
             entry.leaf().map(|c| c.common_name.clone()).unwrap_or_default(),
         ];
         let mut row = TreeRow::new(key(entry.certificate), 1, cells);
@@ -262,9 +263,10 @@ impl CertificatesTab {
             );
             if let Some(next) = next {
                 text.push_str(&format!(
-                    "  ·  next expiry {} ({})",
-                    format_cpa_date(next.not_after),
-                    next.common_name
+                    "  ·  next to expire: {}, {} ({})",
+                    next.common_name,
+                    display_date(next.not_after),
+                    relative(next.not_after, self.now)
                 ));
             }
             ui.label(RichText::new(text).weak());
@@ -277,7 +279,7 @@ impl CertificatesTab {
             theme::empty_state(
                 ui,
                 "No certId selected",
-                "Select a certId on the left to see its certificate chain and where it is used.",
+                "Select a certId to see its chain and usage.",
                 |_| {},
             );
             return;
@@ -349,7 +351,17 @@ impl CertificatesTab {
                 ui.add_space(6.0);
             }
             let position_text = format!("{} of {}", position + 1, entry.certificates.len());
-            certificate_card(ui, (index, position), &position_text, certificate, Status::of(certificate, self.now));
+            // The role follows from the place in the chain: the core calls a certificate without
+            // Basic Constraints a leaf, also when it is the intermediate of this chain
+            let role = if position == 0 {
+                "Leaf"
+            } else if certificate.subject == certificate.issuer {
+                "Root"
+            } else {
+                "Intermediate"
+            };
+            let position_text = format!("{role}  ·  {position_text}");
+            certificate_card(ui, (index, position), &position_text, certificate, Status::of(certificate, self.now), self.now);
         }
 
         ui.add_space(8.0);
@@ -462,7 +474,14 @@ fn read_text(path: &PathBuf) -> Result<String, String> {
 }
 
 /// One certificate of the chain: type, common name, status and the details of the certificate.
-fn certificate_card(ui: &mut Ui, id: (usize, usize), position: &str, certificate: &CertificateDetails, status: Status) {
+fn certificate_card(
+    ui: &mut Ui,
+    id: (usize, usize),
+    position: &str,
+    certificate: &CertificateDetails,
+    status: Status,
+    now: DateTime<Utc>,
+) {
     egui::Frame::new()
         .fill(ui.visuals().faint_bg_color)
         .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
@@ -471,8 +490,7 @@ fn certificate_card(ui: &mut Ui, id: (usize, usize), position: &str, certificate
         .show(ui, |ui| {
             ui.set_width(ui.available_width());
             ui.horizontal(|ui| {
-                ui.label(RichText::new(format!("Certificate ({})", certificate.kind)).weak());
-                ui.label(RichText::new(format!("·  {position}")).weak());
+                ui.label(RichText::new(position).weak());
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     theme::badge(ui, &status.text(), status.color(ui));
                 });
@@ -485,20 +503,26 @@ fn certificate_card(ui: &mut Ui, id: (usize, usize), position: &str, certificate
             .on_hover_text(summary(certificate));
             ui.add_space(4.0);
             egui::Grid::new(("certificate_card", id)).num_columns(2).spacing([12.0, 4.0]).show(ui, |ui| {
-                let valid_until = format_cpa_date(certificate.not_after);
-                for (name, value) in [
-                    ("Subject", certificate.subject.clone()),
-                    ("Issuer", certificate.issuer.clone()),
-                    ("Serial number", certificate.serial_number.clone()),
-                    ("Valid from", format_cpa_date(certificate.not_before)),
-                    ("Valid until", valid_until),
+                let valid_until = format!("{}  ({})", display_date(certificate.not_after), relative(certificate.not_after, now));
+                for (name, value, exact) in [
+                    ("Subject", certificate.subject.clone(), None),
+                    ("Issuer", certificate.issuer.clone(), None),
+                    ("Serial number", group_hex(&certificate.serial_number), None),
+                    ("Valid from", display_date(certificate.not_before), Some(format_cpa_date(certificate.not_before))),
+                    ("Valid until", valid_until, Some(format_cpa_date(certificate.not_after))),
                 ] {
                     ui.label(RichText::new(name).weak());
                     let mut text = RichText::new(value);
+                    if name == "Serial number" {
+                        text = text.monospace();
+                    }
                     if name == "Valid until" && status != Status::Valid {
                         text = text.color(status.color(ui));
                     }
-                    ui.add(egui::Label::new(text).wrap().selectable(true));
+                    let response = ui.add(egui::Label::new(text).wrap().selectable(true));
+                    if let Some(exact) = exact {
+                        response.on_hover_text(exact);
+                    }
                     ui.end_row();
                 }
             });
@@ -526,7 +550,7 @@ impl Tab for CertificatesTab {
             theme::empty_state(
                 ui,
                 "No certificates in this CPA",
-                "The parties of this CPA have no Certificate elements with a certId.",
+                "Add a Certificate element with a certId to a party in the XML editor, then upload its PEM here.",
                 |_| {},
             );
             return;
@@ -540,6 +564,7 @@ impl Tab for CertificatesTab {
                 // Only the status cell carries the status colour; a whole red tree would hide what matters
                 row.text_color = entry.usages.is_empty().then(|| ui.visuals().weak_text_color());
                 row.cell_colors = vec![None, entry.status(now).map(|status| status.color(ui))];
+                row.badge_columns = vec![1];
             }
         }
 
@@ -594,4 +619,35 @@ impl Tab for CertificatesTab {
             }
         }
     }
+}
+
+/// A date as people read it: "2026-04-26 13:53 UTC". The exact CPA notation is in the tooltip.
+fn display_date(moment: DateTime<Utc>) -> String {
+    moment.format("%Y-%m-%d %H:%M UTC").to_string()
+}
+
+/// How far a moment is from now: "in 2 years", "expired 7 months ago".
+fn relative(moment: DateTime<Utc>, now: DateTime<Utc>) -> String {
+    let days = (moment - now).num_days();
+    let span = |days: i64| match days {
+        0 => "today".to_string(),
+        1 => "1 day".to_string(),
+        2..=59 => format!("{days} days"),
+        60..=729 => format!("{} months", days / 30),
+        _ => format!("{} years", days / 365),
+    };
+    match days {
+        0 => "today".to_string(),
+        d if d > 0 => format!("in {}", span(d)),
+        d => format!("{} ago", span(-d)),
+    }
+}
+
+/// A hexadecimal serial number in groups of two, so it can be read and compared.
+fn group_hex(serial: &str) -> String {
+    let chars: Vec<char> = serial.chars().filter(|c| !c.is_whitespace() && *c != ':').collect();
+    if !chars.iter().all(char::is_ascii_hexdigit) {
+        return serial.to_string();
+    }
+    chars.chunks(2).map(|pair| pair.iter().collect::<String>()).collect::<Vec<_>>().join(":")
 }

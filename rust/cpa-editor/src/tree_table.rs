@@ -28,6 +28,8 @@ pub struct TreeRow {
     pub secondary: Option<String>,
     /// Text colour per column, over the row's colour (e.g. only the status cell red).
     pub cell_colors: Vec<Option<Color32>>,
+    /// Columns whose coloured text is drawn as a badge (status), which stays readable on the selection.
+    pub badge_columns: Vec<usize>,
     /// A direction arrow (true = right) painted before the text of the first column.
     pub icon: Option<(bool, Color32)>,
 }
@@ -269,10 +271,12 @@ impl TreeTable {
                             }
                             let line = line.as_str();
                             let mut job = egui::text::LayoutJob::default();
-                            let cell_color = if selected {
-                                text_color
-                            } else {
-                                row.cell_colors.get(column).copied().flatten().unwrap_or(text_color)
+                            let own_color = row.cell_colors.get(column).copied().flatten();
+                            let badge = own_color.filter(|_| row.badge_columns.contains(&column));
+                            let cell_color = match (badge, own_color) {
+                                (Some(color), _) => color,
+                                (None, Some(color)) if !selected => color,
+                                _ => text_color,
                             };
                             let mut format = egui::TextFormat { font_id: font.clone(), color: cell_color, ..Default::default() };
                             if row.strong && column == 0 {
@@ -289,7 +293,16 @@ impl TreeTable {
                             // Text that does not fit ends with an ellipsis; the tooltip has all of it
                             job.wrap = egui::text::TextWrapping::truncate_at_width((clip.width()).max(0.0));
                             let galley = painter.layout_job(job);
-                            let position = pos2(start, rect.center().y - galley.size().y / 2.0);
+                            let mut position = pos2(start, rect.center().y - galley.size().y / 2.0);
+                            if let Some(color) = badge {
+                                position.x += 8.0;
+                                let pill = Rect::from_min_size(
+                                    pos2(start, rect.center().y - 10.0),
+                                    vec2(galley.size().x + 16.0, 20.0),
+                                );
+                                let fill = if selected { visuals.extreme_bg_color } else { color.gamma_multiply(0.18) };
+                                painter.rect(pill, 10.0, fill, Stroke::new(1.0, color), egui::StrokeKind::Inside);
+                            }
                             // The default fonts have no bold face: a header row is drawn twice, half a pixel apart
                             if row.header_bar.is_some() && column == 0 {
                                 painter.galley(position + vec2(0.6, 0.0), galley.clone(), text_color);
