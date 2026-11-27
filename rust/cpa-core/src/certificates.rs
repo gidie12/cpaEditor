@@ -786,7 +786,7 @@ fn reindent(doc: &mut Document, element: NodeId) {
         depth += 1;
         node = parent;
     }
-    let unit_length = if depth > 0 { before.chars().count() / depth } else { 0 };
+    let unit_length = before.chars().count().checked_div(depth).unwrap_or(0);
     let unit: String = before.chars().take(unit_length.max(1)).collect();
     let unit = if !unit.is_empty() && unit.trim().is_empty() { unit } else { "  ".to_string() };
     crate::diff::indent_with(doc, element, depth, &unit);
