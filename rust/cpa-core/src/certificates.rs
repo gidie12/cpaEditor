@@ -960,6 +960,75 @@ fn reference_change(name: &str, transport: &str, cert_id: &str, old: Option<Stri
     }
 }
 
+/// A reference to a certId that is not in the CPA (a schema error: `IDREF '...' not found`).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BrokenReference {
+    pub reference: NodeId,
+    pub cert_id: String,
+    /// Where it is, e.g. `AnchorCertificateRef in SecurityDetails 'BROKER_TransportSecurity'`.
+    pub description: String,
+    /// The reference may be removed: the schema does not require it (a trust anchor that is not the last one
+    /// removes only itself; the last one removes its TrustAnchors; ClientCertificateRef is optional).
+    pub removable: bool,
+    /// The certIds that the siblings of a trust anchor already refer to: pointing it at one of them adds nothing.
+    pub siblings: Vec<String>,
+}
+
+/// Every element whose certId refers to a certificate that is not in the CPA, in document order.
+pub fn broken_certificate_references(doc: &Document) -> Vec<BrokenReference> {
+    let Some(root) = doc.root() else { return Vec::new() };
+    let existing: std::collections::HashSet<String> = doc
+        .iter_named(root, Some(CPA_NAMESPACE), "Certificate")
+        .filter_map(|c| doc.attribute(c, Some(CPA_NAMESPACE), "certId").map(|id| id.trim().to_string()))
+        .collect();
+    doc.descendants(root)
+        .filter(|&node| doc.is_element(node) && !doc.is_named(node, Some(CPA_NAMESPACE), "Certificate"))
+        .filter_map(|node| {
+            let cert_id = doc.attribute(node, Some(CPA_NAMESPACE), "certId")?.trim().to_string();
+            if existing.contains(&cert_id) {
+                return None;
+            }
+            let removable = doc.is_named(node, Some(CPA_NAMESPACE), "AnchorCertificateRef")
+                || doc.is_named(node, Some(CPA_NAMESPACE), "ClientCertificateRef");
+            let siblings = if doc.is_named(node, Some(CPA_NAMESPACE), "AnchorCertificateRef") {
+                doc.parent_element(node)
+                    .map(|anchors| {
+                        doc.find_all(anchors, Some(CPA_NAMESPACE), "AnchorCertificateRef")
+                            .filter(|&other| other != node)
+                            .filter_map(|other| doc.attribute(other, Some(CPA_NAMESPACE), "certId").map(str::to_string))
+                            .collect()
+                    })
+                    .unwrap_or_default()
+            } else {
+                Vec::new()
+            };
+            Some(BrokenReference { reference: node, cert_id, description: describe_reference(doc, node), removable, siblings })
+        })
+        .collect()
+}
+
+/// Points a certificate reference at another certId.
+pub fn repoint_reference(doc: &mut Document, reference: NodeId, cert_id: &str) {
+    doc.set_attribute(reference, Some(CPA_NAMESPACE), "certId", cert_id);
+}
+
+/// Removes a reference that the schema does not require; the last AnchorCertificateRef takes its TrustAnchors
+/// with it. Error for a reference that must stay (point it at another certId instead).
+pub fn remove_reference(doc: &mut Document, reference: NodeId) -> Result<(), String> {
+    let is = |doc: &Document, local: &str| doc.is_named(reference, Some(CPA_NAMESPACE), local);
+    if is(doc, "AnchorCertificateRef") {
+        let anchors = doc.parent_element(reference).ok_or("No TrustAnchors")?;
+        if doc.find_all(anchors, Some(CPA_NAMESPACE), "AnchorCertificateRef").count() == 1 {
+            remove_with_indentation(doc, anchors);
+            return Ok(());
+        }
+    } else if !is(doc, "ClientCertificateRef") {
+        return Err(format!("A {} is required here; point it at another certId", doc.local_name(reference)));
+    }
+    remove_with_indentation(doc, reference);
+    Ok(())
+}
+
 /// The "Set from certificates" button: sets the end date of the CPA to the expiry date of the certificate that
 /// expires first (leaf, intermediate and root all count). Returns the date, that certificate and the debug lines
 /// that list every certificate in order of expiry.

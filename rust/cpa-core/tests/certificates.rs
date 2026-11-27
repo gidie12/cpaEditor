@@ -759,3 +759,25 @@ fn replace_one_expired_certificate_of_a_chain() {
     assert_eq!(report.role, "Intermediate");
     assert!(report.warnings.iter().any(|w| w.starts_with("The subject changes")), "{:?}", report.warnings);
 }
+
+#[test]
+fn broken_certificate_reference_is_found_and_fixed() {
+    use cpa_core::certificates::{broken_certificate_references, remove_reference, repoint_reference};
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../application/tests/resources/cpas/full_test_cpa.xml");
+    let doc = cpa_core::xml::Document::parse_bytes(&std::fs::read(path).unwrap()).unwrap();
+    let broken = broken_certificate_references(&doc);
+    assert_eq!(broken.len(), 1);
+    assert_eq!(broken[0].cert_id, "BROKER_ClientCerts");
+    assert_eq!(broken[0].description, "AnchorCertificateRef in SecurityDetails 'BROKER_TransportSecurity'");
+    assert!(broken[0].removable);
+
+    let mut removed = doc.clone();
+    remove_reference(&mut removed, broken[0].reference).unwrap();
+    assert!(cpa_core::validation::validate_document(&removed).unwrap().is_empty());
+    assert!(removed.to_xml().contains("tns:certId=\"BROKER_ClientCert\"/>\n            </tns:TrustAnchors>"));
+
+    let mut repointed = doc.clone();
+    repoint_reference(&mut repointed, broken[0].reference, "BROKER_ServerCert");
+    assert!(cpa_core::validation::validate_document(&repointed).unwrap().is_empty());
+    assert!(broken_certificate_references(&repointed).is_empty());
+}

@@ -156,7 +156,7 @@ fn idref_location(document: &Document, message: &str) -> Option<String> {
 /// Advice for the errors whose cause is clear from the message.
 fn advice(message: &str) -> Option<&'static str> {
     if message.starts_with("IDREF '") {
-        Some("Add the element with this id (for a certificate: upload it on the Certificates tab), or change the reference to an existing id.")
+        Some("Add the element with this id, or change the reference to an existing id. For a certId: the Certificates tab can point the reference at another certId or remove it.")
     } else if message.contains("is not a valid value") || message.contains("is not an element of the set") {
         Some("Change the value to one that the schema allows.")
     } else if message.contains("Missing child element") {

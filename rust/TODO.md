@@ -68,3 +68,5 @@ Digikoppeling XSD or Schematron.
   PEM file; warns when the subject or the chain links change.
   Validation runs automatically after every change (a few ms): status in the bottom bar ("• Valid" or "• n schema
   errors", a link to the CPA Validation tab); the log only reports a change of the outcome.
+  Certificates tab warns about references to a certId that is not in the CPA, with "Use <certId>", "Other
+  certId…" and "Remove reference" (trust anchor or ClientCertificateRef).

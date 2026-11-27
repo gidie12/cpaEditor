@@ -96,5 +96,13 @@ fn review_certificates() {
         h.get_by_role_and_label(egui::accesskit::Role::Button, "Add certificate…").click();
         h.run_steps(2);
         save(&mut h, &format!("certificates-add-{suffix}"));
+
+        // The broken trust anchor of the test CPA, removed from the warning
+        let mut h = harness(resource("full_test_cpa.xml"), theme);
+        h.state_mut().select_tab(CERTIFICATES_TAB);
+        h.run_steps(2);
+        h.get_by_role_and_label(egui::accesskit::Role::Button, "Remove reference").click();
+        h.run_steps(3);
+        save(&mut h, &format!("certificates-fixed-{suffix}"));
     }
 }

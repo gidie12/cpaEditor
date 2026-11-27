@@ -185,6 +185,14 @@ pub struct CertificatesTab {
     /// The question for a new Certificate element: partner and certId, then the PEM file.
     add: Option<AddCertificate>,
     confirm_chain: Option<Confirm<PendingChainReplace>>,
+    /// References to certIds that are not in the CPA.
+    broken: Vec<cpa_core::certificates::BrokenReference>,
+}
+
+/// The fix chosen for a broken reference.
+enum Fix {
+    Repoint(NodeId, String),
+    Remove(NodeId),
 }
 
 /// Add certificate: the partner and certId of a new Certificate element, and what it is used for. Also the question
@@ -220,6 +228,7 @@ impl Default for CertificatesTab {
             confirm_strip: None,
             add: None,
             confirm_chain: None,
+            broken: Vec::new(),
         }
     }
 }
@@ -237,6 +246,7 @@ impl CertificatesTab {
         self.row_entry.clear();
         self.now = Utc::now();
         let Some(document) = shared.document.as_ref() else { return };
+        self.broken = cpa_core::certificates::broken_certificate_references(document);
         let mut errors = Vec::new();
         let usages = certificate_usages(document);
         for (index, party_info) in party_infos(document).into_iter().enumerate() {
@@ -351,6 +361,86 @@ impl CertificatesTab {
             });
         });
         (add, strip)
+    }
+
+    /// A warning per reference to a certId that is not in the CPA, with the fixes: use the certId that looks most like
+    /// it, another certId, or remove the reference when the schema allows it.
+    fn broken_references(&self, ui: &mut Ui) -> Option<Fix> {
+        if self.broken.is_empty() {
+            return None;
+        }
+        let cert_ids: Vec<&str> = self.entries.iter().map(|e| e.cert_id.as_str()).collect();
+        let mut fix = None;
+        let (fill, stroke) = if ui.visuals().dark_mode {
+            (Color32::from_rgb(0x42, 0x1c, 0x1c), Color32::from_rgb(0x8a, 0x33, 0x33))
+        } else {
+            (Color32::from_rgb(0xfd, 0xec, 0xec), Color32::from_rgb(0xe0, 0x9a, 0x9a))
+        };
+        egui::Frame::new()
+            .fill(fill)
+            .stroke(egui::Stroke::new(1.0, stroke))
+            .corner_radius(4)
+            .inner_margin(egui::Margin::symmetric(10, 6))
+            .show(ui, |ui| {
+                ui.set_width(ui.available_width());
+                for (number, broken) in self.broken.iter().enumerate() {
+                    ui.horizontal_wrapped(|ui| {
+                        ui.label(RichText::new(format!("{} refers to", broken.description)));
+                        ui.label(RichText::new(&broken.cert_id).strong().color(theme::error_color(ui)));
+                        ui.label("which is not in the CPA.");
+                        // The certId that looks most like it: the longest common start
+                        let best = cert_ids
+                            .iter()
+                            .filter(|id| !broken.siblings.iter().any(|s| s == *id))
+                            .max_by_key(|id| id.chars().zip(broken.cert_id.chars()).take_while(|(a, b)| a == b).count())
+                            .copied();
+                        if let Some(best) = best {
+                            if ui.button(format!("Use {best}")).clicked() {
+                                fix = Some(Fix::Repoint(broken.reference, best.to_string()));
+                            }
+                        }
+                        ui.menu_button("Other certId…", |ui| {
+                            for id in cert_ids.iter().filter(|id| !broken.siblings.iter().any(|s| s == *id)) {
+                                if ui.button(*id).clicked() {
+                                    fix = Some(Fix::Repoint(broken.reference, id.to_string()));
+                                    ui.close();
+                                }
+                            }
+                        });
+                        if broken.removable && ui.button("Remove reference").clicked() {
+                            fix = Some(Fix::Remove(broken.reference));
+                        }
+                    });
+                    if number + 1 < self.broken.len() {
+                        ui.add_space(4.0);
+                    }
+                }
+            });
+        ui.add_space(6.0);
+        fix
+    }
+
+    fn apply_fix(&mut self, fix: Fix, shared: &mut Shared) {
+        let Some(document) = shared.document.as_mut() else { return };
+        let description = |document: &cpa_core::xml::Document, node| cpa_core::certificates::describe_reference(document, node);
+        match fix {
+            Fix::Repoint(node, cert_id) => {
+                let text = description(document, node);
+                cpa_core::certificates::repoint_reference(document, node, &cert_id);
+                shared.changed();
+                shared.log.info(format!("{text} now refers to {cert_id}"));
+            }
+            Fix::Remove(node) => {
+                let text = description(document, node);
+                match cpa_core::certificates::remove_reference(document, node) {
+                    Ok(()) => {
+                        shared.changed();
+                        shared.log.info(format!("{text} removed"));
+                    }
+                    Err(e) => shared.log.error(e),
+                }
+            }
+        }
     }
 
     /// Opens the question for a new certificate, for the first partner.
@@ -934,6 +1024,9 @@ impl Tab for CertificatesTab {
             self.ask_strip();
         }
         ui.add_space(6.0);
+        if let Some(fix) = self.broken_references(ui) {
+            self.apply_fix(fix, shared);
+        }
 
         let mut action = None;
         let dirty = shared.is_dirty();
