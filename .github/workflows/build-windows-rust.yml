@@ -1,0 +1,218 @@
+name: Build Windows executable (Rust)
+
+# The Rust version of the CPA Editor, built next to the Python version of build-windows.yml. The releases themselves
+# (tag releases and the nightly prerelease) are created by build-windows.yml; this workflow attaches
+# CpaEditor-rust.exe to them, so CpaEditor.exe is never replaced.
+
+on:
+  workflow_dispatch:
+    inputs:
+      nightly:
+        description: Attach this build to the nightly prerelease
+        type: boolean
+        default: false
+  # Nightly build of the default branch; skipped when the nightly prerelease of this commit already has it
+  schedule:
+    - cron: '0 2 * * *'
+  pull_request:
+  push:
+    tags: ['v*']
+
+# Read-only by default; only the release jobs get write access
+permissions:
+  contents: read
+
+env:
+  ASSET: CpaEditor-rust.exe
+  ARTIFACT: CpaEditor-rust-windows
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.check.outputs.build }}
+      started: ${{ steps.check.outputs.started }}
+      existing_nightly: ${{ steps.check.outputs.existing_nightly }}
+    steps:
+      - id: check
+        run: |
+          echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          nightly_sha="$(gh api "repos/$GH_REPO/git/ref/tags/nightly" --jq .object.sha 2>/dev/null || true)"
+          if [ "$EVENT" = schedule ] && [ "$nightly_sha" = "$SHA" ]; then
+            # build-windows.yml skips this nightly build and keeps the existing nightly prerelease
+            echo "existing_nightly=true" >> "$GITHUB_OUTPUT"
+            if gh release view nightly --json assets --jq '.assets[].name' 2>/dev/null | grep -qx "$ASSET"; then
+              echo "The nightly build of $SHA already has $ASSET"
+              echo "build=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          else
+            echo "existing_nightly=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "build=true" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          SHA: ${{ github.sha }}
+
+  build:
+    needs: check
+    if: needs.check.outputs.build == 'true'
+    runs-on: windows-latest
+    env:
+      # libxml2 as a static library with the dynamic C runtime: the default triplet of the vcpkg crate (build.rs)
+      VCPKGRS_TRIPLET: x64-windows-static-md
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          # All tags: a nightly build is numbered after the latest release
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      # vcpkg is preinstalled on the runner; built packages are kept in a binary cache between runs
+      - name: Configure vcpkg
+        id: vcpkg
+        shell: pwsh
+        run: |
+          $cache = Join-Path $env:RUNNER_TEMP 'vcpkg-cache'
+          New-Item -ItemType Directory -Force -Path $cache | Out-Null
+          "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" >> $env:GITHUB_ENV
+          "VCPKG_BINARY_SOURCES=clear;files,$cache,readwrite" >> $env:GITHUB_ENV
+          "cache=$cache" >> $env:GITHUB_OUTPUT
+          "commit=$(git -C $env:VCPKG_INSTALLATION_ROOT rev-parse HEAD)" >> $env:GITHUB_OUTPUT
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.vcpkg.outputs.cache }}
+          key: vcpkg-${{ env.VCPKGRS_TRIPLET }}-${{ steps.vcpkg.outputs.commit }}
+          restore-keys: vcpkg-${{ env.VCPKGRS_TRIPLET }}-
+      - name: Install libxml2
+        shell: pwsh
+        run: '& "$env:VCPKG_ROOT\vcpkg.exe" install "libxml2:$env:VCPKGRS_TRIPLET"'
+      # Before the version is set: that rewrites Cargo.lock
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            rust/target
+          key: cargo-windows-${{ hashFiles('rust/Cargo.lock') }}
+          restore-keys: cargo-windows-
+      # A release reports the version of its tag in the title bar and in the update check. A nightly build reports
+      # the latest release plus build information, for example 1.0.5+nightly.20261029.abc1234, so the update check
+      # offers it the next release. Cargo needs exactly three numbers, so v1.2 becomes 1.2.0
+      - name: Set version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            version="${GITHUB_REF_NAME#v}"
+            if ! [[ "$version" =~ ^[0-9]+(\.[0-9]+)*(-[0-9A-Za-z.-]+)?$ ]]; then
+              echo "Tag $GITHUB_REF_NAME is not a version such as v1.2.3 or v1.2.3-rc.1" >&2
+              exit 1
+            fi
+          elif [ "$NIGHTLY" = true ]; then
+            release="$(git describe --tags --abbrev=0 --match 'v[0-9]*' --exclude '*-*' 2>/dev/null || echo v0)"
+            version="${release#v}+nightly.$(date -u +%Y%m%d).${GITHUB_SHA::7}"
+          else
+            exit 0
+          fi
+          numbers="${version%%[-+]*}"
+          suffix="${version:${#numbers}}"
+          IFS=. read -ra parts <<< "$numbers"
+          if (( ${#parts[@]} > 3 )); then
+            echo "Version $version has more than three numbers, which Cargo does not accept" >&2
+            exit 1
+          fi
+          while (( ${#parts[@]} < 3 )); do parts+=(0); done
+          version="$(IFS=.; echo "${parts[*]}")$suffix"
+          echo "Version $version"
+          # The only version line of rust/Cargo.toml is the one of [workspace.package]
+          perl -pi -e 's/^version = "[^"]*"/version = "'"$version"'"/' rust/Cargo.toml
+          grep -q "^version = \"$version\"" rust/Cargo.toml
+        env:
+          NIGHTLY: ${{ github.event_name == 'schedule' || inputs.nightly == true }}
+      - name: Test
+        working-directory: rust
+        run: cargo test -p cpa-core
+      - name: Build
+        working-directory: rust
+        run: cargo build --release -p cpa-editor
+      - name: Collect executable
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp rust/target/release/cpa-editor.exe "dist/$ASSET"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: dist/${{ env.ASSET }}
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: dist
+      # build-windows.yml creates the release (notes, prerelease for a tag with a label such as v1.2.3-rc.1); wait for
+      # it and attach the Rust executable under its own name
+      - name: Attach to release
+        run: |
+          for attempt in $(seq 1 60); do
+            if gh release view "$TAG" > /dev/null 2>&1; then
+              gh release upload "$TAG" "dist/$ASSET" --clobber
+              exit 0
+            fi
+            echo "Waiting for release $TAG (attempt $attempt)"
+            sleep 60
+          done
+          echo "Release $TAG was not created by build-windows.yml within an hour" >&2
+          exit 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+
+  nightly:
+    if: github.event_name == 'schedule' || inputs.nightly == true
+    needs: [check, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: nightly-release-rust
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: dist
+      # build-windows.yml replaces the nightly prerelease with every build. Wait for the one of this commit, created
+      # after this run started, so the executable is not attached to a prerelease that is about to be deleted. When
+      # build-windows.yml skipped this nightly build, the existing prerelease of this commit is used
+      - name: Attach to nightly prerelease
+        run: |
+          for attempt in $(seq 1 60); do
+            nightly_sha="$(gh api "repos/$GH_REPO/git/ref/tags/nightly" --jq .object.sha 2>/dev/null || true)"
+            created="$(gh release view nightly --json createdAt --jq .createdAt 2>/dev/null || true)"
+            if [ "$nightly_sha" = "$SHA" ] && [ -n "$created" ] \
+                && { [ "$EXISTING" = true ] || ! [[ "$created" < "$STARTED" ]]; }; then
+              gh release upload nightly "dist/$ASSET" --clobber
+              exit 0
+            fi
+            echo "Waiting for the nightly prerelease of $SHA (attempt $attempt)"
+            sleep 60
+          done
+          echo "The nightly prerelease of $SHA was not created by build-windows.yml within an hour" >&2
+          exit 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          STARTED: ${{ needs.check.outputs.started }}
+          EXISTING: ${{ needs.check.outputs.existing_nightly }}
