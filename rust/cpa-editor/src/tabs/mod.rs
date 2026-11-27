@@ -35,6 +35,23 @@ pub struct Shared {
     pub request_save: bool,
     /// Set by the General tab: a date is not valid, so saving is not the next step.
     pub invalid_dates: usize,
+    /// The schema validation of the CPA, run by the main window after every change.
+    pub validation: Option<Validation>,
+}
+
+/// The outcome of the automatic validation of one revision of the CPA.
+pub struct Validation {
+    pub revision: u64,
+    pub time: chrono::DateTime<chrono::Local>,
+    /// The schema errors, or why the validation itself failed.
+    pub outcome: Result<Vec<cpa_core::validation::ValidationError>, String>,
+}
+
+impl Validation {
+    /// The number of errors; None when the validation failed.
+    pub fn error_count(&self) -> Option<usize> {
+        self.outcome.as_ref().ok().map(Vec::len)
+    }
 }
 
 impl Shared {

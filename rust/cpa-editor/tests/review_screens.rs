@@ -68,16 +68,14 @@ fn review_screens() {
         }
         save(&mut h, &format!("collaboration-role-problem-{suffix}"));
 
-        // CPA Validation: before, with errors, and valid
+        // CPA Validation: validated automatically, with errors and valid
         let mut h = harness(Some(resource("full_test_cpa.xml")), theme);
         h.state_mut().select_tab(6);
-        save(&mut h, &format!("validation-{suffix}"));
-        h.get_by_label("Validate CPA").click();
+        h.run_steps(2);
         save(&mut h, &format!("validation-errors-{suffix}"));
         let mut h = harness(Some(resource("full_cpa_p.xml")), theme);
         h.state_mut().select_tab(6);
         h.run_steps(2);
-        h.get_by_label("Validate CPA").click();
         save(&mut h, &format!("validation-valid-{suffix}"));
     }
 }

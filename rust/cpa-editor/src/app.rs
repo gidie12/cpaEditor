@@ -108,6 +108,7 @@ impl CpaEditorApp {
                 self.shared.generation += 1;
                 self.shared.saved_revision = self.shared.revision;
         self.shared.invalid_dates = 0;
+        self.shared.validation = None;
                 self.shared.log.info("CPA data loaded successfully.");
             }
             Err(e) => self.shared.log.error(format!("Error while loading CPA data: {e}")),
@@ -146,6 +147,7 @@ impl CpaEditorApp {
                 self.shared.revision += 1;
                 self.shared.generation += 1;
                 self.shared.invalid_dates = 0;
+                self.shared.validation = None;
                 self.shared.log.info(format!(
                     "New CPA {} made from {source}: valid from {} to {}",
                     options.cpa_id.trim(),
@@ -241,6 +243,31 @@ impl CpaEditorApp {
         }
     }
 
+    /// The outcome of the automatic validation; errors link to the CPA Validation tab.
+    fn validation_status(&mut self, ui: &mut egui::Ui) {
+        let Some(validation) = &self.shared.validation else { return };
+        let tab = self.tabs.iter().position(|t| t.title() == "CPA Validation");
+        match validation.error_count() {
+            Some(0) => {
+                ui.label(RichText::new("• Valid").color(theme::ok_color(ui)))
+                    .on_hover_text("Valid against the ebXML CPP/CPA 2.0 schema; checked after every change");
+            }
+            count => {
+                let text = match count {
+                    Some(1) => "• 1 schema error".to_string(),
+                    Some(n) => format!("• {n} schema errors"),
+                    None => "• Validation failed".to_string(),
+                };
+                let link = ui.add(egui::Link::new(RichText::new(text).color(theme::error_color(ui))));
+                if link.on_hover_text("Show on the CPA Validation tab").clicked() {
+                    if let Some(tab) = tab {
+                        self.current_tab = tab;
+                    }
+                }
+            }
+        }
+    }
+
     fn bottom_panel(&mut self, ui: &mut egui::Ui) {
         // A collapsed log has its own panel id, so the height of the open log is kept
         let panel = if self.log_open && !self.shared.log.lines().is_empty() {
@@ -275,6 +302,7 @@ impl CpaEditorApp {
                         if self.shared.is_dirty() {
                             ui.label(RichText::new("• Unsaved changes").color(theme::warning_color(ui)));
                         }
+                        self.validation_status(ui);
                         if invalid > 0 {
                             let text = if invalid == 1 { "1 invalid date".to_string() } else { format!("{invalid} invalid dates") };
                             theme::badge(ui, &text, theme::error_color(ui));
@@ -408,6 +436,7 @@ impl CpaEditorApp {
     /// The whole window; also used by the screenshot tests.
     pub fn show(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
+        self.validate_if_changed();
         // Open a CPA that is dropped on the window
         let dropped = ctx.input(|i| i.raw.dropped_files.first().map(|f| f.path().to_path_buf()));
         if let Some(path) = dropped.filter(|p| !p.as_os_str().is_empty()) {
@@ -455,5 +484,37 @@ impl CpaEditorApp {
         }
         self.help.show(&ctx);
         self.update_check.show(&ctx, &mut self.shared.log);
+        // A change in this frame is validated in the next one, so the status shows it at once
+        if self.shared.document.is_some() && self.shared.validation.as_ref().map(|v| v.revision) != Some(self.shared.revision) {
+            ctx.request_repaint();
+        }
+    }
+
+    /// Validates the CPA against the schema when it changed since the last validation (a few milliseconds). The log
+    /// only reports a change of the outcome, not every validation.
+    fn validate_if_changed(&mut self) {
+        let Some(document) = &self.shared.document else {
+            self.shared.validation = None;
+            return;
+        };
+        if self.shared.validation.as_ref().is_some_and(|v| v.revision == self.shared.revision) {
+            return;
+        }
+        let outcome = cpa_core::validation::validate_document(document);
+        let before = self.shared.validation.as_ref().map(|v| v.error_count());
+        let validation = crate::tabs::Validation { revision: self.shared.revision, time: chrono::Local::now(), outcome };
+        let after = validation.error_count();
+        if before != Some(after) {
+            match (&validation.outcome, after) {
+                (Ok(_), Some(0)) => self.shared.log.info("Validation: the CPA is valid against the schema"),
+                (Ok(_), Some(count)) => self.shared.log.warning(format!(
+                    "Validation: {} (see the CPA Validation tab)",
+                    if count == 1 { "1 schema error".to_string() } else { format!("{count} schema errors") }
+                )),
+                (Err(e), _) => self.shared.log.error(format!("Validation failed: {e}")),
+                _ => {}
+            }
+        }
+        self.shared.validation = Some(validation);
     }
 }

@@ -1,7 +1,5 @@
 //! CPA Validation tab: validates the CPA against the schema (validator_tab.py).
 
-use chrono::{DateTime, Local};
-use cpa_core::validation::validate_document;
 use cpa_core::xml::Document;
 use eframe::egui::{self, RichText, Ui};
 
@@ -16,53 +14,21 @@ struct Problem {
     advice: Option<&'static str>,
 }
 
-/// The outcome of the last validation.
-enum Outcome {
-    Valid,
-    Errors(Vec<Problem>),
-    /// The validation itself failed, e.g. a schema that could not be loaded.
-    Failed(String),
+/// The schema errors of a validation, with where they are and what to do about them.
+fn problems(document: &Document, errors: &[cpa_core::validation::ValidationError]) -> Vec<Problem> {
+    errors
+        .iter()
+        .map(|e| Problem {
+            location: if e.line > 0 { Some(format!("Line {}", e.line)) } else { idref_location(document, &e.message) },
+            advice: advice(&e.message),
+            message: e.message.clone(),
+        })
+        .collect()
 }
 
+/// Shows the automatic validation that the main window runs after every change.
 #[derive(Default)]
-pub struct ValidationTab {
-    result: Option<(Outcome, DateTime<Local>, u64)>,
-    /// A result belongs to the CPA it was run on
-    generation: u64,
-}
-
-impl ValidationTab {
-    fn validate(&mut self, shared: &mut Shared) {
-        let Some(document) = &shared.document else { return };
-        let outcome = match validate_document(document) {
-            Ok(errors) if errors.is_empty() => {
-                shared.log.info("Validation found no errors");
-                Outcome::Valid
-            }
-            Ok(errors) => {
-                shared.log.warning(format!("Validation found {}", count_text(errors.len())));
-                let problems = errors
-                    .iter()
-                    .map(|e| Problem {
-                        location: if e.line > 0 {
-                            Some(format!("Line {}", e.line))
-                        } else {
-                            idref_location(document, &e.message)
-                        },
-                        advice: advice(&e.message),
-                        message: e.message.clone(),
-                    })
-                    .collect();
-                Outcome::Errors(problems)
-            }
-            Err(e) => {
-                shared.log.error(&e);
-                Outcome::Failed(e)
-            }
-        };
-        self.result = Some((outcome, Local::now(), shared.revision));
-    }
-}
+pub struct ValidationTab;
 
 impl Tab for ValidationTab {
     fn title(&self) -> &'static str {
@@ -70,45 +36,33 @@ impl Tab for ValidationTab {
     }
 
     fn ui(&mut self, ui: &mut Ui, shared: &mut Shared) {
-        if self.generation != shared.generation {
-            *self = ValidationTab { generation: shared.generation, ..Default::default() };
-        }
-        if shared.document.is_none() {
+        let Some(document) = &shared.document else {
             no_cpa(ui, shared);
             return;
-        }
-        let Some((outcome, time, revision)) = &self.result else {
-            let mut run = false;
-            theme::empty_state(
-                ui,
-                "Not validated yet",
-                "Check the CPA against the ebXML CPP/CPA 2.0 schema before you save it.",
-                |ui| run = ui.add(theme::primary_button("Validate CPA").min_size(egui::vec2(140.0, 32.0))).clicked(),
-            );
-            if run {
-                self.validate(shared);
-            }
+        };
+        let Some(validation) = &shared.validation else {
+            theme::empty_state(ui, "Validating…", "The CPA is checked against the ebXML CPP/CPA 2.0 schema.", |_| {});
             return;
         };
 
-        let mut run = false;
         ui.add_space(4.0);
         ui.horizontal(|ui| {
-            run = theme::action_button(ui, "Validate again", false, true).clicked();
-            ui.add_space(8.0);
-            match outcome {
-                Outcome::Valid => theme::badge(ui, "Valid", theme::ok_color(ui)),
-                Outcome::Errors(errors) => theme::badge(ui, &count_text(errors.len()), theme::error_color(ui)),
-                Outcome::Failed(_) => theme::badge(ui, "Validation failed", theme::error_color(ui)),
+            match &validation.outcome {
+                Ok(errors) if errors.is_empty() => theme::badge(ui, "Valid", theme::ok_color(ui)),
+                Ok(errors) => theme::badge(ui, &count_text(errors.len()), theme::error_color(ui)),
+                Err(_) => theme::badge(ui, "Validation failed", theme::error_color(ui)),
             }
-            ui.label(RichText::new(format!("Last run {}", time.format("%H:%M:%S"))).weak());
-            if *revision != shared.revision {
-                ui.label(RichText::new("· Changed since the last run, validate again").color(theme::warning_color(ui)));
-            }
+            ui.label(
+                RichText::new(format!(
+                    "Checked automatically after every change · last check {}",
+                    validation.time.format("%H:%M:%S")
+                ))
+                .weak(),
+            );
         });
         ui.add_space(8.0);
-        match outcome {
-            Outcome::Valid => {
+        match &validation.outcome {
+            Ok(errors) if errors.is_empty() => {
                 let dirty = shared.is_dirty();
                 let text = if dirty {
                     "The CPA is valid against the schema. Save it to keep your changes."
@@ -126,20 +80,18 @@ impl Tab for ValidationTab {
                     shared.request_save = true;
                 }
             }
-            Outcome::Failed(message) => {
+            Err(message) => {
                 ui.label(RichText::new(message).color(theme::error_color(ui)));
             }
-            Outcome::Errors(errors) => {
+            Ok(errors) => {
+                let problems = problems(document, errors);
                 egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
-                    for problem in errors {
+                    for problem in &problems {
                         error_card(ui, problem);
                         ui.add_space(6.0);
                     }
                 });
             }
-        }
-        if run {
-            self.validate(shared);
         }
     }
 }

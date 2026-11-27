@@ -64,3 +64,5 @@ Digikoppeling XSD or Schematron.
   certId. Message signing/encryption references are not set.
   Certificate chain cards: "Replace…" swaps only that certificate (leaf, intermediate or root) for the one in a
   PEM file; warns when the subject or the chain links change.
+  Validation runs automatically after every change (a few ms): status in the bottom bar ("• Valid" or "• n schema
+  errors", a link to the CPA Validation tab); the log only reports a change of the outcome.
