@@ -80,6 +80,25 @@ fn summary(certificate: &CertificateDetails) -> String {
     text
 }
 
+/// Uses that are on by default for a new certificate: all when the partner has no certificate yet, otherwise none
+/// (a second certificate should not take over the TLS settings unasked).
+fn default_uses(document: &cpa_core::xml::Document, party: usize) -> cpa_core::certificates::CertificateUse {
+    let has_certificates = party_infos(document)
+        .get(party)
+        .is_some_and(|&p| document.find(p, Some(cpa_core::CPA_NAMESPACE), "Certificate").is_some());
+    if has_certificates { Default::default() } else { ALL_USES }
+}
+
+/// Reports what linking a certificate changed; every endpoint that became https is listed.
+pub fn log_link_report(log: &mut crate::log::Log, report: &cpa_core::certificates::LinkReport) {
+    for change in &report.changes {
+        log.info(change.clone());
+    }
+    for (transport, old, new) in &report.endpoints {
+        log.info(format!("Endpoint of transport {transport} now uses HTTPS: {old} -> {new}"));
+    }
+}
+
 /// Reports what stripping the certificates changed; every changed endpoint is a warning.
 pub fn log_strip_report(log: &mut crate::log::Log, report: &cpa_core::certificates::StripReport) {
     let ids = if report.cert_ids.is_empty() { "none".to_string() } else { report.cert_ids.join(", ") };
@@ -128,6 +147,7 @@ impl Entry {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Action {
     Upload(usize),
+    Link(usize),
     Download(usize),
     CopyKeyInfo(usize),
 }
@@ -156,14 +176,21 @@ pub struct CertificatesTab {
     add: Option<AddCertificate>,
 }
 
-/// Add certificate: the partner and certId of a new Certificate element.
+/// Add certificate: the partner and certId of a new Certificate element, and what it is used for. Also the question
+/// to link an existing certId (`existing`), without a PEM file.
 struct AddCertificate {
     party: usize,
     cert_id: String,
     /// The certId was typed, so choosing another partner keeps it.
     edited: bool,
     party_names: Vec<String>,
+    uses: cpa_core::certificates::CertificateUse,
+    /// Link this existing certId instead of adding a certificate.
+    existing: bool,
 }
+
+const ALL_USES: cpa_core::certificates::CertificateUse =
+    cpa_core::certificates::CertificateUse { tls_server: true, tls_client: true, trust_anchor: true };
 
 impl Default for CertificatesTab {
     fn default() -> Self {
@@ -323,58 +350,126 @@ impl CertificatesTab {
             return;
         }
         let cert_id = cpa_core::certificates::new_cert_id(document, 0);
-        self.add = Some(AddCertificate { party: 0, cert_id, edited: false, party_names });
+        let uses = default_uses(document, 0);
+        self.add = Some(AddCertificate { party: 0, cert_id, edited: false, party_names, uses, existing: false });
+    }
+
+    /// Opens the question to link an existing certId to the transports of its partner.
+    fn ask_link(&mut self, index: usize, shared: &Shared) {
+        let Some(document) = &shared.document else { return };
+        let entry = &self.entries[index];
+        let parties = party_infos(document);
+        let Some(party) = document.parent_element(entry.certificate).and_then(|p| parties.iter().position(|&x| x == p))
+        else {
+            return;
+        };
+        let party_names = parties.iter().map(|&p| party_name(document, p)).collect();
+        self.add = Some(AddCertificate {
+            party,
+            cert_id: entry.cert_id.clone(),
+            edited: true,
+            party_names,
+            // Nothing chosen: an existing certId often has one role (server or client)
+            uses: Default::default(),
+            existing: true,
+        });
     }
 
     /// The question for a new certificate. "Choose PEM file…" adds it; the question stays open when that fails.
     fn show_add(&mut self, ctx: &egui::Context, shared: &mut Shared) {
         let Some(add) = &mut self.add else { return };
         let Some(document) = &shared.document else { return };
-        let error = cpa_core::certificates::check_new_cert_id(document, &add.cert_id);
+        let error = if add.existing { None } else { cpa_core::certificates::check_new_cert_id(document, &add.cert_id) };
+        let transports = party_infos(document)
+            .get(add.party)
+            .map(|&party| cpa_core::cpa::transports(document, party).len())
+            .unwrap_or(0);
         let (mut close, mut choose) = (false, false);
         let modal = egui::Modal::new(egui::Id::unique("add_certificate")).show(ctx, |ui| {
-            ui.set_width(480.0);
-            ui.heading("Add certificate");
-            ui.add_space(4.0);
-            ui.label(
-                RichText::new(
-                    "Adds a Certificate element to the partner and fills its KeyInfo from a PEM file (leaf first). \
-                     Transports and security details refer to it by its certId.",
-                )
-                .weak(),
-            );
+            ui.set_width(520.0);
+            if add.existing {
+                ui.heading("Link certificate to transports");
+                ui.add_space(4.0);
+                ui.label(
+                    RichText::new(format!(
+                        "Uses certId {} in the transports of {}. A reference to another certId is replaced.",
+                        add.cert_id, add.party_names[add.party]
+                    ))
+                    .weak(),
+                );
+            } else {
+                ui.heading("Add certificate");
+                ui.add_space(4.0);
+                ui.label(
+                    RichText::new(
+                        "Adds a Certificate element to the partner and fills its KeyInfo from a PEM file (leaf first).",
+                    )
+                    .weak(),
+                );
+            }
             ui.add_space(10.0);
-            egui::Grid::new("add_certificate_fields").num_columns(2).spacing([12.0, 8.0]).show(ui, |ui| {
-                ui.label("Partner");
-                ui.horizontal(|ui| {
-                    for (index, name) in add.party_names.iter().enumerate() {
-                        if ui.radio_value(&mut add.party, index, name).clicked() && !add.edited {
-                            add.cert_id = cpa_core::certificates::new_cert_id(document, index);
+            if !add.existing {
+                egui::Grid::new("add_certificate_fields").num_columns(2).spacing([12.0, 8.0]).show(ui, |ui| {
+                    ui.label("Partner");
+                    ui.horizontal(|ui| {
+                        for (index, name) in add.party_names.iter().enumerate() {
+                            if ui.radio_value(&mut add.party, index, name).clicked() {
+                                if !add.edited {
+                                    add.cert_id = cpa_core::certificates::new_cert_id(document, index);
+                                }
+                                add.uses = default_uses(document, index);
+                            }
                         }
-                    }
+                    });
+                    ui.end_row();
+                    let label = ui.label("certId");
+                    ui.vertical(|ui| {
+                        let edit = egui::TextEdit::singleline(&mut add.cert_id).desired_width(320.0);
+                        let response = theme::with_error_border(ui, error.is_some(), |ui| ui.add(edit)).labelled_by(label.id);
+                        if response.changed() {
+                            add.edited = true;
+                        }
+                        if let Some(error) = &error {
+                            ui.label(RichText::new(error).color(theme::error_color(ui)).small());
+                        }
+                    });
+                    ui.end_row();
                 });
-                ui.end_row();
-                let label = ui.label("certId");
-                ui.vertical(|ui| {
-                    let edit = egui::TextEdit::singleline(&mut add.cert_id).desired_width(320.0);
-                    let response = theme::with_error_border(ui, error.is_some(), |ui| ui.add(edit)).labelled_by(label.id);
-                    if response.changed() {
-                        add.edited = true;
-                    }
-                    if let Some(error) = &error {
-                        ui.label(RichText::new(error).color(theme::error_color(ui)).small());
-                    }
-                });
-                ui.end_row();
-            });
+                ui.add_space(8.0);
+            }
+            theme::section(ui, &format!("Use in the {}", match transports {
+                1 => "transport of this partner".to_string(),
+                n => format!("{n} transports of this partner"),
+            }));
+            ui.checkbox(&mut add.uses.tls_server, "TLS server certificate (receiving)");
+            ui.label(RichText::new("     TransportServerSecurity; http endpoints become https").small().weak());
+            ui.checkbox(&mut add.uses.tls_client, "TLS client certificate (sending)");
+            ui.label(RichText::new("     TransportClientSecurity").small().weak());
+            ui.checkbox(&mut add.uses.trust_anchor, "Trust anchor in the security details");
+            ui.label(RichText::new("     AnchorCertificateRef, referred to by the TLS settings").small().weak());
             ui.add_space(12.0);
+            let nothing = add.existing && add.uses == Default::default();
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 close = ui.add(egui::Button::new("Cancel").min_size(egui::vec2(96.0, 28.0))).clicked();
-                choose = ui.add_enabled(error.is_none(), theme::primary_button("Choose PEM file…")).clicked();
+                let text = if add.existing { "Link" } else { "Choose PEM file…" };
+                choose = ui.add_enabled(error.is_none() && !nothing, theme::primary_button(text)).clicked();
             });
         });
         if close || modal.should_close() {
             self.add = None;
+            return;
+        }
+        if choose && add.existing {
+            let (party, cert_id, uses) = (add.party, add.cert_id.clone(), add.uses);
+            let Some(document) = shared.document.as_mut() else { return };
+            match cpa_core::certificates::link_certificate(document, party, &cert_id, uses) {
+                Ok(report) => {
+                    shared.changed();
+                    log_link_report(&mut shared.log, &report);
+                    self.add = None;
+                }
+                Err(e) => shared.log.error(format!("Error while linking certificate: {e}")),
+            }
             return;
         }
         if choose {
@@ -384,14 +479,27 @@ impl CertificatesTab {
                 return;
             };
             let (party, cert_id, partner) = (add.party, add.cert_id.trim().to_string(), add.party_names[add.party].clone());
+            let uses = add.uses;
             let result = read_text(&path).and_then(|pem| {
                 let document = shared.document.as_mut().ok_or("No CPA loaded")?;
-                cpa_core::certificates::add_certificate(document, party, &cert_id, &pem)
+                // Checked first, so a PEM that cannot be read changes nothing
+                let mut copy = document.clone();
+                let certificate = cpa_core::certificates::add_certificate(&mut copy, party, &cert_id, &pem)?;
+                let report = if uses == Default::default() {
+                    None
+                } else {
+                    Some(cpa_core::certificates::link_certificate(&mut copy, party, &cert_id, uses)?)
+                };
+                *document = copy;
+                Ok((certificate, report))
             });
             match result {
-                Ok(certificate) => {
+                Ok((certificate, report)) => {
                     shared.changed();
                     shared.log.info(format!("Certificate {cert_id} added to {partner} from {}", path.display()));
+                    if let Some(report) = report {
+                        log_link_report(&mut shared.log, &report);
+                    }
                     self.tree.selected = Some(key(certificate));
                     self.add = None;
                 }
@@ -473,6 +581,12 @@ impl CertificatesTab {
             {
                 *action = Some(Action::CopyKeyInfo(index));
             }
+            if theme::action_button(ui, "Link to transports…", false, true)
+                .on_hover_text("Use this certId for TLS of the transports and as trust anchor")
+                .clicked()
+            {
+                *action = Some(Action::Link(index));
+            }
         });
         ui.label(
             RichText::new("Upload a PEM file with the chain, leaf first; it replaces the KeyInfo of this certId.")
@@ -521,6 +635,7 @@ impl CertificatesTab {
         match action {
             Action::Upload(index) => self.upload(index, shared),
             Action::Download(index) => self.download(index, shared),
+            Action::Link(index) => self.ask_link(index, shared),
             Action::CopyKeyInfo(index) => {
                 let entry = &self.entries[index];
                 if let (Some(document), Some(key_info)) = (shared.document.as_ref(), entry.key_info) {
@@ -765,6 +880,7 @@ impl Tab for CertificatesTab {
                 item(ui, "Upload certificate…", index.is_some(), Action::Upload);
                 item(ui, "Download certificate…", enabled(|e| !e.certificates.is_empty()), Action::Download);
                 item(ui, "Copy KeyInfo", enabled(|e| e.key_info.is_some()), Action::CopyKeyInfo);
+                item(ui, "Link to transports…", index.is_some(), Action::Link);
             });
         });
         if let Some(action) = action {

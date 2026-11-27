@@ -46,8 +46,8 @@ Digikoppeling XSD or Schematron.
   Digikoppeling profile choice that fills the messaging/security settings (shares rules with the check above).
 
 ## Certificates
-- After Add certificate: option to use it for transport TLS (client/server security, https endpoint) and
-  signing/encryption, the reverse of Remove all certificates.
+- Link a certificate for message signing/encryption (SenderNonRepudiation/SenderDigitalEnvelope in DocExchange).
+- Link dialog: show which roles the certId already has.
 
 ## Docs
 - README, EN/NL guides and schema reference pages for the Rust version.
@@ -59,4 +59,6 @@ Digikoppeling XSD or Schematron.
   File > New CPA from this one…: copy with a new CPA ID (version at the end +1), start now, same duration,
   status proposed, optionally without certificates; Show changes… lists the differences with the source CPA.
   Certificates: "Add certificate…" (summary bar and empty state) adds a Certificate element with a certId to a
-  partner from a PEM chain, indented like the CPA; references (TLS, signing) are not added yet.
+  partner from a PEM chain, indented like the CPA, and can use it at once for TLS server/client of the partner's
+  transports (http endpoints become https) and as trust anchor; "Link to transports…" does that for an existing
+  certId. Message signing/encryption references are not set.

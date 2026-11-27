@@ -658,19 +658,204 @@ pub fn add_certificate(doc: &mut Document, party_index: usize, cert_id: &str, pe
     }
     doc.append_child(certificate, key_info);
     strip_redundant_namespaces(doc, key_info);
-    // Indented like its siblings: the whitespace before it, divided by its depth, is one level
-    let before = tail.as_deref().and_then(|t| t.rsplit('\n').next()).unwrap_or("").to_string();
+    reindent(doc, certificate);
+    Ok(certificate)
+}
+
+/// Indents an element and its descendants like its siblings: the whitespace before it, divided by its depth, is one
+/// level (two spaces when that cannot be read). Text with content is left alone.
+fn reindent(doc: &mut Document, element: NodeId) {
+    let before = doc
+        .parent(element)
+        .and_then(|parent| {
+            let siblings = doc.children(parent);
+            let position = siblings.iter().position(|&s| s == element)?;
+            let previous = *siblings.get(position.checked_sub(1)?)?;
+            match doc.kind(previous) {
+                crate::xml::NodeKind::Text(text) => Some(text.clone()),
+                _ => None,
+            }
+        })
+        .and_then(|text| text.rsplit('\n').next().map(str::to_string))
+        .unwrap_or_default();
     let mut depth = 0;
-    let mut node = certificate;
+    let mut node = element;
     while let Some(parent) = doc.parent_element(node) {
         depth += 1;
         node = parent;
     }
     let unit_length = if depth > 0 { before.chars().count() / depth } else { 0 };
     let unit: String = before.chars().take(unit_length.max(1)).collect();
-    let unit = if unit.trim().is_empty() && !unit.is_empty() { unit } else { "  ".to_string() };
-    crate::diff::indent_with(doc, certificate, depth, &unit);
-    Ok(certificate)
+    let unit = if !unit.is_empty() && unit.trim().is_empty() { unit } else { "  ".to_string() };
+    crate::diff::indent_with(doc, element, depth, &unit);
+}
+
+/// What a certificate is used for when it is linked to the transports of its partner.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct CertificateUse {
+    /// ServerCertificateRef of each TransportReceiver (TransportServerSecurity); http endpoints become https.
+    pub tls_server: bool,
+    /// ClientCertificateRef of each TransportSender (TransportClientSecurity).
+    pub tls_client: bool,
+    /// AnchorCertificateRef in the security details of the partner, which the TLS settings refer to.
+    pub trust_anchor: bool,
+}
+
+/// What linking a certificate changed.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct LinkReport {
+    /// Each change as a sentence for the log, e.g. `ServerCertificateRef of transport T1 set to C1`.
+    pub changes: Vec<String>,
+    /// (transportId, old, new) of every endpoint that changed from http to https.
+    pub endpoints: Vec<(String, String, String)>,
+}
+
+/// The child with the name, or a new one inserted after the last of `after` that is present (first child when none
+/// is), with the given text.
+fn child_or_insert(doc: &mut Document, parent: NodeId, local: &str, after: &[&str], text: Option<&str>) -> (NodeId, bool) {
+    if let Some(existing) = doc.find(parent, Some(CPA_NAMESPACE), local) {
+        return (existing, false);
+    }
+    let element = doc.create_element(Some(CPA_NAMESPACE), local);
+    if let Some(text) = text {
+        doc.set_text(element, Some(text));
+    }
+    let reference = doc
+        .child_elements(parent)
+        .filter(|&child| after.iter().any(|name| doc.is_named(child, Some(CPA_NAMESPACE), name)))
+        .last();
+    match reference {
+        Some(reference) => crate::cpa::insert_after_tail(doc, parent, reference, element),
+        None => {
+            let first = doc.child_elements(parent).next();
+            match first {
+                Some(first) => doc.insert_before(first, element),
+                None => doc.append_child(parent, element),
+            }
+        }
+    }
+    (element, true)
+}
+
+/// Sets the certId of a certificate reference, creating the reference when it is missing. Returns the certId it had.
+fn set_reference(doc: &mut Document, parent: NodeId, local: &str, after: &[&str], attribute: &str, value: &str) -> Option<String> {
+    let (element, _) = child_or_insert(doc, parent, local, after, None);
+    let old = doc.attribute(element, Some(CPA_NAMESPACE), attribute).map(str::to_string);
+    doc.set_attribute(element, Some(CPA_NAMESPACE), attribute, value);
+    old
+}
+
+/// Links a certificate of a partner to its transports and security details:
+///
+/// - `trust_anchor`: an AnchorCertificateRef in the first SecurityDetails of the partner (a new
+///   `<certId>_TransportSecurity` after the certificates when there is none); the TLS settings below refer to it.
+/// - `tls_server`: each TransportReceiver gets TransportServerSecurity (TLS 1.2) with this ServerCertificateRef;
+///   `http://` endpoints become `https://`.
+/// - `tls_client`: each TransportSender gets TransportClientSecurity (TLS 1.2) with this ClientCertificateRef.
+///
+/// An existing reference to another certId is replaced (reported). Indentation follows the CPA.
+pub fn link_certificate(doc: &mut Document, party_index: usize, cert_id: &str, uses: CertificateUse) -> Result<LinkReport, String> {
+    let party = *crate::cpa::party_infos(doc).get(party_index).ok_or("This partner is not in the CPA")?;
+    let certificate = doc
+        .find_all(party, Some(CPA_NAMESPACE), "Certificate")
+        .find(|&c| doc.attribute(c, Some(CPA_NAMESPACE), "certId") == Some(cert_id))
+        .ok_or_else(|| format!("The partner has no certificate {cert_id}"))?;
+    let mut report = LinkReport::default();
+
+    let mut security_id = None;
+    if uses.trust_anchor {
+        let details = match doc.find(party, Some(CPA_NAMESPACE), "SecurityDetails") {
+            Some(details) => details,
+            None => {
+                let mut id = format!("{cert_id}_TransportSecurity");
+                let mut number = 2;
+                while id_in_use(doc, &id) {
+                    id = format!("{cert_id}_TransportSecurity{number}");
+                    number += 1;
+                }
+                let details = doc.create_element(Some(CPA_NAMESPACE), "SecurityDetails");
+                doc.set_attribute(details, Some(CPA_NAMESPACE), "securityId", &id);
+                let last_certificate =
+                    doc.find_all(party, Some(CPA_NAMESPACE), "Certificate").last().unwrap_or(certificate);
+                let tail = doc.tail(last_certificate);
+                crate::cpa::insert_after_tail(doc, party, last_certificate, details);
+                if let Some(tail) = &tail {
+                    doc.set_tail(details, Some(tail));
+                }
+                report.changes.push(format!("SecurityDetails {id} added"));
+                details
+            }
+        };
+        let id = doc.attribute(details, Some(CPA_NAMESPACE), "securityId").unwrap_or_default().to_string();
+        let (anchors, _) = child_or_insert(doc, details, "TrustAnchors", &[], None);
+        let present = doc
+            .find_all(anchors, Some(CPA_NAMESPACE), "AnchorCertificateRef")
+            .any(|r| doc.attribute(r, Some(CPA_NAMESPACE), "certId") == Some(cert_id));
+        if !present {
+            let reference = doc.append_element(anchors, Some(CPA_NAMESPACE), "AnchorCertificateRef");
+            doc.set_attribute(reference, Some(CPA_NAMESPACE), "certId", cert_id);
+            report.changes.push(format!("Trust anchor {cert_id} added to SecurityDetails {id}"));
+        }
+        reindent(doc, details);
+        security_id = Some(id);
+    }
+
+    for transport in crate::cpa::transports(doc, party) {
+        let transport_id = doc.attribute(transport, Some(CPA_NAMESPACE), "transportId").unwrap_or_default().to_string();
+        if uses.tls_server {
+            if let Some(receiver) = doc.find(transport, Some(CPA_NAMESPACE), "TransportReceiver") {
+                let after = ["TransportProtocol", "AccessAuthentication", "Endpoint"];
+                let (security, _) = child_or_insert(doc, receiver, "TransportServerSecurity", &after, None);
+                let (protocol, _) = child_or_insert(doc, security, "TransportSecurityProtocol", &[], Some("TLS"));
+                set_default_version(doc, protocol);
+                let old = set_reference(doc, security, "ServerCertificateRef", &["TransportSecurityProtocol"], "certId", cert_id);
+                report.changes.push(reference_change("ServerCertificateRef", &transport_id, cert_id, old));
+                if let Some(id) = &security_id {
+                    let after = ["TransportSecurityProtocol", "ServerCertificateRef"];
+                    set_reference(doc, security, "ClientSecurityDetailsRef", &after, "securityId", id);
+                }
+                for endpoint in doc.find_all(receiver, Some(CPA_NAMESPACE), "Endpoint").collect::<Vec<_>>() {
+                    let Some(uri) = doc.attribute(endpoint, Some(CPA_NAMESPACE), "uri").map(str::to_string) else { continue };
+                    if let Some(rest) = uri.strip_prefix("http://") {
+                        let new = format!("https://{rest}");
+                        doc.set_attribute(endpoint, Some(CPA_NAMESPACE), "uri", &new);
+                        report.endpoints.push((transport_id.clone(), uri, new));
+                    }
+                }
+            }
+        }
+        if uses.tls_client {
+            if let Some(sender) = doc.find(transport, Some(CPA_NAMESPACE), "TransportSender") {
+                let after = ["TransportProtocol", "AccessAuthentication"];
+                let (security, _) = child_or_insert(doc, sender, "TransportClientSecurity", &after, None);
+                let (protocol, _) = child_or_insert(doc, security, "TransportSecurityProtocol", &[], Some("TLS"));
+                set_default_version(doc, protocol);
+                let old = set_reference(doc, security, "ClientCertificateRef", &["TransportSecurityProtocol"], "certId", cert_id);
+                report.changes.push(reference_change("ClientCertificateRef", &transport_id, cert_id, old));
+                if let Some(id) = &security_id {
+                    let after = ["TransportSecurityProtocol", "ClientCertificateRef"];
+                    set_reference(doc, security, "ServerSecurityDetailsRef", &after, "securityId", id);
+                }
+            }
+        }
+        reindent(doc, transport);
+    }
+    Ok(report)
+}
+
+/// A new TransportSecurityProtocol gets version 1.2.
+fn set_default_version(doc: &mut Document, protocol: NodeId) {
+    if doc.attribute(protocol, Some(CPA_NAMESPACE), "version").is_none() {
+        doc.set_attribute(protocol, Some(CPA_NAMESPACE), "version", "1.2");
+    }
+}
+
+fn reference_change(name: &str, transport: &str, cert_id: &str, old: Option<String>) -> String {
+    match old {
+        Some(old) if old != cert_id => format!("{name} of transport {transport} changed from {old} to {cert_id}"),
+        Some(_) => format!("{name} of transport {transport} already {cert_id}"),
+        None => format!("{name} of transport {transport} set to {cert_id}"),
+    }
 }
 
 /// The "Set from certificates" button: sets the end date of the CPA to the expiry date of the certificate that

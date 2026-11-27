@@ -56,6 +56,13 @@ fn review_certificates() {
         }
         save(&mut h, &format!("certificates-selected-{suffix}"));
 
+        // Link the selected certId to the transports
+        h.get_by_role_and_label(egui::accesskit::Role::Button, "Link to transports…").click();
+        h.run_steps(2);
+        save(&mut h, &format!("certificates-link-{suffix}"));
+        h.get_by_role_and_label(egui::accesskit::Role::Button, "Cancel").click();
+        h.run_steps(2);
+
         // Remove all certificates: the question, then the result on the Transport tab and in the log
         h.get_by_label("Remove all certificates…").click();
         h.run_steps(2);

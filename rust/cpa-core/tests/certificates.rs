@@ -659,3 +659,60 @@ fn add_certificate_after_stripping() {
     assert!(xml.contains("</ds:KeyInfo>\n        </tns:Certificate>\n        <tns:SecurityDetails"));
     assert!(cpa_core::validation::validate_document(&doc).unwrap().is_empty());
 }
+
+#[test]
+fn link_certificate_restores_tls_after_stripping() {
+    use cpa_core::certificates::{add_certificate, certificate_entries, link_certificate, strip_certificates, CertificateUse};
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../application/tests/resources/cpas/full_test_cpa.xml");
+    let mut doc = cpa_core::xml::Document::parse_bytes(&std::fs::read(&path).unwrap()).unwrap();
+    let party = cpa_core::cpa::party_infos(&doc)[0];
+    let pem = cpa_core::certificates::key_info_to_pem(&doc, certificate_entries(&doc, party).0[0].key_info).unwrap();
+    strip_certificates(&mut doc);
+    add_certificate(&mut doc, 0, "Broker_Cert", &pem).unwrap();
+
+    let uses = CertificateUse { tls_server: true, tls_client: true, trust_anchor: true };
+    let report = link_certificate(&mut doc, 0, "Broker_Cert", uses).unwrap();
+    assert_eq!(
+        report.endpoints,
+        vec![(
+            "BROKER_T_HTTPS".to_string(),
+            "http://party-a.example.com/exchange/PARTNER_A".to_string(),
+            "https://party-a.example.com/exchange/PARTNER_A".to_string()
+        )]
+    );
+    assert!(report.changes.contains(&"ServerCertificateRef of transport BROKER_T_HTTPS set to Broker_Cert".to_string()));
+    let xml = doc.to_xml();
+    for expected in [
+        "<tns:SecurityDetails tns:securityId=\"BROKER_TransportSecurity\">\n            <tns:TrustAnchors>\n                <tns:AnchorCertificateRef tns:certId=\"Broker_Cert\"/>\n            </tns:TrustAnchors>\n        </tns:SecurityDetails>",
+        "<tns:TransportClientSecurity>\n                    <tns:TransportSecurityProtocol tns:version=\"1.2\">TLS</tns:TransportSecurityProtocol>\n                    <tns:ClientCertificateRef tns:certId=\"Broker_Cert\"/>\n                    <tns:ServerSecurityDetailsRef tns:securityId=\"BROKER_TransportSecurity\"/>\n                </tns:TransportClientSecurity>\n            </tns:TransportSender>",
+        "tns:type=\"allPurpose\"/>\n                <tns:TransportServerSecurity>\n                    <tns:TransportSecurityProtocol tns:version=\"1.2\">TLS</tns:TransportSecurityProtocol>\n                    <tns:ServerCertificateRef tns:certId=\"Broker_Cert\"/>\n                    <tns:ClientSecurityDetailsRef tns:securityId=\"BROKER_TransportSecurity\"/>\n                </tns:TransportServerSecurity>\n            </tns:TransportReceiver>",
+    ] {
+        assert!(xml.contains(expected), "missing:\n{expected}");
+    }
+    assert!(cpa_core::validation::validate_document(&doc).unwrap().is_empty());
+    // The certificate is now in use
+    assert!(cpa_core::certificates::certificate_usages(&doc)["Broker_Cert"].len() >= 3);
+
+    // Linking again changes nothing
+    let before = doc.to_xml();
+    let again = link_certificate(&mut doc, 0, "Broker_Cert", uses).unwrap();
+    assert!(again.endpoints.is_empty());
+    assert_eq!(doc.to_xml(), before);
+}
+
+#[test]
+fn link_certificate_in_a_cpa_without_security_details() {
+    use cpa_core::certificates::{add_certificate, certificate_entries, link_certificate, CertificateUse};
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../application/tests/resources/cpas");
+    let source = cpa_core::xml::Document::parse_bytes(&std::fs::read(dir.join("full_test_cpa.xml")).unwrap()).unwrap();
+    let party = cpa_core::cpa::party_infos(&source)[0];
+    let pem = cpa_core::certificates::key_info_to_pem(&source, certificate_entries(&source, party).0[0].key_info).unwrap();
+    let mut doc = cpa_core::xml::Document::parse_bytes(&std::fs::read(dir.join("full_cpa_p.xml")).unwrap()).unwrap();
+    let cert_id = cpa_core::certificates::new_cert_id(&doc, 0);
+    add_certificate(&mut doc, 0, &cert_id, &pem).unwrap();
+    let uses = CertificateUse { tls_server: true, tls_client: true, trust_anchor: true };
+    let report = link_certificate(&mut doc, 0, &cert_id, uses).unwrap();
+    assert!(report.changes.iter().any(|c| c.starts_with("SecurityDetails ")), "{:?}", report.changes);
+    let errors = cpa_core::validation::validate_document(&doc).unwrap();
+    assert!(errors.is_empty(), "{errors:?}");
+}
