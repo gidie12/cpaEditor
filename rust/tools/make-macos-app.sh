@@ -6,13 +6,26 @@ set -eu
 cd "$(dirname "$0")/.."
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
-cargo build --release -p cpa-editor
+# UNIVERSAL=1: one binary for Apple Silicon and Intel (needs the x86_64-apple-darwin and aarch64-apple-darwin targets)
+if [ "${UNIVERSAL:-0}" = 1 ]; then
+    # The libxml2 of the macOS SDK serves both architectures
+    export PKG_CONFIG_ALLOW_CROSS=1
+    cargo build --release -p cpa-editor --target aarch64-apple-darwin
+    cargo build --release -p cpa-editor --target x86_64-apple-darwin
+    mkdir -p target/universal
+    lipo -create -output target/universal/cpa-editor \
+        target/aarch64-apple-darwin/release/cpa-editor target/x86_64-apple-darwin/release/cpa-editor
+    binary=target/universal/cpa-editor
+else
+    cargo build --release -p cpa-editor
+    binary=target/release/cpa-editor
+fi
 
 version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n 1)
 app="dist/CPA Editor.app"
 rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
-cp target/release/cpa-editor "$app/Contents/MacOS/cpa-editor"
+cp "$binary" "$app/Contents/MacOS/cpa-editor"
 
 cat > "$app/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
