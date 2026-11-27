@@ -271,7 +271,8 @@ impl CertificatesTab {
         });
     }
 
-    fn detail_panel(&self, ui: &mut Ui, action: &mut Option<Action>) {
+    /// `dirty`: the CPA has unsaved changes, so Save CPA… is the primary button and Upload is not.
+    fn detail_panel(&self, ui: &mut Ui, dirty: bool, action: &mut Option<Action>) {
         let Some(index) = self.selected_entry() else {
             theme::empty_state(
                 ui,
@@ -300,7 +301,7 @@ impl CertificatesTab {
 
         ui.add_space(10.0);
         ui.horizontal(|ui| {
-            let primary = status.is_none_or(Status::needs_replacement);
+            let primary = !dirty && status.is_none_or(Status::needs_replacement);
             if theme::action_button(ui, "Upload certificate…", primary, true)
                 .on_hover_text("Replace the KeyInfo with the certificate chain of a PEM file")
                 .clicked()
@@ -549,6 +550,7 @@ impl Tab for CertificatesTab {
         ui.add_space(6.0);
 
         let mut action = None;
+        let dirty = shared.is_dirty();
         let max_width = ui.available_width() * 0.5;
         egui::Panel::right("certificates_detail")
             .resizable(true)
@@ -558,7 +560,7 @@ impl Tab for CertificatesTab {
             .show(ui, |ui| {
                 egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                     ui.add_space(4.0);
-                    self.detail_panel(ui, &mut action);
+                    self.detail_panel(ui, dirty, &mut action);
                 });
             });
         egui::CentralPanel::no_frame().show(ui, |ui| {
