@@ -161,6 +161,13 @@ pub fn empty_state(ui: &mut Ui, heading: &str, text: &str, action: impl FnOnce(&
 
 /// A light background with dark text for a notice, readable in light and dark mode.
 pub fn notice(ui: &mut Ui, text: &str) {
+    warning_box(ui, |ui, color| {
+        ui.label(RichText::new(text).color(color));
+    });
+}
+
+/// A yellow warning box over the full width; `add_contents` gets the text colour of the box.
+pub fn warning_box<R>(ui: &mut Ui, add_contents: impl FnOnce(&mut Ui, Color32) -> R) -> R {
     let (fill, stroke, color) = if ui.visuals().dark_mode {
         (Color32::from_rgb(0x42, 0x36, 0x10), Color32::from_rgb(0x85, 0x6a, 0x1a), Color32::from_rgb(0xfd, 0xe6, 0x8a))
     } else {
@@ -173,8 +180,9 @@ pub fn notice(ui: &mut Ui, text: &str) {
         .inner_margin(egui::Margin::symmetric(10, 6))
         .show(ui, |ui| {
             ui.set_width(ui.available_width());
-            ui.label(RichText::new(text).color(color));
-        });
+            add_contents(ui, color)
+        })
+        .inner
 }
 
 /// A heading above a group of fields, with a line under it.

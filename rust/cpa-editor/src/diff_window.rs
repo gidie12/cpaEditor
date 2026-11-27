@@ -59,13 +59,26 @@ impl DiffWindow {
                 ui.set_width(size.x);
                 ui.heading("Save CPA with these changes?");
                 ui.add_space(6.0);
-                let extra = if self.cpa_id.is_some() { 40.0 } else { 0.0 };
+                let extra = if self.cpa_id.is_some() { 80.0 } else { 0.0 };
                 self.contents(ui, size.y - 130.0 - extra);
                 ui.add_space(8.0);
                 if let Some((current, increased)) = &self.cpa_id {
-                    ui.checkbox(&mut self.increase, format!("Increase the CPA ID: {current} becomes {increased}"));
-                    ui.label(RichText::new("The CPA ID was not changed since the CPA was loaded.").small().weak());
-                    ui.add_space(6.0);
+                    let increase = &mut self.increase;
+                    crate::theme::warning_box(ui, |ui, color| {
+                        ui.label(
+                            RichText::new(format!("The CPA ID {current} was not changed since the CPA was loaded."))
+                                .color(color)
+                                .strong(),
+                        );
+                        ui.label(
+                            RichText::new("A changed CPA usually needs a new CPA ID, so the partner sees it as a new version.")
+                                .color(color),
+                        );
+                        ui.add_space(2.0);
+                        let text = RichText::new(format!("Increase the CPA ID to {increased}")).color(color);
+                        ui.checkbox(increase, text);
+                    });
+                    ui.add_space(8.0);
                 }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if ui.add(egui::Button::new("Cancel").min_size(egui::vec2(96.0, 28.0))).clicked() {
