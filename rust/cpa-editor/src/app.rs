@@ -9,6 +9,8 @@ use crate::help_window::{HelpWindows, UpdateCheck};
 use crate::log::Level;
 use crate::tabs::certificates::CertificatesTab;
 use crate::tabs::collaboration_role::CollaborationRoleTab;
+use crate::tabs::comment::CommentTab;
+use crate::tabs::general::GeneralTab;
 use crate::tabs::validation::ValidationTab;
 use crate::tabs::{Placeholder, Shared, Tab};
 use crate::theme;
@@ -37,10 +39,10 @@ impl CpaEditorApp {
         let mut app = CpaEditorApp {
             shared: Shared::default(),
             tabs: vec![
-                Box::new(Placeholder("General")),
+                Box::new(GeneralTab::default()),
                 Box::new(CollaborationRoleTab::default()),
                 Box::new(Placeholder("Transport")),
-                Box::new(Placeholder("Comment")),
+                Box::new(CommentTab::default()),
                 Box::new(Placeholder("XML editor")),
                 Box::new(CertificatesTab::default()),
                 Box::new(ValidationTab::default()),

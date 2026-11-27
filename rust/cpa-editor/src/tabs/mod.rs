@@ -11,6 +11,8 @@ use crate::log::Log;
 
 pub mod certificates;
 pub mod collaboration_role;
+pub mod comment;
+pub mod general;
 pub mod validation;
 
 /// State shared by all tabs.
