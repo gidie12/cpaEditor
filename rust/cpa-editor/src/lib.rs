@@ -3,6 +3,7 @@
 
 pub mod app;
 pub mod diff_window;
+pub mod new_cpa;
 pub mod help_window;
 pub mod log;
 pub mod tabs;

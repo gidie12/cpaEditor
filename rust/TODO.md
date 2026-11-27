@@ -41,6 +41,10 @@ Digikoppeling XSD or Schematron.
   tree; snapshots with a valid and an expiring certificate.
 - Validation: "Show in XML editor" / "Go to Certificates" button on an error card.
 
+## New CPAs
+- Next: "New CPA…" from a built-in template with a wizard (parties, PartyId type, roles, endpoints), then a
+  Digikoppeling profile choice that fills the messaging/security settings (shares rules with the check above).
+
 ## Docs
 - README, EN/NL guides and schema reference pages for the Rust version.
   Include: General lists the other PartyIds of a partner (the first is edited, the others shown, change them in
@@ -48,3 +52,5 @@ Digikoppeling XSD or Schematron.
   message signing/encryption; https endpoints become http (warning per endpoint in the log).
   Show changes… (bottom bar and File menu): diff since the CPA was loaded (red/green, changed words darker);
   Save CPA… first shows the same changes with Save…/Cancel. The loaded CPA stays the base after saving.
+  File > New CPA from this one…: copy with a new CPA ID (version at the end +1), start now, same duration,
+  status proposed, optionally without certificates; Show changes… lists the differences with the source CPA.

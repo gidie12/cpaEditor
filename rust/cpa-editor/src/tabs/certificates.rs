@@ -80,6 +80,21 @@ fn summary(certificate: &CertificateDetails) -> String {
     text
 }
 
+/// Reports what stripping the certificates changed; every changed endpoint is a warning.
+pub fn log_strip_report(log: &mut crate::log::Log, report: &cpa_core::certificates::StripReport) {
+    let ids = if report.cert_ids.is_empty() { "none".to_string() } else { report.cert_ids.join(", ") };
+    log.info(format!("Removed {}: {ids}", plural(report.cert_ids.len(), "certificate", "certificates")));
+    for (name, count) in &report.removed {
+        log.info(format!("Removed {count} {name}"));
+    }
+    for (transport, old, new) in &report.endpoints {
+        log.warning(format!("Endpoint of transport {transport} is now plain HTTP: {old} -> {new}"));
+    }
+    if report.endpoints.is_empty() {
+        log.info("No https endpoints to change");
+    }
+}
+
 fn plural(count: usize, one: &str, many: &str) -> String {
     if count == 1 { format!("1 {one}") } else { format!("{count} {many}") }
 }
@@ -304,17 +319,7 @@ impl CertificatesTab {
         let Some(document) = shared.document.as_mut() else { return };
         let report = cpa_core::certificates::strip_certificates(document);
         shared.changed();
-        let ids = if report.cert_ids.is_empty() { "none".to_string() } else { report.cert_ids.join(", ") };
-        shared.log.info(format!("Removed {}: {ids}", plural(report.cert_ids.len(), "certificate", "certificates")));
-        for (name, count) in &report.removed {
-            shared.log.info(format!("Removed {count} {name}"));
-        }
-        for (transport, old, new) in &report.endpoints {
-            shared.log.warning(format!("Endpoint of transport {transport} is now plain HTTP: {old} -> {new}"));
-        }
-        if report.endpoints.is_empty() {
-            shared.log.info("No https endpoints to change");
-        }
+        log_strip_report(&mut shared.log, &report);
     }
 
     /// `dirty`: the CPA has unsaved changes, so Save CPA… is the primary button and Upload is not.

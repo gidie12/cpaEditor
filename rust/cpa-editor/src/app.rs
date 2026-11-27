@@ -32,6 +32,8 @@ pub struct CpaEditorApp {
     loaded_text: Option<String>,
     /// Show changes, or the question before saving.
     diff: Option<crate::diff_window::DiffWindow>,
+    /// New CPA from this one.
+    new_cpa: Option<crate::new_cpa::NewCpaDialog>,
 }
 
 impl CpaEditorApp {
@@ -60,6 +62,7 @@ impl CpaEditorApp {
             window_title: String::new(),
             loaded_text: None,
             diff: None,
+            new_cpa: None,
         };
         if check_for_updates {
             // Look for a newer version once the window is shown
@@ -98,6 +101,7 @@ impl CpaEditorApp {
                 self.shared.log.clear();
                 self.loaded_text = Some(cpa_core::diff::cpa_text(&document));
                 self.diff = None;
+                self.new_cpa = None;
                 self.shared.document = Some(document);
                 self.shared.file_path = Some(path.to_path_buf());
                 self.shared.revision += 1;
@@ -115,6 +119,48 @@ impl CpaEditorApp {
         match (&self.loaded_text, &self.shared.document) {
             (Some(loaded), Some(document)) => cpa_core::diff::cpa_changes(loaded, &cpa_core::diff::cpa_text(document)),
             _ => Vec::new(),
+        }
+    }
+
+    /// New CPA from this one: asks for the new CPAId and dates.
+    fn ask_new_cpa(&mut self) {
+        match &self.shared.document {
+            Some(document) => self.new_cpa = Some(crate::new_cpa::NewCpaDialog::new(document)),
+            None => self.shared.log.error("No CPA loaded, open the CPA to start from first"),
+        }
+    }
+
+    /// Replaces the loaded CPA with a new one made from it. The loaded CPA stays the base of Show changes, so the
+    /// differences with the source can be checked before saving.
+    pub fn create_new_cpa(&mut self, options: &cpa_core::cpa::NewCpaOptions) {
+        let Some(document) = &self.shared.document else { return };
+        let source = cpa_core::cpa::read_general(document).cpa_id;
+        match cpa_core::cpa::new_cpa_from(document, options) {
+            Ok((new, report)) => {
+                self.shared.document = Some(new);
+                let name = cpa_core::cpa::cpa_file_name(&options.cpa_id);
+                self.shared.file_path = Some(match self.shared.file_path.as_ref().and_then(|p| p.parent()) {
+                    Some(directory) => directory.join(name),
+                    None => PathBuf::from(name),
+                });
+                self.shared.revision += 1;
+                self.shared.generation += 1;
+                self.shared.invalid_dates = 0;
+                self.shared.log.info(format!(
+                    "New CPA {} made from {source}: valid from {} to {}",
+                    options.cpa_id.trim(),
+                    options.start_date.trim(),
+                    options.end_date.trim()
+                ));
+                if options.reset_status {
+                    self.shared.log.info("Status set to proposed");
+                }
+                if let Some(report) = report {
+                    crate::tabs::certificates::log_strip_report(&mut self.shared.log, &report);
+                }
+                self.shared.log.info("Not saved yet: Show changes… lists the differences with the source CPA");
+            }
+            Err(e) => self.shared.log.error(format!("Error while making the new CPA: {e}")),
         }
     }
 
@@ -299,6 +345,10 @@ impl CpaEditorApp {
                         ui.close();
                         self.save_cpa_dialog();
                     }
+                    if ui.add_enabled(self.shared.document.is_some(), egui::Button::new("New CPA from this one…")).clicked() {
+                        ui.close();
+                        self.ask_new_cpa();
+                    }
                     if ui.add_enabled(self.shared.document.is_some(), egui::Button::new("Show changes…")).clicked() {
                         ui.close();
                         self.show_changes();
@@ -383,6 +433,14 @@ impl CpaEditorApp {
         }
         if std::mem::take(&mut self.shared.request_save) {
             self.save_cpa_dialog();
+        }
+        if let (Some(dialog), Some(document)) = (&mut self.new_cpa, &self.shared.document) {
+            if let Some(answer) = dialog.show(&ctx, document) {
+                self.new_cpa = None;
+                if let crate::new_cpa::NewCpaAnswer::Create(options) = answer {
+                    self.create_new_cpa(&options);
+                }
+            }
         }
         if let Some(diff) = &self.diff {
             if let Some(answer) = diff.show(&ctx) {

@@ -2,10 +2,10 @@
 //! and end date with their Zulu and local time. Every edit is written to the CPA right away, so nothing is lost when
 //! the user saves or switches tabs while a field still has the focus.
 
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{DateTime, Utc};
 use cpa_core::certificates::{certificate_expiries, end_date_from_certificates, end_date_message};
 use cpa_core::cpa::{read_general, set_general, set_start_date_to_now, GeneralField, CPA_STATUS_OPTIONS};
-use cpa_core::dates::{describe_cpa_date, parse_iso_datetime, INVALID_DATE_MESSAGE, NO_TIMEZONE_MESSAGE};
+use cpa_core::dates::{describe_cpa_date, INVALID_DATE_MESSAGE, NO_TIMEZONE_MESSAGE};
 use cpa_core::xml::Document;
 use eframe::egui::{self, Color32, RichText, Ui};
 
@@ -430,9 +430,7 @@ fn status_color(ui: &Ui, status: &str) -> Color32 {
 
 /// A CPA date as a moment, None when it is not a valid date with a timezone.
 fn moment(value: &str) -> Option<DateTime<Utc>> {
-    let parsed = parse_iso_datetime(value.trim())?;
-    let offset = parsed.offset?;
-    Some(offset.from_local_datetime(&parsed.naive).single()?.with_timezone(&Utc))
+    cpa_core::dates::cpa_moment(value)
 }
 
 /// Whether the CPA is in force now, as a badge text and colour. None when a date is missing or not valid.

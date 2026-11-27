@@ -60,6 +60,19 @@ fn review_general_comment() {
         // General: as loaded, then the end date from the certificates (they have expired in the test CPA)
         let mut h = harness(theme, GENERAL);
         save(&mut h, &format!("general-{suffix}"));
+
+        // New CPA from this one: the question from the File menu, with certificates removed, then the result
+        let mut n = harness(theme, GENERAL);
+        n.get_by_label("File").click();
+        n.run_steps(2);
+        n.get_by_label("New CPA from this one…").click();
+        n.run_steps(2);
+        n.get_by_label("Remove all certificates").click();
+        n.run_steps(2);
+        save(&mut n, &format!("new-cpa-{suffix}"));
+        n.get_by_label("Create CPA").click();
+        n.run_steps(3);
+        save(&mut n, &format!("new-cpa-created-{suffix}"));
         h.get_by_label("Set from certificates").click();
         save(&mut h, &format!("general-from-certificates-{suffix}"));
 

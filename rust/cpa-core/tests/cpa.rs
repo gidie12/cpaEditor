@@ -337,3 +337,47 @@ fn xml_editor_deletes_elements_but_not_the_root() {
     assert!(!doc.is_attached(status));
     assert!(doc.to_xml().contains("CPA123\">\n  <tns:Start>"));
 }
+
+#[test]
+fn next_cpa_id_raises_the_version() {
+    use cpa_core::cpa::next_cpa_id;
+    assert_eq!(next_cpa_id("osb_ebms_123_456_1"), "osb_ebms_123_456_2");
+    assert_eq!(next_cpa_id("CPA009"), "CPA010");
+    assert_eq!(next_cpa_id("cpa"), "cpa_2");
+    assert_eq!(next_cpa_id("42"), "42_2");
+    assert_eq!(next_cpa_id(""), "");
+}
+
+#[test]
+fn new_cpa_from_copies_with_new_id_dates_and_status() {
+    use cpa_core::cpa::{check_new_cpa_options, new_cpa_defaults, new_cpa_from, read_general, GeneralField};
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../application/tests/resources/cpas/full_test_cpa.xml");
+    let doc = cpa_core::xml::Document::parse_bytes(&std::fs::read(path).unwrap()).unwrap();
+    let before = doc.to_xml();
+    let mut options = new_cpa_defaults(&doc);
+    assert_ne!(options.cpa_id, read_general(&doc).cpa_id);
+    assert!(check_new_cpa_options(&doc, &options).is_empty());
+
+    options.strip_certificates = true;
+    let (new, report) = new_cpa_from(&doc, &options).unwrap();
+    assert_eq!(doc.to_xml(), before, "the loaded CPA stays as it was");
+    let fields = read_general(&new);
+    assert_eq!(fields.cpa_id, options.cpa_id);
+    assert_eq!(fields.start_date, options.start_date);
+    assert_eq!(fields.end_date, options.end_date);
+    assert_eq!(fields.status, "proposed");
+    assert_eq!(report.unwrap().cert_ids.len(), 4);
+    assert!(cpa_core::validation::validate_document(&new).unwrap().is_empty());
+
+    // The same CPAId and an end before the start are refused
+    options.cpa_id = read_general(&doc).cpa_id;
+    options.end_date = "2000-01-01T00:00:00Z".into();
+    let fields: Vec<GeneralField> = check_new_cpa_options(&doc, &options).into_iter().map(|(f, _)| f).collect();
+    assert_eq!(fields, vec![GeneralField::CpaId, GeneralField::EndDate]);
+    assert!(new_cpa_from(&doc, &options).is_err());
+}
+
+#[test]
+fn cpa_file_name_replaces_characters_a_file_name_cannot_hold() {
+    assert_eq!(cpa_core::cpa::cpa_file_name("a/b:c*d"), "a_b_c_d.xml");
+}

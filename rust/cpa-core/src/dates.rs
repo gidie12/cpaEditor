@@ -25,6 +25,13 @@ pub fn now_cpa_date() -> String {
     format_cpa_date(Utc::now())
 }
 
+/// A CPA date as a moment in UTC; None when it is not a valid date or has no timezone.
+pub fn cpa_moment(value: &str) -> Option<DateTime<Utc>> {
+    let parsed = parse_iso_datetime(value.trim())?;
+    let offset = parsed.offset?;
+    Some(offset.from_local_datetime(&parsed.naive).single()?.with_timezone(&Utc))
+}
+
 /// Describes a CPA date in Zulu time (UTC) and in local time, for example
 /// `Zulu: 2026-10-09T10:44:32Z    Local: 2026-10-09 12:44:32 CEST (UTC+02:00)`.
 ///

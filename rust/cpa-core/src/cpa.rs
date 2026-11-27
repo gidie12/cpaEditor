@@ -472,6 +472,107 @@ pub fn python_repr(value: &str) -> String {
     out
 }
 
+// ----------------------------------------------------------------------------------------------------------------
+// New CPA from the loaded one
+// ----------------------------------------------------------------------------------------------------------------
+
+/// What changes when a new CPA is made from the loaded one.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct NewCpaOptions {
+    pub cpa_id: String,
+    pub start_date: String,
+    pub end_date: String,
+    /// Status `proposed`: a new CPA still has to be agreed.
+    pub reset_status: bool,
+    pub strip_certificates: bool,
+}
+
+/// The proposed CPAId of a new CPA: a version number at the end goes up by one (`..._2` becomes `..._3`, the
+/// Digikoppeling convention ends with the version), otherwise `_2` is added.
+pub fn next_cpa_id(cpa_id: &str) -> String {
+    let digits = cpa_id.len() - cpa_id.trim_end_matches(|c: char| c.is_ascii_digit()).len();
+    if digits > 0 && digits < cpa_id.len() {
+        let (stem, number) = cpa_id.split_at(cpa_id.len() - digits);
+        if let Ok(value) = number.parse::<u64>() {
+            // Keep leading zeros: 009 becomes 010
+            return format!("{stem}{:0width$}", value + 1, width = digits);
+        }
+    }
+    if cpa_id.is_empty() { String::new() } else { format!("{cpa_id}_2") }
+}
+
+/// The proposed options: the next CPAId, starting now, valid as long as the loaded CPA was (one year when its
+/// dates cannot be read), status proposed, certificates kept.
+pub fn new_cpa_defaults(doc: &Document) -> NewCpaOptions {
+    let fields = read_general(doc);
+    let now = chrono::Utc::now();
+    let length = match (crate::dates::cpa_moment(&fields.start_date), crate::dates::cpa_moment(&fields.end_date)) {
+        (Some(start), Some(end)) if end > start => end - start,
+        _ => chrono::Duration::days(365),
+    };
+    NewCpaOptions {
+        cpa_id: next_cpa_id(fields.cpa_id.trim()),
+        start_date: crate::dates::format_cpa_date(now),
+        end_date: crate::dates::format_cpa_date(now + length),
+        reset_status: true,
+        strip_certificates: false,
+    }
+}
+
+/// What is wrong with the options, per field; empty when a new CPA can be made.
+pub fn check_new_cpa_options(doc: &Document, options: &NewCpaOptions) -> Vec<(GeneralField, String)> {
+    let mut errors = Vec::new();
+    let cpa_id = options.cpa_id.trim();
+    if cpa_id.is_empty() {
+        errors.push((GeneralField::CpaId, "Enter a CPAId".to_string()));
+    } else if cpa_id == read_general(doc).cpa_id.trim() {
+        errors.push((GeneralField::CpaId, "A new CPA needs another CPAId than the loaded CPA".to_string()));
+    } else if let Err(e) = check_xml_text(cpa_id) {
+        errors.push((GeneralField::CpaId, e));
+    }
+    let start = crate::dates::cpa_moment(&options.start_date);
+    let end = crate::dates::cpa_moment(&options.end_date);
+    if start.is_none() {
+        errors.push((GeneralField::StartDate, crate::dates::INVALID_DATE_MESSAGE.to_string()));
+    }
+    if end.is_none() {
+        errors.push((GeneralField::EndDate, crate::dates::INVALID_DATE_MESSAGE.to_string()));
+    }
+    if let (Some(start), Some(end)) = (start, end) {
+        if end <= start {
+            errors.push((GeneralField::EndDate, "The end date must be after the start date".to_string()));
+        }
+    }
+    errors
+}
+
+/// Makes a new CPA from the loaded one: a copy with the new CPAId and dates, optionally status `proposed` and
+/// without certificates. The loaded CPA is not changed.
+pub fn new_cpa_from(
+    doc: &Document,
+    options: &NewCpaOptions,
+) -> Result<(Document, Option<crate::certificates::StripReport>), String> {
+    if let Some((_, error)) = check_new_cpa_options(doc, options).into_iter().next() {
+        return Err(error);
+    }
+    let mut new = doc.clone();
+    set_general(&mut new, GeneralField::CpaId, options.cpa_id.trim())?;
+    set_general(&mut new, GeneralField::StartDate, options.start_date.trim())?;
+    set_general(&mut new, GeneralField::EndDate, options.end_date.trim())?;
+    if options.reset_status {
+        set_general(&mut new, GeneralField::Status, "proposed")?;
+    }
+    let report = options.strip_certificates.then(|| crate::certificates::strip_certificates(&mut new));
+    Ok((new, report))
+}
+
+/// The file name for a CPAId: characters a file name cannot hold become an underscore.
+pub fn cpa_file_name(cpa_id: &str) -> String {
+    let name: String =
+        cpa_id.trim().chars().map(|c| if r#"\/:*?"<>|"#.contains(c) || c.is_control() { '_' } else { c }).collect();
+    format!("{name}.xml")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
