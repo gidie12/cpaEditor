@@ -26,6 +26,8 @@ pub struct TreeRow {
     pub header_bar: Option<Color32>,
     /// Weak text after the text of the first column.
     pub secondary: Option<String>,
+    /// Text colour per column, over the row's colour (e.g. only the status cell red).
+    pub cell_colors: Vec<Option<Color32>>,
     /// A direction arrow (true = right) painted before the text of the first column.
     pub icon: Option<(bool, Color32)>,
 }
@@ -267,7 +269,12 @@ impl TreeTable {
                             }
                             let line = line.as_str();
                             let mut job = egui::text::LayoutJob::default();
-                            let mut format = egui::TextFormat { font_id: font.clone(), color: text_color, ..Default::default() };
+                            let cell_color = if selected {
+                                text_color
+                            } else {
+                                row.cell_colors.get(column).copied().flatten().unwrap_or(text_color)
+                            };
+                            let mut format = egui::TextFormat { font_id: font.clone(), color: cell_color, ..Default::default() };
                             if row.strong && column == 0 {
                                 format.font_id = FontId { family: egui::FontFamily::Proportional, ..font.clone() };
                                 format.color = if selected { text_color } else { visuals.strong_text_color() };

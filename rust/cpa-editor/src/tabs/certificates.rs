@@ -532,16 +532,14 @@ impl Tab for CertificatesTab {
             return;
         }
 
-        // Expired and soon expiring certIds get the status colour, unused certIds weak text
+        // The status cell gets the status colour, unused certIds weak text
         let now = self.now;
         for row in &mut self.rows {
             if let Some(&index) = self.row_entry.get(&row.key) {
                 let entry = &self.entries[index];
-                row.text_color = match entry.status(now) {
-                    Some(status) if status != Status::Valid => Some(status.color(ui)),
-                    _ if entry.usages.is_empty() => Some(ui.visuals().weak_text_color()),
-                    _ => None,
-                };
+                // Only the status cell carries the status colour; a whole red tree would hide what matters
+                row.text_color = entry.usages.is_empty().then(|| ui.visuals().weak_text_color());
+                row.cell_colors = vec![None, entry.status(now).map(|status| status.color(ui))];
             }
         }
 
