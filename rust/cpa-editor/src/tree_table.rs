@@ -195,6 +195,9 @@ impl TreeTable {
                 visible.len(),
                 |ui, range| {
                     let first_visible = range.start;
+                    // The bottom of the row under the sticky group row: that row is covered as a whole
+                    let sticky_line = ui.clip_rect().top() + ROW_HEIGHT;
+                    let mut covered_bottom = sticky_line;
                     for &index in &visible[range] {
                         let row = &rows[index];
                         let has_children = rows.get(index + 1).is_some_and(|next| next.depth > row.depth);
@@ -331,6 +334,9 @@ impl TreeTable {
                             let column = column_at(&self.widths, rect.left(), response.interact_pointer_pos());
                             events.double_clicked = Some((row.key, column));
                         }
+                        if rect.top() < sticky_line && rect.bottom() > sticky_line {
+                            covered_bottom = rect.bottom();
+                        }
                         response.context_menu(|ui| context_menu(ui, Some(row.key)));
                         if selected && self.scroll_to_selected {
                             ui.scroll_to_rect(rect, Some(egui::Align::Center));
@@ -352,10 +358,13 @@ impl TreeTable {
                     if let Some(&index) = sticky {
                         let row = &rows[index];
                         let clip = ui.clip_rect();
+                        // Cover the row that would show half under it, so no cut-off text peeks through
+                        let cover = Rect::from_min_max(clip.min, pos2(clip.right(), covered_bottom));
                         let rect = Rect::from_min_size(clip.min, vec2(clip.width(), ROW_HEIGHT));
                         let painter = ui.painter().with_clip_rect(clip);
-                        painter.rect_filled(rect, 0.0, visuals.panel_fill);
-                        painter.rect_filled(rect, 0.0, visuals.widgets.noninteractive.bg_fill);
+                        painter.rect_filled(cover, 0.0, visuals.panel_fill);
+                        painter.rect_filled(cover, 0.0, visuals.widgets.noninteractive.bg_fill);
+                        let rect = Rect::from_min_size(pos2(rect.left(), cover.bottom() - ROW_HEIGHT), rect.size());
                         if let Some(bar) = row.header_bar {
                             painter.rect_filled(Rect::from_min_size(rect.min, vec2(3.0, ROW_HEIGHT)), 0.0, bar);
                         }
@@ -363,6 +372,8 @@ impl TreeTable {
                             [rect.left_bottom(), rect.right_bottom()],
                             visuals.widgets.noninteractive.bg_stroke,
                         );
+                        let toggle = pos2(rect.left() + 4.0 + row.depth as f32 * INDENT + INDENT / 2.0, rect.center().y);
+                        crate::theme::paint_arrow(&painter, toggle, 8.0, crate::theme::Arrow::Down, visuals.strong_text_color());
                         let mut job = egui::text::LayoutJob::default();
                         let strong = egui::TextFormat {
                             font_id: header_font.clone(),

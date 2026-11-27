@@ -58,7 +58,7 @@ struct Detail {
     /// The certIds or securityIds of the partner for a reference attribute.
     options: Option<Vec<String>>,
     /// Per certId: the common name and expiry of its leaf certificate, shown under the drop-down list.
-    option_hints: std::collections::HashMap<String, String>,
+    option_hints: std::collections::HashMap<String, (String, bool)>,
     /// The current value of a reference attribute when it is not one of the options (Python then shows the first).
     unknown_value: Option<String>,
     error: Option<String>,
@@ -217,9 +217,10 @@ impl TransportTab {
                 for entry in cpa_core::certificates::certificate_entries(document, party).0 {
                     let leaf = cpa_core::certificates::key_info_certificates(document, entry.key_info, now).0;
                     if let Some(leaf) = leaf.first() {
-                        let state = if leaf.not_after < now { "expired" } else { "expires" };
+                        let expired = leaf.not_after < now;
+                        let state = if expired { "expired" } else { "expires" };
                         let hint = format!("{} · {state} {}", leaf.common_name, leaf.not_after.format("%Y-%m-%d"));
-                        self.detail.option_hints.insert(entry.cert_id, hint);
+                        self.detail.option_hints.insert(entry.cert_id, (hint, expired));
                     }
                 }
             }
@@ -317,15 +318,16 @@ impl TransportTab {
             }
             Some(options) => {
                 let options = options.clone();
-                ui.vertical(|ui| {
-                    if combo(ui, "transport_value", &mut self.detail.value, &options, true) {
-                        self.detail.error = None;
-                    }
-                    // Which certificate is behind the id
-                    if let Some(hint) = self.detail.option_hints.get(&self.detail.value) {
-                        ui.label(RichText::new(hint).weak());
-                    }
-                });
+                if combo(ui, "transport_value", &mut self.detail.value, &options, true) {
+                    self.detail.error = None;
+                }
+                // Which certificate is behind the id, in its own grid row so "Value" stays on the line of the list
+                if let Some((hint, expired)) = self.detail.option_hints.get(&self.detail.value) {
+                    ui.end_row();
+                    ui.label("");
+                    let text = RichText::new(hint);
+                    ui.label(if *expired { text.color(theme::error_color(ui)) } else { text.weak() });
+                }
             }
             None => {
                 let field =
