@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use cpa_core::xml::Document;
 use eframe::egui::{self, RichText};
 
+use crate::help_window::{HelpWindows, UpdateCheck};
 use crate::log::Level;
 use crate::tabs::collaboration_role::CollaborationRoleTab;
 use crate::tabs::validation::ValidationTab;
@@ -14,6 +15,8 @@ pub struct CpaEditorApp {
     shared: Shared,
     tabs: Vec<Box<dyn Tab>>,
     current_tab: usize,
+    help: HelpWindows,
+    update_check: UpdateCheck,
 }
 
 impl CpaEditorApp {
@@ -30,7 +33,11 @@ impl CpaEditorApp {
                 Box::new(ValidationTab::default()),
             ],
             current_tab: 0,
+            help: HelpWindows::default(),
+            update_check: UpdateCheck::default(),
         };
+        // Look for a newer version once the window is shown
+        app.update_check.start(&_cc.egui_ctx, true, &mut app.shared.log);
         if let Some(path) = initial_file {
             app.load_cpa(&path);
         }
@@ -128,7 +135,17 @@ impl CpaEditorApp {
         egui::TopBottomPanel::top("menu").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("Help", |ui| {
-                    ui.label("Help is being ported.");
+                    for label in self.help.labels() {
+                        if ui.button(label).clicked() {
+                            self.help.open(label);
+                            ui.close_menu();
+                        }
+                    }
+                    ui.separator();
+                    if ui.button("Check for updates").clicked() {
+                        self.update_check.start(ui.ctx(), false, &mut self.shared.log);
+                        ui.close_menu();
+                    }
                 });
             });
         });
@@ -144,6 +161,8 @@ impl eframe::App for CpaEditorApp {
         }
 
         self.menu_bar(ctx);
+        self.help.show(ctx);
+        self.update_check.show(ctx, &mut self.shared.log);
         self.bottom_panel(ctx);
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.horizontal_wrapped(|ui| {

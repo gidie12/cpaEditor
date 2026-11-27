@@ -4,6 +4,7 @@
 //! CPA Editor: desktop application for viewing and editing ebXML CPA files (cpp-cpa-2_0.xsd).
 
 mod app;
+mod help_window;
 mod log;
 mod tabs;
 mod tree_table;
