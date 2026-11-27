@@ -46,3 +46,5 @@ Digikoppeling XSD or Schematron.
   Include: General lists the other PartyIds of a partner (the first is edited, the others shown, change them in
   the XML editor). Certificates: "Remove all certificates…" strips certificates, transport TLS, trust anchors and
   message signing/encryption; https endpoints become http (warning per endpoint in the log).
+  Show changes… (bottom bar and File menu): diff since the CPA was loaded (red/green, changed words darker);
+  Save CPA… first shows the same changes with Save…/Cancel. The loaded CPA stays the base after saving.

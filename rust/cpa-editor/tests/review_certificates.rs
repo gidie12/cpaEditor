@@ -67,6 +67,18 @@ fn review_certificates() {
         h.run_steps(2);
         save(&mut h, &format!("certificates-stripped-transport-{suffix}"));
 
+        // Show changes, then Save CPA… asks with the same changes
+        h.get_by_role_and_label(egui::accesskit::Role::Button, "Show changes…").click();
+        h.run_steps(3);
+        save(&mut h, &format!("show-changes-{suffix}"));
+        h.get_by_role_and_label(egui::accesskit::Role::Button, "Close window").click();
+        h.run_steps(2);
+        h.get_by_role_and_label(egui::accesskit::Role::Button, "Save CPA…").click();
+        h.run_steps(3);
+        save(&mut h, &format!("save-confirm-changes-{suffix}"));
+        h.get_by_role_and_label(egui::accesskit::Role::Button, "Cancel").click();
+        h.run_steps(2);
+
         // A CPA without certificates
         let mut h = harness(resource("full_cpa_p.xml"), theme);
         h.state_mut().select_tab(CERTIFICATES_TAB);

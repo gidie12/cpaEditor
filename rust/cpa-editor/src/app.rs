@@ -28,6 +28,10 @@ pub struct CpaEditorApp {
     update_check: UpdateCheck,
     log_open: bool,
     window_title: String,
+    /// The CPA as indented text when it was loaded: the base of Show changes, also after saving.
+    loaded_text: Option<String>,
+    /// Show changes, or the question before saving.
+    diff: Option<crate::diff_window::DiffWindow>,
 }
 
 impl CpaEditorApp {
@@ -54,6 +58,8 @@ impl CpaEditorApp {
             update_check: UpdateCheck::default(),
             log_open: true,
             window_title: String::new(),
+            loaded_text: None,
+            diff: None,
         };
         if check_for_updates {
             // Look for a newer version once the window is shown
@@ -90,6 +96,8 @@ impl CpaEditorApp {
         match result {
             Ok(document) => {
                 self.shared.log.clear();
+                self.loaded_text = Some(cpa_core::diff::cpa_text(&document));
+                self.diff = None;
                 self.shared.document = Some(document);
                 self.shared.file_path = Some(path.to_path_buf());
                 self.shared.revision += 1;
@@ -102,11 +110,44 @@ impl CpaEditorApp {
         }
     }
 
+    /// The changes since the CPA was loaded; empty without a CPA or without changes.
+    fn changes(&self) -> Vec<cpa_core::diff::Hunk> {
+        match (&self.loaded_text, &self.shared.document) {
+            (Some(loaded), Some(document)) => cpa_core::diff::cpa_changes(loaded, &cpa_core::diff::cpa_text(document)),
+            _ => Vec::new(),
+        }
+    }
+
+    /// Show changes: the window with the changes of this moment.
+    fn show_changes(&mut self) {
+        if self.shared.document.is_none() {
+            self.shared.log.error("No CPA loaded, no changes to show");
+            return;
+        }
+        let hunks = self.changes();
+        if hunks.is_empty() {
+            self.shared.log.info("No changes since the CPA was loaded");
+            return;
+        }
+        self.diff = Some(crate::diff_window::DiffWindow::new(hunks, false));
+    }
+
+    /// Save CPA…: first the changes since the CPA was loaded, then the file dialog when the user chooses Save….
     fn save_cpa_dialog(&mut self) {
         if self.shared.document.is_none() {
             self.shared.log.error("No CPA loaded, nothing to save");
             return;
         }
+        let hunks = self.changes();
+        if hunks.is_empty() {
+            self.shared.log.info("No changes since the CPA was loaded");
+            self.save_cpa_file_dialog();
+            return;
+        }
+        self.diff = Some(crate::diff_window::DiffWindow::new(hunks, true));
+    }
+
+    fn save_cpa_file_dialog(&mut self) {
         let mut dialog = rfd::FileDialog::new().add_filter("xml files", &["xml"]);
         if let Some(path) = &self.shared.file_path {
             if let Some(directory) = path.parent() {
@@ -176,6 +217,10 @@ impl CpaEditorApp {
                     .on_hover_text(ui.ctx().format_shortcut(&SAVE_SHORTCUT));
                 if save.clicked() {
                     self.save_cpa_dialog();
+                }
+                let show = ui.add_enabled(can_save, egui::Button::new("Show changes…").min_size(egui::vec2(96.0, 28.0)));
+                if show.on_hover_text("The changes since the CPA was loaded").clicked() {
+                    self.show_changes();
                 }
                 ui.add_space(8.0);
                 match self.file_name() {
@@ -253,6 +298,10 @@ impl CpaEditorApp {
                     if ui.add_enabled(self.shared.document.is_some(), save).clicked() {
                         ui.close();
                         self.save_cpa_dialog();
+                    }
+                    if ui.add_enabled(self.shared.document.is_some(), egui::Button::new("Show changes…")).clicked() {
+                        ui.close();
+                        self.show_changes();
                     }
                 });
                 ui.menu_button("Help", |ui| {
@@ -334,6 +383,17 @@ impl CpaEditorApp {
         }
         if std::mem::take(&mut self.shared.request_save) {
             self.save_cpa_dialog();
+        }
+        if let Some(diff) = &self.diff {
+            if let Some(answer) = diff.show(&ctx) {
+                let confirm = diff.is_confirm();
+                self.diff = None;
+                match answer {
+                    crate::diff_window::DiffAnswer::Save => self.save_cpa_file_dialog(),
+                    crate::diff_window::DiffAnswer::Close if confirm => self.shared.log.info("Saving cancelled"),
+                    crate::diff_window::DiffAnswer::Close => {}
+                }
+            }
         }
         self.help.show(&ctx);
         self.update_check.show(&ctx, &mut self.shared.log);

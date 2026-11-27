@@ -15,6 +15,7 @@ num-bigint = "0.4"  # same major version as x509-parser uses
 quick-xml = "0.37"
 regex = "1.13.2"
 serde_json = "1.0.154"
+similar = "2"
 tempfile = "3.27.0"
 thiserror = "2"
 ureq = { version = "3.2.1", default-features = false, features = ["native-tls", "json"] }

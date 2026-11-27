@@ -2,6 +2,7 @@
 //! main.rs starts [`app::CpaEditorApp`]; the library exists so the screenshot tests can drive the same window.
 
 pub mod app;
+pub mod diff_window;
 pub mod help_window;
 pub mod log;
 pub mod tabs;
