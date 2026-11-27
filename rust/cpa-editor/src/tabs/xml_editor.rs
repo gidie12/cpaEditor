@@ -425,7 +425,7 @@ impl XmlEditorTab {
                         ("Delete element…", false, "The root element cannot be deleted")
                     }
                     Some(RowKind::Element(_)) => ("Delete element…", true, ""),
-                    None => ("Delete…", false, "Select an element or an attribute first"),
+                    None => ("Delete element…", false, "Select an element or an attribute first"),
                 };
                 let response = ui.add(theme::danger_button_state(ui, label, can_delete));
                 if response.on_disabled_hover_text(why).clicked() {
@@ -463,11 +463,12 @@ impl XmlEditorTab {
         ui.add_space(10.0);
         egui::Grid::new("xml_detail").num_columns(2).spacing([12.0, 8.0]).min_col_width(LABEL_WIDTH).show(ui, |ui| {
             ui.label("Path");
-            ui.add(egui::Label::new(RichText::new(&self.detail.path).monospace().weak()).wrap());
+            // One line: a path or namespace wrapped mid-word reads badly; the whole text is in the tooltip
+            ui.add(egui::Label::new(RichText::new(&self.detail.path).weak()).truncate()).on_hover_text(&self.detail.path);
             ui.end_row();
             ui.label("Namespace");
             let namespace = if self.detail.namespace.is_empty() { "(none)" } else { self.detail.namespace.as_str() };
-            ui.add(egui::Label::new(RichText::new(namespace).weak()).wrap());
+            ui.add(egui::Label::new(RichText::new(namespace).weak()).truncate().selectable(true)).on_hover_text(namespace);
             ui.end_row();
             ui.label(if self.detail.editable { "Value" } else { "Content" });
             if self.detail.editable {
@@ -527,14 +528,21 @@ impl XmlEditorTab {
         // Add an element or an attribute to the element (of the attribute)
         let owner = if is_attribute { self.detail.owner.clone() } else { self.detail.name.clone() };
         theme::section(ui, &format!("Add to {owner}"));
+        // An element with a value gets no child elements: mixed content is not valid in a CPA
+        let has_value = !is_attribute && self.detail.editable && !self.detail.original.trim().is_empty();
+        if has_value {
+            self.add_type = "Attribute".to_string();
+            ui.label(RichText::new(format!("{owner} holds a value: only attributes can be added.")).weak());
+        }
         let mut add = false;
         egui::Grid::new("xml_add").num_columns(2).spacing([12.0, 8.0]).min_col_width(LABEL_WIDTH).show(ui, |ui| {
             ui.label("Type");
-            let types: Vec<String> = ADD_TYPES.iter().map(|t| t.to_string()).collect();
+            let types: Vec<String> =
+                ADD_TYPES.iter().filter(|t| !has_value || **t == "Attribute").map(|t| t.to_string()).collect();
             combo(ui, "xml_add_type", &mut self.add_type, &types, true);
             ui.end_row();
             ui.label("Name");
-            let hint = if self.add_type == "Attribute" { "e.g. version" } else { "e.g. Comment" };
+            let hint = if self.add_type == "Attribute" { "e.g. version" } else { "e.g. tns:Description" };
             let width = ui.available_width();
             if ui.add(egui::TextEdit::singleline(&mut self.add_name).hint_text(hint).desired_width(width)).changed() {
                 self.add_error = None;

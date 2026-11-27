@@ -140,7 +140,13 @@ impl TreeTable {
         self.widths = fit_widths(&self.columns.iter().map(|(_, width)| *width).collect::<Vec<_>>(), available);
         let total_width: f32 = self.widths.iter().sum();
 
-        egui::ScrollArea::horizontal().id_salt(self.id.with("h")).auto_shrink([false, false]).show(ui, |ui| {
+        // The columns are fitted to the width: a horizontal scroll bar would only cost a row
+        let hidden = egui::scroll_area::ScrollBarVisibility::AlwaysHidden;
+        egui::ScrollArea::horizontal()
+            .id_salt(self.id.with("h"))
+            .auto_shrink([false, false])
+            .scroll_bar_visibility(hidden)
+            .show(ui, |ui| {
             ui.set_min_width(total_width);
             self.header(ui, total_width);
             // Keys belong to the tree when no text field has the focus (one tab is visible at a time)
@@ -188,6 +194,7 @@ impl TreeTable {
                 ROW_HEIGHT,
                 visible.len(),
                 |ui, range| {
+                    let first_visible = range.start;
                     for &index in &visible[range] {
                         let row = &rows[index];
                         let has_children = rows.get(index + 1).is_some_and(|next| next.depth > row.depth);
@@ -265,7 +272,8 @@ impl TreeTable {
                             let painter = ui.painter().with_clip_rect(clip.intersect(ui.clip_rect()));
                             let font = if row.header_bar.is_some() && column == 0 { header_font.clone() } else { font.clone() };
                             // Only the first line: values can be multi-line (a KeyInfo)
-                            let mut line = text.lines().next().unwrap_or("").to_string();
+                            // Only the first line, with runs of whitespace (XML indentation) shown as one space
+                            let mut line = text.lines().next().unwrap_or("").split_whitespace().collect::<Vec<_>>().join(" ");
                             if self.middle_truncate.contains(&column) {
                                 line = shorten_middle(&painter, &line, &font, clip.width());
                             }
@@ -334,6 +342,44 @@ impl TreeTable {
                     if rest.height() > 0.0 {
                         let response = ui.allocate_rect(rest, Sense::click());
                         response.context_menu(|ui| context_menu(ui, None));
+                    }
+                    // The group (partner) of the rows in view stays at the top once its own row scrolled away
+                    let sticky = visible[..first_visible.min(visible.len())]
+                        .iter()
+                        .rev()
+                        .find(|&&i| rows[i].header_bar.is_some())
+                        .filter(|_| first_visible > 0);
+                    if let Some(&index) = sticky {
+                        let row = &rows[index];
+                        let clip = ui.clip_rect();
+                        let rect = Rect::from_min_size(clip.min, vec2(clip.width(), ROW_HEIGHT));
+                        let painter = ui.painter().with_clip_rect(clip);
+                        painter.rect_filled(rect, 0.0, visuals.panel_fill);
+                        painter.rect_filled(rect, 0.0, visuals.widgets.noninteractive.bg_fill);
+                        if let Some(bar) = row.header_bar {
+                            painter.rect_filled(Rect::from_min_size(rect.min, vec2(3.0, ROW_HEIGHT)), 0.0, bar);
+                        }
+                        painter.line_segment(
+                            [rect.left_bottom(), rect.right_bottom()],
+                            visuals.widgets.noninteractive.bg_stroke,
+                        );
+                        let mut job = egui::text::LayoutJob::default();
+                        let strong = egui::TextFormat {
+                            font_id: header_font.clone(),
+                            color: visuals.strong_text_color(),
+                            ..Default::default()
+                        };
+                        job.append(row.cells.first().map(String::as_str).unwrap_or(""), 0.0, strong.clone());
+                        if let Some(secondary) = &row.secondary {
+                            job.append(secondary, 8.0, egui::TextFormat { color: visuals.weak_text_color(), ..strong });
+                        }
+                        let galley = painter.layout_job(job);
+                        let position = pos2(
+                            rect.left() + 4.0 + row.depth as f32 * INDENT + INDENT,
+                            rect.center().y - galley.size().y / 2.0,
+                        );
+                        painter.galley(position + vec2(0.6, 0.0), galley.clone(), visuals.strong_text_color());
+                        painter.galley(position, galley, visuals.strong_text_color());
                     }
                 },
             );

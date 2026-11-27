@@ -57,6 +57,8 @@ struct Detail {
     original: String,
     /// The certIds or securityIds of the partner for a reference attribute.
     options: Option<Vec<String>>,
+    /// Per certId: the common name and expiry of its leaf certificate, shown under the drop-down list.
+    option_hints: std::collections::HashMap<String, String>,
     /// The current value of a reference attribute when it is not one of the options (Python then shows the first).
     unknown_value: Option<String>,
     error: Option<String>,
@@ -210,6 +212,17 @@ impl TransportTab {
                 self.detail.unknown_value = Some(value);
                 self.detail.value = options[0].clone();
             }
+            if let (Some(party), "certId") = (party_info, self.detail.name.as_str()) {
+                let now = chrono::Utc::now();
+                for entry in cpa_core::certificates::certificate_entries(document, party).0 {
+                    let leaf = cpa_core::certificates::key_info_certificates(document, entry.key_info, now).0;
+                    if let Some(leaf) = leaf.first() {
+                        let state = if leaf.not_after < now { "expired" } else { "expires" };
+                        let hint = format!("{} · {state} {}", leaf.common_name, leaf.not_after.format("%Y-%m-%d"));
+                        self.detail.option_hints.insert(entry.cert_id, hint);
+                    }
+                }
+            }
             self.detail.options = Some(options);
         }
     }
@@ -304,9 +317,15 @@ impl TransportTab {
             }
             Some(options) => {
                 let options = options.clone();
-                if combo(ui, "transport_value", &mut self.detail.value, &options, true) {
-                    self.detail.error = None;
-                }
+                ui.vertical(|ui| {
+                    if combo(ui, "transport_value", &mut self.detail.value, &options, true) {
+                        self.detail.error = None;
+                    }
+                    // Which certificate is behind the id
+                    if let Some(hint) = self.detail.option_hints.get(&self.detail.value) {
+                        ui.label(RichText::new(hint).weak());
+                    }
+                });
             }
             None => {
                 let field =

@@ -51,7 +51,8 @@ pub fn apply(ctx: &egui::Context) {
         visuals.widgets.inactive.bg_stroke = Stroke::new(1.0, if dark { gray(112) } else { gray(138) });
         visuals.widgets.hovered.bg_stroke = Stroke::new(1.0, if dark { gray(150) } else { gray(100) });
         // Disabled text keeps at least 3:1 contrast
-        visuals.disabled_alpha = 0.72;
+        // A disabled button must look clearly different from an enabled one, yet stay readable (about 4:1)
+        visuals.disabled_alpha = 0.5;
         // Weak text (hints, paths, secondary text) still reaches 4.5:1
         visuals.weak_text_color = Some(if dark { gray(160) } else { gray(100) });
         for widget in [
