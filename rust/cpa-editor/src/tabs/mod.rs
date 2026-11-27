@@ -26,6 +26,8 @@ pub struct Shared {
     pub saved_revision: u64,
     /// Set by a tab to ask the main window for the Open dialog.
     pub request_open: bool,
+    /// Set by a tab to ask the main window for the Save dialog.
+    pub request_save: bool,
 }
 
 impl Shared {

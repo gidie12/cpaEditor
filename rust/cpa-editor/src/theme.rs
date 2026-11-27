@@ -49,6 +49,8 @@ pub fn apply(ctx: &egui::Context) {
         visuals.widgets.hovered.bg_stroke = Stroke::new(1.0, if dark { gray(130) } else { gray(140) });
         // Disabled text keeps at least 3:1 contrast
         visuals.disabled_alpha = 0.72;
+        // Weak text (hints, paths, secondary text) still reaches 4.5:1
+        visuals.weak_text_color = Some(if dark { gray(160) } else { gray(100) });
         for widget in [
             &mut visuals.widgets.noninteractive,
             &mut visuals.widgets.inactive,
@@ -84,7 +86,7 @@ pub fn danger_button(ui: &Ui, text: &str) -> egui::Button<'static> {
 }
 
 pub fn ok_color(ui: &Ui) -> Color32 {
-    if ui.visuals().dark_mode { Color32::from_rgb(0x4a, 0xde, 0x80) } else { Color32::from_rgb(0x15, 0x80, 0x3d) }
+    if ui.visuals().dark_mode { Color32::from_rgb(0x4a, 0xde, 0x80) } else { Color32::from_rgb(0x12, 0x6b, 0x33) }
 }
 
 pub fn error_color(ui: &Ui) -> Color32 {

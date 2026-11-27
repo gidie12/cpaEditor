@@ -84,11 +84,13 @@ pub struct TreeTable {
     pub closed: HashSet<RowKey>,
     pub selected: Option<RowKey>,
     scroll_to_selected: bool,
+    /// The widths used in this frame: the stored widths fitted into the available width.
+    widths: Vec<f32>,
 }
 
-const ROW_HEIGHT: f32 = 24.0;
+const ROW_HEIGHT: f32 = 26.0;
 const INDENT: f32 = 18.0;
-const MIN_COLUMN_WIDTH: f32 = 40.0;
+const MIN_COLUMN_WIDTH: f32 = 70.0;
 
 impl TreeTable {
     pub fn new(id_source: &str, columns: &[(&str, f32)]) -> Self {
@@ -98,6 +100,7 @@ impl TreeTable {
             closed: HashSet::new(),
             selected: None,
             scroll_to_selected: false,
+            widths: Vec::new(),
         }
     }
 
@@ -123,15 +126,12 @@ impl TreeTable {
         let mut events = TreeEvents::default();
         let visible = self.visible_rows(rows);
         let font = TextStyle::Body.resolve(ui.style());
-        let header_font = FontId { size: font.size + 1.0, ..font.clone() };
+        let header_font = FontId { size: font.size + 2.0, ..font.clone() };
         let visuals = ui.visuals().clone();
         // The last column takes the remaining width, so its text ends with an ellipsis instead of running out of view
         let available = ui.available_width();
-        if let Some(((_, last), others)) = self.columns.split_last_mut() {
-            let others: f32 = others.iter().map(|(_, width)| width).sum();
-            *last = (available - others).max(120.0);
-        }
-        let total_width: f32 = self.columns.iter().map(|(_, width)| width).sum();
+        self.widths = fit_widths(&self.columns.iter().map(|(_, width)| *width).collect::<Vec<_>>(), available);
+        let total_width: f32 = self.widths.iter().sum();
 
         egui::ScrollArea::horizontal().id_salt(self.id.with("h")).auto_shrink([false, false]).show(ui, |ui| {
             ui.set_min_width(total_width);
@@ -248,7 +248,7 @@ impl TreeTable {
 
                         // The cells, each clipped to its column
                         let mut column_left = rect.left();
-                        for (column, (_, width)) in self.columns.iter().enumerate() {
+                        for (column, width) in self.widths.iter().enumerate() {
                             let text = row.cells.get(column).map(String::as_str).unwrap_or("");
                             let start = if column == 0 { x } else { column_left + 6.0 };
                             let clip = Rect::from_min_max(
@@ -288,7 +288,7 @@ impl TreeTable {
                             ui.memory_mut(|m| m.stop_text_input());
                         }
                         if response.double_clicked() {
-                            let column = column_at(&self.columns, rect.left(), response.interact_pointer_pos());
+                            let column = column_at(&self.widths, rect.left(), response.interact_pointer_pos());
                             events.double_clicked = Some((row.key, column));
                         }
                         response.context_menu(|ui| context_menu(ui, Some(row.key)));
@@ -318,7 +318,7 @@ impl TreeTable {
         let color = visuals.strong_text_color();
         let stroke = Stroke::new(1.0, visuals.widgets.noninteractive.bg_stroke.color);
         for column in 0..self.columns.len() {
-            let width = self.columns[column].1;
+            let width = self.widths[column];
             let clip = Rect::from_min_max(pos2(left, rect.top()), pos2(left + width - 4.0, rect.bottom()));
             let mut job = egui::text::LayoutJob::simple_singleline(self.columns[column].0.clone(), font.clone(), color);
             job.wrap = egui::text::TextWrapping::truncate_at_width((width - 10.0).max(0.0));
@@ -334,6 +334,12 @@ impl TreeTable {
             }
             if response.dragged() {
                 self.columns[column].1 = (width + response.drag_delta().x).max(MIN_COLUMN_WIDTH);
+                // The widths of the other columns stay as they are shown
+                for (other, shown) in self.widths.iter().enumerate() {
+                    if other != column {
+                        self.columns[other].1 = *shown;
+                    }
+                }
             }
             ui.painter().vline(left, rect.y_range(), stroke);
         }
@@ -367,16 +373,35 @@ fn full_text(row: &TreeRow) -> String {
     cells.join("\n")
 }
 
-fn column_at(columns: &[(String, f32)], left: f32, pointer: Option<egui::Pos2>) -> usize {
+/// Fits the column widths into the available width: the last column takes what is left (at least
+/// `MIN_LAST_WIDTH`); when that is not enough, the other columns shrink in proportion, each to at least
+/// `MIN_COLUMN_WIDTH`.
+fn fit_widths(widths: &[f32], available: f32) -> Vec<f32> {
+    const MIN_LAST_WIDTH: f32 = 160.0;
+    let Some((_, others)) = widths.split_last() else { return Vec::new() };
+    let mut fitted: Vec<f32> = others.to_vec();
+    let sum: f32 = fitted.iter().sum();
+    if sum + MIN_LAST_WIDTH > available && sum > 0.0 {
+        let scale = ((available - MIN_LAST_WIDTH) / sum).clamp(0.0, 1.0);
+        for width in &mut fitted {
+            *width = (*width * scale).max(MIN_COLUMN_WIDTH);
+        }
+    }
+    let sum: f32 = fitted.iter().sum();
+    fitted.push((available - sum).max(MIN_LAST_WIDTH));
+    fitted
+}
+
+fn column_at(widths: &[f32], left: f32, pointer: Option<egui::Pos2>) -> usize {
     let Some(pointer) = pointer else { return 0 };
     let mut right = left;
-    for (column, (_, width)) in columns.iter().enumerate() {
+    for (column, width) in widths.iter().enumerate() {
         right += width;
         if pointer.x < right {
             return column;
         }
     }
-    columns.len().saturating_sub(1)
+    widths.len().saturating_sub(1)
 }
 
 /// The keys of the ancestors of a row.
@@ -414,6 +439,16 @@ mod tests {
         assert_eq!(tree.visible_rows(&rows()), vec![0, 1, 3, 4]);
         tree.closed.insert(1);
         assert_eq!(tree.visible_rows(&rows()), vec![0, 4]);
+    }
+
+    #[test]
+    fn widths_fit_the_available_width() {
+        // Enough room: the last column takes the rest
+        assert_eq!(fit_widths(&[100.0, 100.0, 50.0], 500.0), vec![100.0, 100.0, 300.0]);
+        // Too little room: the others shrink so the last column keeps its minimum
+        let fitted = fit_widths(&[200.0, 200.0, 50.0], 400.0);
+        assert_eq!(fitted.iter().sum::<f32>(), 400.0);
+        assert_eq!(fitted[2], 160.0);
     }
 
     #[test]

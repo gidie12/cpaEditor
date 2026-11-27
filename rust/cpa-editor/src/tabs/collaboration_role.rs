@@ -100,11 +100,10 @@ impl Default for CollaborationRoleTab {
             tree: TreeTable::new(
                 "collaboration_role",
                 &[
-                    ("Partner / Service / Direction", 270.0),
+                    ("Partner / Service / Direction", 330.0),
                     ("Action", 130.0),
                     ("Channel", 170.0),
                     ("Package", 120.0),
-                    ("Status", 100.0),
                     ("OtherPartyActionBinding", 260.0),
                 ],
             ),
@@ -172,7 +171,6 @@ impl CollaborationRoleTab {
     fn insert_action(&mut self, document: &Document, element: NodeId, depth: usize) {
         let action = describe_action(document, element);
         let problems = roles::validate_action(document, element);
-        let status = if problems.is_empty() { "OK".to_string() } else { format!("{} problem(s)", problems.len()) };
         let mut row = TreeRow::new(
             key(element),
             depth,
@@ -181,7 +179,6 @@ impl CollaborationRoleTab {
                 action.action.clone(),
                 action.channel_ids.join(", "),
                 action.package_id.clone(),
-                status,
                 action.other_party_binding.clone(),
             ],
         );
@@ -190,8 +187,9 @@ impl CollaborationRoleTab {
             Direction::Receive => theme::ACCENT_RECEIVE,
         };
         row = row.icon(points_right(action.direction), color);
+        // Only a problem is worth a mark: red text and the number of problems after the direction
         if !problems.is_empty() {
-            row = row.text_color(PROBLEM_COLOR);
+            row = row.text_color(PROBLEM_COLOR).secondary(problem_count(problems.len()));
         }
         self.rows.push(row);
         self.kinds.insert(key(element), (Kind::Action, element));
@@ -399,7 +397,7 @@ impl CollaborationRoleTab {
         action
     }
 
-    fn detail_panel(&mut self, ui: &mut Ui, shared: &mut Shared) {
+    fn detail_panel(&mut self, ui: &mut Ui) {
         if self.detail.action.is_none() {
             theme::empty_state(
                 ui,
@@ -414,13 +412,13 @@ impl CollaborationRoleTab {
         ui.add_space(2.0);
         ui.horizontal(|ui| {
             if self.detail.problems.is_empty() {
-                theme::badge(ui, "No problems", theme::ok_color(ui));
+                theme::badge(ui, "Valid", theme::ok_color(ui));
             } else {
-                let count = self.detail.problems.len();
-                let text = if count == 1 { "1 problem".to_string() } else { format!("{count} problems") };
-                theme::badge(ui, &text, theme::error_color(ui));
+                theme::badge(ui, &problem_count(self.detail.problems.len()), theme::error_color(ui));
             }
-            ui.label(RichText::new(&self.detail.binding_id).monospace().weak());
+            // A long binding id must not widen the panel
+            let id = egui::Label::new(RichText::new(&self.detail.binding_id).monospace().weak()).truncate();
+            ui.add(id).on_hover_text(&self.detail.binding_id);
         });
         for problem in &self.detail.problems {
             ui.label(RichText::new(format!("• {problem}")).color(theme::error_color(ui)));
@@ -442,8 +440,13 @@ impl CollaborationRoleTab {
         });
         ui.add_space(8.0);
         characteristics_frame(ui, "detail", &mut self.detail.characteristics, true);
-        ui.add_space(12.0);
+        ui.add_space(8.0);
+    }
+
+    /// The buttons of the detail form, fixed at the bottom of the panel so they never scroll out of view.
+    fn detail_actions(&mut self, ui: &mut Ui, shared: &mut Shared) {
         let changed = self.detail.is_changed();
+        ui.add_space(8.0);
         ui.horizontal(|ui| {
             if theme::action_button(ui, "Save changes", true, changed).clicked() {
                 self.save_changes(shared);
@@ -457,6 +460,7 @@ impl CollaborationRoleTab {
                 ui.label(RichText::new("No changes").weak());
             }
         });
+        ui.add_space(6.0);
     }
 
     fn run(&mut self, action: MenuAction, document: &Document) {
@@ -507,6 +511,10 @@ impl CollaborationRoleTab {
             }
         }
     }
+}
+
+fn problem_count(count: usize) -> String {
+    if count == 1 { "1 problem".to_string() } else { format!("{count} problems") }
 }
 
 fn action_matches(document: &Document, action: NodeId, search: &str) -> bool {
@@ -577,9 +585,16 @@ impl Tab for CollaborationRoleTab {
             .min_size(340.0)
             .max_size(max_width)
             .show(ui, |ui| {
-                egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
-                    ui.add_space(4.0);
-                    self.detail_panel(ui, shared);
+                if self.detail.action.is_some() {
+                    egui::Panel::bottom("collaboration_role_detail_actions").show(ui, |ui| {
+                        self.detail_actions(ui, shared);
+                    });
+                }
+                egui::CentralPanel::no_frame().show(ui, |ui| {
+                    egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
+                        ui.add_space(4.0);
+                        self.detail_panel(ui);
+                    });
                 });
             });
         let mut events = TreeEvents::default();

@@ -318,6 +318,9 @@ impl CpaEditorApp {
         if std::mem::take(&mut self.shared.request_open) {
             self.load_cpa_dialog();
         }
+        if std::mem::take(&mut self.shared.request_save) {
+            self.save_cpa_dialog();
+        }
         self.help.show(&ctx);
         self.update_check.show(&ctx, &mut self.shared.log);
     }

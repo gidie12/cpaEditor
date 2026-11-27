@@ -12,6 +12,8 @@ use crate::theme;
 struct Problem {
     message: String,
     location: Option<String>,
+    /// What to do about it, when the kind of error is known.
+    advice: Option<&'static str>,
 }
 
 /// The outcome of the last validation.
@@ -38,7 +40,7 @@ impl ValidationTab {
                 Outcome::Valid
             }
             Ok(errors) => {
-                shared.log.info(format!("Validation found {}", count_text(errors.len())));
+                shared.log.warning(format!("Validation found {}", count_text(errors.len())));
                 let problems = errors
                     .iter()
                     .map(|e| Problem {
@@ -47,6 +49,7 @@ impl ValidationTab {
                         } else {
                             idref_location(document, &e.message)
                         },
+                        advice: advice(&e.message),
                         message: e.message.clone(),
                     })
                     .collect();
@@ -106,7 +109,19 @@ impl Tab for ValidationTab {
         ui.add_space(8.0);
         match outcome {
             Outcome::Valid => {
-                theme::empty_state(ui, "No errors found", "The CPA is valid against the schema.", |_| {});
+                let dirty = shared.is_dirty();
+                let text = if dirty {
+                    "The CPA is valid against the schema. Save it to keep your changes."
+                } else {
+                    "The CPA is valid against the schema."
+                };
+                let mut save = false;
+                theme::empty_state(ui, "No errors found", text, |ui| {
+                    save = theme::action_button(ui, "Save CPA…", dirty, true).clicked();
+                });
+                if save {
+                    shared.request_save = true;
+                }
             }
             Outcome::Failed(message) => {
                 ui.label(RichText::new(message).color(theme::error_color(ui)));
@@ -151,6 +166,10 @@ fn error_card(ui: &mut Ui, problem: &Problem) {
             if let Some(location) = &problem.location {
                 ui.add(egui::Label::new(RichText::new(location).monospace().weak()).wrap().selectable(true));
             }
+            if let Some(advice) = problem.advice {
+                ui.add_space(2.0);
+                ui.label(RichText::new(advice));
+            }
         })
         .response;
     let rect = response.rect;
@@ -165,8 +184,31 @@ fn idref_location(document: &Document, message: &str) -> Option<String> {
     let (element, attribute) = document.descendants(root).filter(|&n| document.is_element(n)).find_map(|n| {
         document.attributes(n).iter().find(|a| a.value == id).map(|a| (n, a.name.local.clone()))
     })?;
-    let mut names: Vec<&str> =
-        document.ancestors(element).filter(|&n| document.is_element(n)).map(|n| document.local_name(n)).collect();
+    // A PartyInfo is named after its partner: a CPA has two of them
+    let mut names: Vec<String> = document
+        .ancestors(element)
+        .filter(|&n| document.is_element(n))
+        .map(|n| match document.local_name(n) {
+            "PartyInfo" => match document.attributes(n).iter().find(|a| a.name.local == "partyName") {
+                Some(name) => format!("PartyInfo ({})", name.value),
+                None => "PartyInfo".to_string(),
+            },
+            name => name.to_string(),
+        })
+        .collect();
     names.reverse();
     Some(format!("Used in {} @{attribute}", names.join(" / ")))
+}
+
+/// Advice for the errors whose cause is clear from the message.
+fn advice(message: &str) -> Option<&'static str> {
+    if message.starts_with("IDREF '") {
+        Some("Add the element with this id (for a certificate: upload it on the Certificates tab), or change the reference to an existing id.")
+    } else if message.contains("is not a valid value") || message.contains("is not an element of the set") {
+        Some("Change the value to one that the schema allows.")
+    } else if message.contains("Missing child element") {
+        Some("Add the missing element in the XML editor.")
+    } else {
+        None
+    }
 }
