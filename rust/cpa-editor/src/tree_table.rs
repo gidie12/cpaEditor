@@ -92,6 +92,8 @@ pub struct TreeTable {
     widths: Vec<f32>,
     /// Columns whose text is shortened in the middle ("BROKER_DC…3PT10M"): ids that differ at the end.
     pub middle_truncate: Vec<usize>,
+    /// Right-click opens the context menu; off when the tab has no actions for it.
+    pub context_menu: bool,
 }
 
 const ROW_HEIGHT: f32 = 26.0;
@@ -108,6 +110,7 @@ impl TreeTable {
             scroll_to_selected: false,
             widths: Vec::new(),
             middle_truncate: Vec::new(),
+            context_menu: true,
         }
     }
 
@@ -337,7 +340,9 @@ impl TreeTable {
                         if rect.top() < sticky_line && rect.bottom() > sticky_line {
                             covered_bottom = rect.bottom();
                         }
-                        response.context_menu(|ui| context_menu(ui, Some(row.key)));
+                        if self.context_menu {
+                            response.context_menu(|ui| context_menu(ui, Some(row.key)));
+                        }
                         if selected && self.scroll_to_selected {
                             ui.scroll_to_rect(rect, Some(egui::Align::Center));
                             self.scroll_to_selected = false;
@@ -345,7 +350,7 @@ impl TreeTable {
                     }
                     // The empty area below the rows also has a context menu
                     let rest = ui.available_rect_before_wrap();
-                    if rest.height() > 0.0 {
+                    if rest.height() > 0.0 && self.context_menu {
                         let response = ui.allocate_rect(rest, Sense::click());
                         response.context_menu(|ui| context_menu(ui, None));
                     }

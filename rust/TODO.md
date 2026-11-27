@@ -33,7 +33,8 @@ Digikoppeling XSD or Schematron.
   value, disabled buttons clearly weaker, no wrapping in Path/Namespace.
 
 ## Open from the tab builders
-- Clone transport does not update references (DeliveryChannel `transportId`) to the new id.
+- Clone transport is hidden for now (`CLONE_TRANSPORT` in tabs/transport.rs); it does not update references
+  (DeliveryChannel `transportId`) to the new id.
 - XML editor: an attribute added with a plain name gets no namespace (schema rejects CPA attributes; Python same).
 - Unsaved edits in a detail panel are replaced when another tab changes the CPA; "+ New comment" drops them
   without asking.

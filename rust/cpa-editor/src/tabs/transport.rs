@@ -1,6 +1,6 @@
 //! Transport tab (transport_tab.py): per partner the Transport elements with their child elements and attributes.
 //! A value or an attribute is edited in the detail panel; a certId or securityId is chosen from the certificates
-//! or security details of the same partner. A Transport can be cloned; the clone gets a unique transportId.
+//! or security details of the same partner. Clone transport (a copy with a unique transportId) is off for now.
 
 use std::collections::{HashMap, HashSet};
 
@@ -13,6 +13,9 @@ use super::{no_cpa, Shared, Tab};
 use crate::theme::{self, PARTNER_COLORS};
 use crate::tree_table::{RowKey, TreeEvents, TreeRow, TreeTable};
 use crate::widgets::combo;
+
+/// Clone transport is off for now: it does not update the references to the new transportId yet (TODO.md).
+const CLONE_TRANSPORT: bool = false;
 
 /// Width of the label column of the detail form.
 const LABEL_WIDTH: f32 = 110.0;
@@ -292,7 +295,8 @@ impl TransportTab {
         let mut clone = false;
         ui.horizontal(|ui| {
             let can_clone = self.selected_transport(document).is_some();
-            clone = ui
+            clone = CLONE_TRANSPORT
+                && ui
                 .add_enabled(can_clone, egui::Button::new("Clone transport"))
                 .on_hover_text("Copy the selected Transport, with a new transportId, directly after it")
                 .on_disabled_hover_text("Select a Transport or one of its rows first")
@@ -384,7 +388,7 @@ impl TransportTab {
                         &heading,
                         "This element has no value of its own. Select one of its attributes or values to edit it.",
                         |ui| {
-                            if is_transport {
+                            if is_transport && CLONE_TRANSPORT {
                                 clone = ui.button("Clone transport").clicked();
                             }
                         },
@@ -516,6 +520,7 @@ impl Tab for TransportTab {
                 });
             });
         let mut events = TreeEvents::default();
+        self.tree.context_menu = CLONE_TRANSPORT;
         egui::CentralPanel::no_frame().show(ui, |ui| {
             let Some(document) = shared.document.as_ref() else { return };
             let kinds = &self.kinds;

@@ -78,6 +78,7 @@ fn review_transport_and_xml_editor() {
 
 /// The clone of a Transport gets its own transportId, so the CPA stays valid (no render, so no GPU needed).
 #[test]
+#[ignore = "Clone transport is off for now"]
 fn clone_transport_keeps_the_cpa_valid() {
     let mut h = harness_for("full_cpa_p.xml", TRANSPORT_TAB, egui::Theme::Light);
     // Partner header, Transport, @transportId: the toolbar button is then the only "Clone transport"
