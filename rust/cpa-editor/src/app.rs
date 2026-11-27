@@ -53,7 +53,7 @@ impl CpaEditorApp {
                 Box::new(CommentTab::default()),
                 Box::new(XmlEditorTab::default()),
                 Box::new(CertificatesTab::default()),
-                Box::new(ValidationTab::default()),
+                Box::new(ValidationTab),
             ],
             current_tab: 0,
             help: HelpWindows::default(),
