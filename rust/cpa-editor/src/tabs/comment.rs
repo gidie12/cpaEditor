@@ -308,7 +308,8 @@ impl CommentTab {
                 let changed = self.is_changed();
                 ui.horizontal(|ui| {
                     let save = theme::action_button(ui, "Save changes", true, changed && !empty);
-                    if save.on_disabled_hover_text("A comment cannot be empty").clicked() {
+                    let reason = if changed { "A comment cannot be empty" } else { "No changes to save" };
+                    if save.on_disabled_hover_text(reason).clicked() {
                         action = Some(PanelAction::Save(node));
                     }
                     if ui.add_enabled(changed, egui::Button::new("Discard")).clicked() {

@@ -76,6 +76,14 @@ fn review_general_comment() {
             h.run_steps(2);
         }
         save(&mut h, &format!("comment-selected-{suffix}"));
+        // Change the selected comment: Save changes becomes the primary button
+        h.get_by_role(egui::accesskit::Role::MultilineTextInput).click();
+        h.run_steps(2);
+        h.input_mut().events.push(egui::Event::Text(" Version 2.".into()));
+        h.run_steps(2);
+        save(&mut h, &format!("comment-edited-{suffix}"));
+        h.get_by_label("Discard").click();
+        h.run_steps(2);
         h.get_by_label("Delete comment…").click();
         save(&mut h, &format!("comment-delete-{suffix}"));
 
