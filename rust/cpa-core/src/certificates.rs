@@ -570,6 +570,108 @@ pub fn key_info_from_pem(doc: &mut Document, pem: &str) -> Result<NodeId, String
     Ok(key_info)
 }
 
+/// What replacing one certificate of a chain changes, to show before and log after.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ChainReplacement {
+    /// `Leaf`, `Intermediate` or `Root`: the place in the chain.
+    pub role: &'static str,
+    pub old_name: String,
+    pub old_not_after: DateTime<Utc>,
+    pub new_name: String,
+    pub new_not_after: DateTime<Utc>,
+    /// Things to check: another subject, a chain that no longer links, a new certificate that is not newer.
+    pub warnings: Vec<String>,
+}
+
+/// Replaces one certificate of the chain in a KeyInfo (`position` counts the readable certificates, leaf first, as
+/// [`key_info_certificates`] lists them) with the certificate of a PEM file; the other certificates stay. Updates
+/// X509Certificate, X509SubjectName and X509IssuerSerial of that X509Data, and for the leaf the RSAKeyValue.
+///
+/// Errors: no certificate at that position, a PEM without exactly one certificate (use Upload for a whole chain),
+/// or a leaf without an RSA key.
+pub fn replace_chain_certificate(doc: &mut Document, key_info: NodeId, position: usize, pem: &str) -> Result<ChainReplacement, String> {
+    let count = pem.matches("-----BEGIN CERTIFICATE-----").count();
+    if count != 1 {
+        return Err(format!(
+            "The file holds {count} certificates; choose a file with only the new certificate, or use Upload \
+             certificate… for the whole chain"
+        ));
+    }
+    let new = parse_der_certificate(&first_pem_certificate(pem)?)?;
+    let readable: Vec<(NodeId, ParsedCertificate)> = x509_certificates(doc, key_info)
+        .into_iter()
+        .filter_map(|node| read_x509_certificate(doc, node).ok().map(|certificate| (node, certificate)))
+        .collect();
+    let (node, old) = readable.get(position).ok_or("There is no certificate at this place in the chain")?;
+    let node = *node;
+    let role = if position == 0 {
+        "Leaf"
+    } else if old.subject == old.issuer {
+        "Root"
+    } else {
+        "Intermediate"
+    };
+
+    let mut warnings = Vec::new();
+    if new.subject != old.subject {
+        warnings.push(format!("The subject changes from {} to {}", old.subject, new.subject));
+    }
+    if position > 0 {
+        let below = &readable[position - 1].1;
+        if below.issuer != new.subject {
+            warnings.push(format!(
+                "{} was issued by {}, not by the new certificate {}",
+                below.common_name, below.issuer, new.subject
+            ));
+        }
+    }
+    if let Some((_, above)) = readable.get(position + 1) {
+        if new.issuer != above.subject {
+            warnings.push(format!("The new certificate is issued by {}, not by {}", new.issuer, above.subject));
+        }
+    }
+    if new.not_after <= old.not_after {
+        warnings.push("The new certificate does not expire later than the old one".to_string());
+    }
+    if new.not_after < Utc::now() {
+        warnings.push("The new certificate has expired".to_string());
+    }
+    let rsa = if position == 0 { Some(new.rsa.clone()?) } else { None };
+
+    let standard = base64::engine::general_purpose::STANDARD;
+    doc.set_text(node, Some(&standard.encode(&new.der)));
+    if let Some(x509_data) = doc.parent_element(node) {
+        let set = |doc: &mut Document, parent: NodeId, local: &str, value: &str| {
+            if let Some(element) = doc.find(parent, Some(DS_NAMESPACE), local) {
+                doc.set_text(element, Some(value));
+            }
+        };
+        set(doc, x509_data, "X509SubjectName", &new.subject);
+        if let Some(issuer_serial) = doc.find(x509_data, Some(DS_NAMESPACE), "X509IssuerSerial") {
+            set(doc, issuer_serial, "X509IssuerName", &new.issuer);
+            set(doc, issuer_serial, "X509SerialNumber", &new.serial.to_string());
+        }
+    }
+    if let Some((modulus, exponent)) = rsa {
+        let key_values: Vec<NodeId> = doc.iter_named(key_info, Some(DS_NAMESPACE), "RSAKeyValue").collect();
+        for key_value in key_values {
+            for (local, bytes) in [("Modulus", &modulus), ("Exponent", &exponent)] {
+                if let Some(element) = doc.find(key_value, Some(DS_NAMESPACE), local) {
+                    doc.set_text(element, Some(&standard.encode(bytes)));
+                }
+            }
+        }
+    }
+    Ok(ChainReplacement {
+        role,
+        old_name: old.common_name.clone(),
+        old_not_after: old.not_after,
+        new_name: new.common_name,
+        new_not_after: new.not_after,
+        warnings,
+    })
+}
+
 /// Puts a new KeyInfo in a Certificate element: the old KeyInfo (if any) is removed with its tail and the new one
 /// is added at the end of the Certificate, like `replace_xml_object`. A `ds` declaration of the new KeyInfo that
 /// is already in scope is dropped, as lxml does.

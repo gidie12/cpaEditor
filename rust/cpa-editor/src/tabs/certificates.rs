@@ -148,6 +148,8 @@ impl Entry {
 enum Action {
     Upload(usize),
     Link(usize),
+    /// Replace one certificate of the chain: (entry, position in the chain).
+    ReplaceInChain(usize, usize),
     Download(usize),
     CopyKeyInfo(usize),
 }
@@ -156,6 +158,14 @@ enum Action {
 #[derive(Clone)]
 struct PendingUpload {
     certificate: NodeId,
+    pem: String,
+}
+
+/// One certificate of a chain that waits for the confirmation to be replaced.
+#[derive(Clone)]
+struct PendingChainReplace {
+    key_info: NodeId,
+    position: usize,
     pem: String,
 }
 
@@ -174,6 +184,7 @@ pub struct CertificatesTab {
     confirm_strip: Option<Confirm<()>>,
     /// The question for a new Certificate element: partner and certId, then the PEM file.
     add: Option<AddCertificate>,
+    confirm_chain: Option<Confirm<PendingChainReplace>>,
 }
 
 /// Add certificate: the partner and certId of a new Certificate element, and what it is used for. Also the question
@@ -208,6 +219,7 @@ impl Default for CertificatesTab {
             confirm: None,
             confirm_strip: None,
             add: None,
+            confirm_chain: None,
         }
     }
 }
@@ -625,7 +637,10 @@ impl CertificatesTab {
                 "Intermediate"
             };
             let position_text = format!("{role}  ·  {position_text}");
-            certificate_card(ui, (index, position), &position_text, certificate, Status::of(certificate, self.now), self.now);
+            let status = Status::of(certificate, self.now);
+            if certificate_card(ui, (index, position), &position_text, certificate, status, self.now) {
+                *action = Some(Action::ReplaceInChain(index, position));
+            }
         }
 
         ui.add_space(8.0);
@@ -636,6 +651,7 @@ impl CertificatesTab {
             Action::Upload(index) => self.upload(index, shared),
             Action::Download(index) => self.download(index, shared),
             Action::Link(index) => self.ask_link(index, shared),
+            Action::ReplaceInChain(index, position) => self.ask_replace_in_chain(index, position, shared),
             Action::CopyKeyInfo(index) => {
                 let entry = &self.entries[index];
                 if let (Some(document), Some(key_info)) = (shared.document.as_ref(), entry.key_info) {
@@ -643,6 +659,70 @@ impl CertificatesTab {
                     shared.log.info(format!("KeyInfo of certId {} copied to the clipboard", entry.cert_id));
                 }
             }
+        }
+    }
+
+    /// Reads the PEM with the new certificate and asks, with what changes and any warnings, before replacing one
+    /// certificate of the chain.
+    fn ask_replace_in_chain(&mut self, index: usize, position: usize, shared: &mut Shared) {
+        let entry = &self.entries[index];
+        let (Some(document), Some(key_info)) = (&shared.document, entry.key_info) else { return };
+        let Some(path) = rfd::FileDialog::new().add_filter("Certificate files", &["cer", "crt", "pem"]).pick_file()
+        else {
+            return;
+        };
+        let preview = read_text(&path).and_then(|pem| {
+            let mut copy = document.clone();
+            cpa_core::certificates::replace_chain_certificate(&mut copy, key_info, position, &pem).map(|r| (r, pem))
+        });
+        let (report, pem) = match preview {
+            Ok(result) => result,
+            Err(e) => {
+                shared.log.error(format!("Error while replacing certificate: {e}"));
+                return;
+            }
+        };
+        let mut text = format!(
+            "Replace the {} certificate of certId {}:\n\n• old: {}, valid until {}\n• new: {}, valid until {}\n\nThe \
+             other certificates of the chain stay.",
+            report.role.to_lowercase(),
+            entry.cert_id,
+            report.old_name,
+            display_date(report.old_not_after),
+            report.new_name,
+            display_date(report.new_not_after),
+        );
+        if !report.warnings.is_empty() {
+            text.push_str("\n\nCheck first:");
+            for warning in &report.warnings {
+                text.push_str(&format!("\n• {warning}"));
+            }
+        }
+        self.confirm_chain = Some(Confirm {
+            title: format!("Replace {} certificate", report.role.to_lowercase()),
+            text,
+            with_cancel: false,
+            subject: PendingChainReplace { key_info, position, pem },
+        });
+    }
+
+    fn apply_replace_in_chain(&mut self, pending: PendingChainReplace, shared: &mut Shared) {
+        let Some(document) = shared.document.as_mut() else { return };
+        match cpa_core::certificates::replace_chain_certificate(document, pending.key_info, pending.position, &pending.pem) {
+            Ok(report) => {
+                shared.changed();
+                shared.log.info(format!(
+                    "{} certificate {} replaced by {}, valid until {}",
+                    report.role,
+                    report.old_name,
+                    report.new_name,
+                    display_date(report.new_not_after)
+                ));
+                for warning in &report.warnings {
+                    shared.log.warning(warning.clone());
+                }
+            }
+            Err(e) => shared.log.error(format!("Error while replacing certificate: {e}")),
         }
     }
 
@@ -746,7 +826,8 @@ fn certificate_card(
     certificate: &CertificateDetails,
     status: Status,
     now: DateTime<Utc>,
-) {
+) -> bool {
+    let mut replace = false;
     egui::Frame::new()
         .fill(ui.visuals().faint_bg_color)
         .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
@@ -758,6 +839,11 @@ fn certificate_card(
                 ui.label(RichText::new(position).weak());
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     theme::badge(ui, &status.text(), status.color(ui));
+                    // Not primary: Upload certificate… already is when the chain needs replacing
+                    replace = ui
+                        .add(egui::Button::new("Replace…").small())
+                        .on_hover_text("Replace only this certificate with the one in a PEM file; the rest of the chain stays")
+                        .clicked();
                 });
             });
             ui.add(
@@ -792,6 +878,7 @@ fn certificate_card(
                 }
             });
         });
+    replace
 }
 
 impl Tab for CertificatesTab {
@@ -888,6 +975,14 @@ impl Tab for CertificatesTab {
         }
 
         self.show_add(ui.ctx(), shared);
+        if let Some(confirm) = &self.confirm_chain {
+            if let Some((answer, pending)) = confirm.show(ui.ctx()) {
+                self.confirm_chain = None;
+                if answer == Answer::Yes {
+                    self.apply_replace_in_chain(pending, shared);
+                }
+            }
+        }
         if let Some(confirm) = &self.confirm_strip {
             if let Some((answer, ())) = confirm.show(ui.ctx()) {
                 self.confirm_strip = None;

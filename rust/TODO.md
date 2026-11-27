@@ -62,3 +62,5 @@ Digikoppeling XSD or Schematron.
   partner from a PEM chain, indented like the CPA, and can use it at once for TLS server/client of the partner's
   transports (http endpoints become https) and as trust anchor; "Link to transports…" does that for an existing
   certId. Message signing/encryption references are not set.
+  Certificate chain cards: "Replace…" swaps only that certificate (leaf, intermediate or root) for the one in a
+  PEM file; warns when the subject or the chain links change.

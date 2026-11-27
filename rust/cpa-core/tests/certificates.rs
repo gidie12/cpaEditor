@@ -716,3 +716,46 @@ fn link_certificate_in_a_cpa_without_security_details() {
     let errors = cpa_core::validation::validate_document(&doc).unwrap();
     assert!(errors.is_empty(), "{errors:?}");
 }
+
+#[test]
+fn replace_one_expired_certificate_of_a_chain() {
+    use cpa_core::certificates::{certificate_entries, key_info_certificates, replace_chain_certificate};
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let renewed = std::fs::read_to_string(root.join("tests/reference/cpa_certificates/renewed_leaf.pem")).unwrap();
+    let full_chain = std::fs::read_to_string(
+        root.join("../../application/tests/resources/certs/leaf/certs/Leaf Certificate 2_full_chain.pem"),
+    )
+    .unwrap();
+    let path = root.join("../../application/tests/resources/cpas/full_test_cpa.xml");
+    let mut doc = cpa_core::xml::Document::parse_bytes(&std::fs::read(path).unwrap()).unwrap();
+    let party = cpa_core::cpa::party_infos(&doc)[0];
+    let key_info = certificate_entries(&doc, party).0[0].key_info.unwrap();
+    let now = chrono::Utc::now();
+    let before = key_info_certificates(&doc, Some(key_info), now).0;
+    let errors_before = cpa_core::validation::validate_document(&doc).unwrap();
+    assert_eq!(before.len(), 3);
+    assert!(before[0].expired);
+
+    // A whole chain is refused, nothing changes
+    let xml = doc.to_xml();
+    assert!(replace_chain_certificate(&mut doc, key_info, 0, &full_chain).unwrap_err().contains("3 certificates"));
+    assert_eq!(doc.to_xml(), xml);
+
+    // The renewed leaf: same subject and issuer, so no warnings; intermediate and root stay
+    let report = replace_chain_certificate(&mut doc, key_info, 0, &renewed).unwrap();
+    assert_eq!(report.role, "Leaf");
+    assert_eq!(report.new_name, "Leaf Certificate 2");
+    assert!(report.warnings.is_empty(), "{:?}", report.warnings);
+    let after = key_info_certificates(&doc, Some(key_info), now).0;
+    assert_eq!(after.len(), 3);
+    assert!(!after[0].expired);
+    assert_eq!(after[0].serial_number, "1092");
+    assert_eq!(after[1], before[1]);
+    assert_eq!(after[2], before[2]);
+    assert_eq!(cpa_core::validation::validate_document(&doc).unwrap(), errors_before);
+
+    // The leaf in place of the intermediate: warned about
+    let report = replace_chain_certificate(&mut doc, key_info, 1, &renewed).unwrap();
+    assert_eq!(report.role, "Intermediate");
+    assert!(report.warnings.iter().any(|w| w.starts_with("The subject changes")), "{:?}", report.warnings);
+}
