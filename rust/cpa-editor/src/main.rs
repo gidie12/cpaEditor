@@ -3,13 +3,7 @@
 
 //! CPA Editor: desktop application for viewing and editing ebXML CPA files (cpp-cpa-2_0.xsd).
 
-mod app;
-mod help_window;
-mod log;
-mod tabs;
-mod tree_table;
-mod widgets;
-
+use cpa_editor::app;
 use eframe::egui;
 
 fn main() -> eframe::Result {
@@ -26,6 +20,6 @@ fn main() -> eframe::Result {
     eframe::run_native(
         "CPA Editor",
         options,
-        Box::new(|cc| Ok(Box::new(app::CpaEditorApp::new(cc, initial_file)))),
+        Box::new(|cc| Ok(Box::new(app::CpaEditorApp::new(cc, initial_file, true)))),
     )
 }

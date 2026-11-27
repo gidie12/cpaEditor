@@ -131,7 +131,7 @@ impl UpdateCheck {
         }
         let Some(result) = &self.available else { return };
         let mut close = false;
-        let modal = egui::Modal::new(egui::Id::new("update_available")).show(ctx, |ui| {
+        let modal = egui::Modal::new(egui::Id::unique("update_available")).show(ctx, |ui| {
             ui.heading("Update available");
             ui.add_space(6.0);
             ui.label(format!(

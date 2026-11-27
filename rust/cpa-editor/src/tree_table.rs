@@ -22,6 +22,12 @@ pub struct TreeRow {
     pub text_color: Option<Color32>,
     pub background: Option<Color32>,
     pub strong: bool,
+    /// A group header row: slightly larger bold text and a coloured bar on the left.
+    pub header_bar: Option<Color32>,
+    /// Weak text after the text of the first column.
+    pub secondary: Option<String>,
+    /// An arrow painted before the text of the first column.
+    pub icon: Option<(crate::theme::Arrow, Color32)>,
 }
 
 impl TreeRow {
@@ -41,6 +47,22 @@ impl TreeRow {
 
     pub fn strong(mut self) -> Self {
         self.strong = true;
+        self
+    }
+
+    pub fn header(mut self, bar: Color32) -> Self {
+        self.header_bar = Some(bar);
+        self.strong = true;
+        self
+    }
+
+    pub fn icon(mut self, arrow: crate::theme::Arrow, color: Color32) -> Self {
+        self.icon = Some((arrow, color));
+        self
+    }
+
+    pub fn secondary(mut self, text: String) -> Self {
+        self.secondary = Some(text);
         self
     }
 }
@@ -64,14 +86,14 @@ pub struct TreeTable {
     scroll_to_selected: bool,
 }
 
-const ROW_HEIGHT: f32 = 22.0;
+const ROW_HEIGHT: f32 = 24.0;
 const INDENT: f32 = 18.0;
 const MIN_COLUMN_WIDTH: f32 = 40.0;
 
 impl TreeTable {
     pub fn new(id_source: &str, columns: &[(&str, f32)]) -> Self {
         TreeTable {
-            id: egui::Id::new(id_source),
+            id: egui::Id::unique(id_source),
             columns: columns.iter().map(|(name, width)| (name.to_string(), *width)).collect(),
             closed: HashSet::new(),
             selected: None,
@@ -101,7 +123,7 @@ impl TreeTable {
         let mut events = TreeEvents::default();
         let visible = self.visible_rows(rows);
         let font = TextStyle::Body.resolve(ui.style());
-        let strong_font = FontId { size: font.size, ..font.clone() };
+        let header_font = FontId { size: font.size + 1.0, ..font.clone() };
         let visuals = ui.visuals().clone();
         let total_width: f32 = self.columns.iter().map(|(_, width)| width).sum();
 
@@ -165,6 +187,8 @@ impl TreeTable {
                             Some(visuals.selection.bg_fill)
                         } else if let Some(color) = row.background {
                             Some(color)
+                        } else if row.header_bar.is_some() {
+                            Some(visuals.widgets.noninteractive.bg_fill)
                         } else if index % 2 == 1 {
                             Some(visuals.faint_bg_color)
                         } else {
@@ -173,6 +197,10 @@ impl TreeTable {
                         if let Some(color) = background {
                             ui.painter().rect_filled(rect, 0.0, color);
                         }
+                        if let Some(bar) = row.header_bar {
+                            let bar_rect = Rect::from_min_size(rect.min, vec2(3.0, ROW_HEIGHT));
+                            ui.painter().rect_filled(bar_rect, 0.0, bar);
+                        }
                         let text_color = if selected {
                             visuals.selection.stroke.color
                         } else if let Some(color) = row.text_color {
@@ -180,6 +208,8 @@ impl TreeTable {
                         } else if row.background.is_some() {
                             // Coloured rows have a light background, also in dark mode
                             Color32::BLACK
+                        } else if row.header_bar.is_some() {
+                            visuals.strong_text_color()
                         } else {
                             visuals.text_color()
                         };
@@ -190,13 +220,8 @@ impl TreeTable {
                         if has_children {
                             let triangle = Rect::from_min_size(pos2(x, rect.top()), vec2(INDENT, ROW_HEIGHT));
                             let open = !self.closed.contains(&row.key);
-                            ui.painter().text(
-                                triangle.center(),
-                                Align2::CENTER_CENTER,
-                                if open { "⏷" } else { "⏵" },
-                                font.clone(),
-                                text_color,
-                            );
+                            let arrow = if open { crate::theme::Arrow::Down } else { crate::theme::Arrow::Right };
+                            crate::theme::paint_arrow(ui.painter(), triangle.center(), 8.0, arrow, text_color);
                             if response.clicked()
                                 && response.interact_pointer_pos().is_some_and(|p| triangle.contains(p))
                             {
@@ -209,6 +234,11 @@ impl TreeTable {
                             }
                         }
                         x += INDENT;
+                        if let Some((arrow, color)) = row.icon {
+                            let color = if selected { text_color } else { color };
+                            crate::theme::paint_arrow(ui.painter(), pos2(x + 5.0, rect.center().y), 9.0, arrow, color);
+                            x += 16.0;
+                        }
 
                         // The cells, each clipped to its column
                         let mut column_left = rect.left();
@@ -220,10 +250,25 @@ impl TreeTable {
                                 pos2(column_left + width - 4.0, rect.bottom()),
                             );
                             let painter = ui.painter().with_clip_rect(clip.intersect(ui.clip_rect()));
-                            let font = if row.strong && column == 0 { strong_font.clone() } else { font.clone() };
+                            let font = if row.header_bar.is_some() && column == 0 { header_font.clone() } else { font.clone() };
                             // Only the first line: values can be multi-line (a KeyInfo)
                             let line = text.lines().next().unwrap_or("");
-                            let galley = painter.layout_no_wrap(line.to_string(), font, text_color);
+                            let mut job = egui::text::LayoutJob::default();
+                            let mut format = egui::TextFormat { font_id: font.clone(), color: text_color, ..Default::default() };
+                            if row.strong && column == 0 {
+                                format.font_id = FontId { family: egui::FontFamily::Proportional, ..font.clone() };
+                                format.color = if selected { text_color } else { visuals.strong_text_color() };
+                            }
+                            job.append(line, 0.0, format.clone());
+                            if column == 0 {
+                                if let Some(secondary) = &row.secondary {
+                                    let weak = if selected { text_color } else { visuals.weak_text_color() };
+                                    job.append(secondary, 8.0, egui::TextFormat { color: weak, ..format });
+                                }
+                            }
+                            // Text that does not fit ends with an ellipsis; the tooltip has all of it
+                            job.wrap = egui::text::TextWrapping::truncate_at_width((clip.width()).max(0.0));
+                            let galley = painter.layout_job(job);
                             painter.galley(pos2(start, rect.center().y - galley.size().y / 2.0), galley, text_color);
                             column_left += width;
                         }
@@ -310,7 +355,12 @@ impl TreeTable {
 }
 
 fn full_text(row: &TreeRow) -> String {
-    row.cells.iter().filter(|cell| !cell.is_empty()).cloned().collect::<Vec<_>>().join("\n")
+    let mut cells: Vec<String> = row.cells.iter().filter(|cell| !cell.is_empty()).cloned().collect();
+    if let (Some(secondary), Some(first)) = (&row.secondary, cells.first_mut()) {
+        first.push_str(" · ");
+        first.push_str(secondary);
+    }
+    cells.join("\n")
 }
 
 fn column_at(columns: &[(String, f32)], left: f32, pointer: Option<egui::Pos2>) -> usize {

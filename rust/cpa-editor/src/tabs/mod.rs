@@ -22,12 +22,20 @@ pub struct Shared {
     /// Increased only on loading another CPA: a tab forgets its selection and edit fields.
     pub generation: u64,
     pub file_path: Option<PathBuf>,
+    /// The revision that was loaded or saved last; a different revision means unsaved changes.
+    pub saved_revision: u64,
+    /// Set by a tab to ask the main window for the Open dialog.
+    pub request_open: bool,
 }
 
 impl Shared {
     /// Call after every change of the document.
     pub fn changed(&mut self) {
         self.revision += 1;
+    }
+
+    pub fn is_dirty(&self) -> bool {
+        self.document.is_some() && self.revision != self.saved_revision
     }
 }
 
@@ -36,9 +44,13 @@ pub trait Tab {
     fn ui(&mut self, ui: &mut Ui, shared: &mut Shared);
 }
 
-/// Text for a tab without CPA.
-pub fn no_cpa(ui: &mut Ui) {
-    ui.centered_and_justified(|ui| ui.label("Use Load CPA to open a CPA file."));
+/// Empty state of a tab without CPA, with the action to open one.
+pub fn no_cpa(ui: &mut Ui, shared: &mut Shared) {
+    crate::theme::empty_state(ui, "No CPA loaded", "Open a CPA file to view and edit it here.", |ui| {
+        if ui.add(crate::theme::primary_button("Open CPA…")).clicked() {
+            shared.request_open = true;
+        }
+    });
 }
 
 /// A tab that is not ported yet.
@@ -51,9 +63,9 @@ impl Tab for Placeholder {
 
     fn ui(&mut self, ui: &mut Ui, shared: &mut Shared) {
         if shared.document.is_none() {
-            no_cpa(ui);
+            no_cpa(ui, shared);
         } else {
-            ui.label("This tab is being ported.");
+            crate::theme::empty_state(ui, self.0, "This screen is being ported to the new version.", |_| {});
         }
     }
 }

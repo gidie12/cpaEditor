@@ -4,14 +4,16 @@ description = "Desktop application for viewing and editing ebXML CPA files"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
+license.workspace = true
 
 [dependencies]
 chrono = "0.4.45"
 cpa-core = { path = "../cpa-core" }
-eframe = "0.31.1"
+eframe = "0.37"
 log = "0.4.35"
 rfd = "0.17.2"
 uuid = { version = "1.20.0", features = ["v4"] }
 
 [dev-dependencies]
-egui_kittest = { version = "0.31", features = ["snapshot", "wgpu", "eframe"] }
+egui_kittest = { version = "0.37", features = ["snapshot", "wgpu", "eframe"] }
+image = { version = "0.25", default-features = false, features = ["png"] }

@@ -14,14 +14,14 @@ use eframe::egui::{self, Color32, RichText, Ui};
 
 use super::{no_cpa, Shared, Tab};
 use crate::tree_table::{RowKey, TreeEvents, TreeRow, TreeTable};
-use crate::widgets::{combo, editable_combo, message_box, notice, Answer, Confirm, Message};
+use crate::theme::{self, PARTNER_COLORS};
+use crate::widgets::{combo, editable_combo, message_box, Answer, Confirm, Message};
 
-const PARTNER_COLORS: [Color32; 2] = [Color32::from_rgb(0xcf, 0xe2, 0xff), Color32::from_rgb(0xf8, 0xd7, 0xda)];
+/// Width of the label column of the forms, so the fields of all form parts line up.
+const LABEL_WIDTH: f32 = 230.0;
 const PROBLEM_COLOR: Color32 = Color32::from_rgb(0xdc, 0x35, 0x45);
-const OK_COLOR: Color32 = Color32::from_rgb(0x19, 0x87, 0x54);
 const EXPERIMENTAL_NOTICE: &str = "Experimental: adding, changing and deleting Service actions and Collaboration \
     Roles is new. Check the result on the CPA Validation tab before you save the CPA.";
-const NO_PROBLEMS: &str = "No problems found";
 const TIME_TO_PERFORM_SUGGESTIONS: &[&str] = &["PT1H", "PT2H", "PT24H"];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -38,10 +38,11 @@ enum MenuAction {
     Delete,
 }
 
-fn symbol(direction: Direction) -> &'static str {
+/// Send points right (out of the partner), Receive points left (into the partner).
+fn arrow(direction: Direction) -> theme::Arrow {
     match direction {
-        Direction::Send => "▶",
-        Direction::Receive => "◀",
+        Direction::Send => theme::Arrow::Right,
+        Direction::Receive => theme::Arrow::Left,
     }
 }
 
@@ -120,9 +121,7 @@ impl CollaborationRoleTab {
         let search = self.filter.trim().to_lowercase();
         for (index, party_info) in roles::party_infos(document).into_iter().enumerate() {
             let text = format!("Partner {}", roles::party_name(document, party_info));
-            let row = TreeRow::new(key(party_info), 0, vec![text])
-                .background(PARTNER_COLORS[index % PARTNER_COLORS.len()])
-                .strong();
+            let row = TreeRow::new(key(party_info), 0, vec![text]).header(PARTNER_COLORS[index % PARTNER_COLORS.len()]);
             self.rows.push(row);
             self.kinds.insert(key(party_info), (Kind::Partner, party_info));
             let collaboration_roles: Vec<NodeId> =
@@ -150,11 +149,9 @@ impl CollaborationRoleTab {
             return;
         }
         let service_type = if d.service_type.is_empty() { String::new() } else { format!(" [{}]", d.service_type) };
-        let text = format!(
-            "{}{} · Role {} · {} {}",
-            d.service_name, service_type, d.role_name, d.process_name, d.process_version
-        );
-        self.rows.push(TreeRow::new(key(role), 1, vec![text]));
+        let text = format!("{}{}", d.service_name, service_type);
+        let secondary = format!("Role {} · {} {}", d.role_name, d.process_name, d.process_version);
+        self.rows.push(TreeRow::new(key(role), 1, vec![text]).strong().secondary(secondary));
         self.kinds.insert(key(role), (Kind::Role, role));
         for action in actions {
             if search.is_empty() || role_text.contains(search) || matches(action) {
@@ -171,7 +168,7 @@ impl CollaborationRoleTab {
             key(element),
             depth,
             vec![
-                format!("{} {}", symbol(action.direction), action.direction.label()),
+                action.direction.label().to_string(),
                 action.action.clone(),
                 action.channel_ids.join(", "),
                 action.package_id.clone(),
@@ -179,6 +176,11 @@ impl CollaborationRoleTab {
                 status,
             ],
         );
+        let color = match action.direction {
+            Direction::Send => theme::ACCENT_LIGHT,
+            Direction::Receive => theme::ACCENT_RECEIVE,
+        };
+        row = row.icon(arrow(action.direction), color);
         if !problems.is_empty() {
             row = row.text_color(PROBLEM_COLOR);
         }
@@ -356,55 +358,82 @@ impl CollaborationRoleTab {
 
     fn toolbar(&mut self, ui: &mut Ui) -> Option<MenuAction> {
         let mut action = None;
+        let selected = self.selected().map(|(kind, _)| kind);
         ui.horizontal(|ui| {
-            ui.label("Filter");
-            ui.add(egui::TextEdit::singleline(&mut self.filter).desired_width(220.0));
-            if ui.button("Add Service action").clicked() {
+            let filter = egui::TextEdit::singleline(&mut self.filter)
+                .hint_text("Filter on service, role, action or binding id")
+                .desired_width(300.0);
+            ui.add(filter);
+            ui.add_space(8.0);
+            let can_add_action = matches!(selected, Some(Kind::Role | Kind::Action));
+            let add = ui
+                .add_enabled(can_add_action, egui::Button::new("+ Service action"))
+                .on_disabled_hover_text("Select a service or an action first");
+            if add.clicked() {
                 action = Some(MenuAction::AddAction);
             }
-            if ui.button("Add Collaboration Role").clicked() {
+            if ui.button("+ Collaboration Role").clicked() {
                 action = Some(MenuAction::AddRole);
             }
-            if ui.button("Delete").clicked() {
-                action = Some(MenuAction::Delete);
-            }
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                let label = match selected {
+                    Some(Kind::Role) => "Delete Collaboration Role…",
+                    _ => "Delete action…",
+                };
+                let can_delete = matches!(selected, Some(Kind::Role | Kind::Action));
+                if ui.add_enabled(can_delete, theme::danger_button(ui, label)).clicked() {
+                    action = Some(MenuAction::Delete);
+                }
+            });
         });
         action
     }
 
     fn detail_panel(&mut self, ui: &mut Ui, shared: &mut Shared) {
-        let enabled = self.detail.action.is_some();
-        ui.label(RichText::new(&self.detail.title).heading());
+        if self.detail.action.is_none() {
+            theme::empty_state(
+                ui,
+                "No action selected",
+                "Select a Send or Receive row on the left to edit its binding.",
+                |_| {},
+            );
+            return;
+        }
         ui.add_space(4.0);
-        egui::Grid::new("action_detail").num_columns(2).spacing([10.0, 6.0]).show(ui, |ui| {
-            ui.label("ThisPartyActionBinding id");
-            ui.label(&self.detail.binding_id);
-            ui.end_row();
+        ui.label(RichText::new(&self.detail.title).heading().strong());
+        ui.add_space(2.0);
+        ui.horizontal(|ui| {
+            if self.detail.problems.is_empty() {
+                theme::badge(ui, "OK", theme::ok_color(ui));
+            } else {
+                let count = self.detail.problems.len();
+                let text = if count == 1 { "1 problem".to_string() } else { format!("{count} problems") };
+                theme::badge(ui, &text, theme::error_color(ui));
+            }
+            ui.label(RichText::new(&self.detail.binding_id).monospace().weak());
+        });
+        for problem in &self.detail.problems {
+            ui.label(RichText::new(format!("• {problem}")).color(theme::error_color(ui)));
+        }
+        ui.add_space(8.0);
+        theme::section(ui, "Binding");
+        form_grid("action_detail").show(ui, |ui| {
             ui.label("Action");
-            let width = ui.available_width();
-            let field = egui::TextEdit::singleline(&mut self.detail.action_name).desired_width(width);
-            ui.add_enabled(enabled, field);
+            let field = egui::TextEdit::singleline(&mut self.detail.action_name).desired_width(ui.available_width());
+            ui.add(field);
             ui.end_row();
             ui.label("Package");
-            combo(ui, "detail_package", &mut self.detail.package_id, &self.detail.package_options, enabled);
+            combo(ui, "detail_package", &mut self.detail.package_id, &self.detail.package_options, true);
             ui.end_row();
             ui.label("Channel");
-            combo(ui, "detail_channel", &mut self.detail.channel_id, &self.detail.channel_options, enabled);
+            combo(ui, "detail_channel", &mut self.detail.channel_id, &self.detail.channel_options, true);
             ui.end_row();
         });
-        ui.add_space(6.0);
-        characteristics_frame(ui, "detail", &mut self.detail.characteristics, enabled);
-        ui.add_space(6.0);
-        if ui.add_enabled(enabled, egui::Button::new("Save Changes")).clicked() {
+        ui.add_space(8.0);
+        characteristics_frame(ui, "detail", &mut self.detail.characteristics, true);
+        ui.add_space(12.0);
+        if ui.add(theme::primary_button("Save changes")).clicked() {
             self.save_changes(shared);
-        }
-        ui.add_space(6.0);
-        if enabled {
-            if self.detail.problems.is_empty() {
-                ui.label(RichText::new(NO_PROBLEMS).color(OK_COLOR));
-            } else {
-                ui.label(RichText::new(self.detail.problems.join("\n")).color(ui.visuals().error_fg_color));
-            }
         }
     }
 
@@ -463,38 +492,37 @@ fn action_matches(document: &Document, action: NodeId, search: &str) -> bool {
     [&action.action, &action.id, &action.other_party_binding].iter().any(|value| value.to_lowercase().contains(search))
 }
 
+/// A two-column form grid whose label column has the same width everywhere.
+fn form_grid(id: &str) -> egui::Grid {
+    egui::Grid::new(id).num_columns(2).spacing([12.0, 6.0]).min_col_width(LABEL_WIDTH)
+}
+
 /// Fields for the attributes of BusinessTransactionCharacteristics. An empty value leaves the attribute out.
 fn characteristics_frame(ui: &mut Ui, id: &str, characteristics: &mut Characteristics, enabled: bool) {
-    egui::CollapsingHeader::new("BusinessTransactionCharacteristics")
-        .id_salt((id, "characteristics"))
-        .default_open(true)
-        .show(ui, |ui| {
-            egui::Grid::new((id, "characteristics_grid")).num_columns(2).spacing([10.0, 4.0]).show(ui, |ui| {
-                for definition in CHARACTERISTICS {
-                    ui.label(definition.name);
-                    let mut value = characteristic(characteristics, definition.name).to_string();
-                    let changed = match definition.allowed {
-                        Some(allowed) => {
-                            let options: Vec<String> =
-                                std::iter::once(String::new()).chain(allowed.iter().map(|v| v.to_string())).collect();
-                            combo(ui, (id, definition.name), &mut value, &options, enabled)
-                        }
-                        None => {
-                            editable_combo(ui, (id, definition.name), &mut value, TIME_TO_PERFORM_SUGGESTIONS, enabled)
-                        }
-                    };
-                    if changed {
-                        roles::set_characteristic(characteristics, definition.name, &value);
-                    }
-                    ui.end_row();
+    theme::section(ui, "BusinessTransactionCharacteristics");
+    form_grid(&format!("{id}_characteristics")).show(ui, |ui| {
+        for definition in CHARACTERISTICS {
+            ui.label(definition.name);
+            let mut value = characteristic(characteristics, definition.name).to_string();
+            let changed = match definition.allowed {
+                Some(allowed) => {
+                    let options: Vec<String> =
+                        std::iter::once(String::new()).chain(allowed.iter().map(|v| v.to_string())).collect();
+                    combo(ui, (id, definition.name), &mut value, &options, enabled)
                 }
-            });
-        });
+                None => editable_combo(ui, (id, definition.name), &mut value, TIME_TO_PERFORM_SUGGESTIONS, enabled),
+            };
+            if changed {
+                roles::set_characteristic(characteristics, definition.name, &value);
+            }
+            ui.end_row();
+        }
+    });
 }
 
 impl Tab for CollaborationRoleTab {
     fn title(&self) -> &'static str {
-        "Collaboration Role (experimental)"
+        "Collaboration Role"
     }
 
     fn ui(&mut self, ui: &mut Ui, shared: &mut Shared) {
@@ -503,10 +531,11 @@ impl Tab for CollaborationRoleTab {
             let filter = std::mem::take(&mut self.filter);
             *self = CollaborationRoleTab { generation: shared.generation, filter, ..Default::default() };
         }
-        let Some(document) = shared.document.as_ref() else {
-            no_cpa(ui);
+        if shared.document.is_none() {
+            no_cpa(ui, shared);
             return;
-        };
+        }
+        let Some(document) = shared.document.as_ref() else { return };
         let state = (shared.revision, self.filter.clone());
         if self.built_for.as_ref() != Some(&state) {
             self.build_rows(document);
@@ -514,21 +543,25 @@ impl Tab for CollaborationRoleTab {
             self.built_for = Some(state);
         }
 
-        notice(ui, EXPERIMENTAL_NOTICE);
+        theme::notice(ui, EXPERIMENTAL_NOTICE);
         ui.add_space(6.0);
         let mut action = self.toolbar(ui);
         ui.add_space(6.0);
 
-        egui::SidePanel::right("collaboration_role_detail")
+        let max_width = ui.available_width() * 0.5;
+        egui::Panel::right("collaboration_role_detail")
             .resizable(true)
-            .default_width(440.0)
-            .min_width(300.0)
-            .max_width(ui.available_width() * 0.6)
-            .show_inside(ui, |ui| {
-                egui::ScrollArea::vertical().show(ui, |ui| self.detail_panel(ui, shared));
+            .default_size(460.0)
+            .min_size(340.0)
+            .max_size(max_width)
+            .show(ui, |ui| {
+                egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
+                    ui.add_space(4.0);
+                    self.detail_panel(ui, shared);
+                });
             });
         let mut events = TreeEvents::default();
-        egui::CentralPanel::default().show_inside(ui, |ui| {
+        egui::CentralPanel::no_frame().show(ui, |ui| {
             let kinds = &self.kinds;
             let menu = &mut action;
             events = self.tree.show(ui, &self.rows, |ui, row| {
@@ -536,7 +569,7 @@ impl Tab for CollaborationRoleTab {
                 let mut item = |ui: &mut Ui, text: &str, chosen: MenuAction| {
                     if ui.button(text).clicked() {
                         *menu = Some(chosen);
-                        ui.close_menu();
+                        ui.close();
                     }
                 };
                 if matches!(kind, Some(Kind::Role | Kind::Action)) {
@@ -733,7 +766,7 @@ impl ServiceActionDialog {
             .max_width(800.0)
             .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
             .show(ctx, |ui| {
-                egui::Grid::new("service_action_form").num_columns(2).spacing([10.0, 6.0]).show(ui, |ui| {
+                form_grid("service_action_form").show(ui, |ui| {
                     ui.label("Partner");
                     ui.label(&self.party_name);
                     ui.end_row();
@@ -778,7 +811,7 @@ impl ServiceActionDialog {
                     );
                     ui.add_enabled(!self.other_roles.is_empty(), egui::Checkbox::new(&mut self.mirror_enabled, text));
                     let enabled = self.mirror_enabled;
-                    egui::Grid::new("mirror_form").num_columns(2).spacing([10.0, 6.0]).show(ui, |ui| {
+                    form_grid("mirror_form").show(ui, |ui| {
                         ui.label("Service");
                         direction_changed |=
                             combo(ui, "mirror_role", &mut self.mirror_role, &self.other_role_choices, enabled);
