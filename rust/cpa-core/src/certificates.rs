@@ -263,7 +263,13 @@ fn rfc4514_string(name: &Name) -> String {
 fn escape_dn_value(value: &NameValue) -> String {
     let text = match value {
         NameValue::Bytes(bytes) if bytes.is_empty() => return String::new(),
-        NameValue::Bytes(bytes) => return format!("#{}", bytes.iter().map(|b| format!("{b:02x}")).collect::<String>()),
+        NameValue::Bytes(bytes) => {
+            let mut hex = String::from("#");
+            for byte in bytes {
+                hex.push_str(&format!("{byte:02x}"));
+            }
+            return hex;
+        }
         NameValue::Text(text) => text,
     };
     if text.is_empty() {
@@ -454,6 +460,16 @@ pub fn key_info_to_pem(doc: &Document, key_info: Option<NodeId>) -> Result<Strin
         pem.push_str(&der_to_pem(&certificate.der));
     }
     Ok(pem)
+}
+
+/// The proposed file name for "Download Certificate": the certId (or `certificate` without one) with every
+/// character other than a letter, digit, `_`, `.` or `-` replaced by `_` (Python `re.sub(r'[^\w.-]', '_', ...)`),
+/// plus `.pem`.
+pub fn pem_file_name(cert_id: Option<&str>) -> String {
+    let cert_id = cert_id.filter(|id| !id.is_empty()).unwrap_or("certificate");
+    let name: String =
+        cert_id.chars().map(|c| if c.is_alphanumeric() || matches!(c, '_' | '.' | '-') { c } else { '_' }).collect();
+    format!("{name}.pem")
 }
 
 /// A certificate in PEM, as cryptography writes it: lines of 64 characters.

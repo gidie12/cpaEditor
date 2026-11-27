@@ -76,12 +76,7 @@ pub fn read_general(doc: &Document) -> GeneralFields {
         let Some(name) = doc.attribute(party_info, Some(CPA_NAMESPACE), "partyName") else { break };
         names.push(name.to_string());
     }
-    let pair = |values: Vec<String>| -> [String; 2] {
-        match <[String; 2]>::try_from(values) {
-            Ok(pair) => pair,
-            Err(_) => [String::new(), String::new()],
-        }
-    };
+    let pair = |values: Vec<String>| -> [String; 2] { <[String; 2]>::try_from(values).unwrap_or_default() };
     fields.party_ids = pair(ids);
     fields.party_id_types = pair(types);
     fields.party_names = pair(names);
