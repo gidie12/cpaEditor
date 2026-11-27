@@ -33,6 +33,10 @@ impl CpaEditorApp {
         if let Some(path) = initial_file {
             app.load_cpa(&path);
         }
+        // CPA_EDITOR_TAB=<number> opens on that tab, used for screenshots of the documentation
+        if let Some(tab) = std::env::var("CPA_EDITOR_TAB").ok().and_then(|t| t.parse::<usize>().ok()) {
+            app.current_tab = tab.min(app.tabs.len() - 1);
+        }
         app
     }
 
