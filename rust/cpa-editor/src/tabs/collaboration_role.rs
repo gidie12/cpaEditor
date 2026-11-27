@@ -389,7 +389,7 @@ impl CollaborationRoleTab {
                     _ => "Delete action…",
                 };
                 let can_delete = matches!(selected, Some(Kind::Role | Kind::Action));
-                if ui.add_enabled(can_delete, theme::danger_button(ui, label)).clicked() {
+                if theme::danger(ui, label, can_delete).clicked() {
                     action = Some(MenuAction::Delete);
                 }
             });
@@ -398,6 +398,8 @@ impl CollaborationRoleTab {
     }
 
     fn detail_panel(&mut self, ui: &mut Ui) {
+        // The content takes the width of the panel and never widens it (long ids, messages and channel names)
+        ui.set_max_width(ui.available_width());
         if self.detail.action.is_none() {
             theme::empty_state(
                 ui,
@@ -513,8 +515,9 @@ impl CollaborationRoleTab {
     }
 }
 
+/// The same words as the validation tab: "1 error", "n errors".
 fn problem_count(count: usize) -> String {
-    if count == 1 { "1 problem".to_string() } else { format!("{count} problems") }
+    if count == 1 { "1 error".to_string() } else { format!("{count} errors") }
 }
 
 fn action_matches(document: &Document, action: NodeId, search: &str) -> bool {
@@ -524,7 +527,7 @@ fn action_matches(document: &Document, action: NodeId, search: &str) -> bool {
 
 /// A two-column form grid whose label column has the same width everywhere.
 fn form_grid(id: &str) -> egui::Grid {
-    egui::Grid::new(id).num_columns(2).spacing([12.0, 6.0]).min_col_width(LABEL_WIDTH)
+    egui::Grid::new(id).num_columns(2).spacing([12.0, 4.0]).min_col_width(LABEL_WIDTH)
 }
 
 /// Fields for the attributes of BusinessTransactionCharacteristics. An empty value leaves the attribute out.
@@ -566,6 +569,8 @@ impl Tab for CollaborationRoleTab {
             return;
         }
         let Some(document) = shared.document.as_ref() else { return };
+        // Channel and binding ids differ at the end: shorten them in the middle
+        self.tree.middle_truncate = vec![2, 4];
         let state = (shared.revision, self.filter.clone());
         if self.built_for.as_ref() != Some(&state) {
             self.build_rows(document);
@@ -591,7 +596,9 @@ impl Tab for CollaborationRoleTab {
                     });
                 }
                 egui::CentralPanel::no_frame().show(ui, |ui| {
-                    egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
+                    // A form taller than the panel shows its scroll bar, so no field looks cut off
+                    let scroll_bar = egui::scroll_area::ScrollBarVisibility::VisibleWhenNeeded;
+                    egui::ScrollArea::vertical().auto_shrink([false, false]).scroll_bar_visibility(scroll_bar).show(ui, |ui| {
                         ui.add_space(4.0);
                         self.detail_panel(ui);
                     });

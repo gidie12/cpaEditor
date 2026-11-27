@@ -117,7 +117,10 @@ impl Tab for ValidationTab {
                 };
                 let mut save = false;
                 theme::empty_state(ui, "No errors found", text, |ui| {
-                    save = theme::action_button(ui, "Save CPA…", dirty, true).clicked();
+                    // Only a next step when there is something to save; the bottom bar has Save CPA… as well
+                    if dirty {
+                        save = ui.add(theme::primary_button("Save CPA…")).clicked();
+                    }
                 });
                 if save {
                     shared.request_save = true;
@@ -127,8 +130,6 @@ impl Tab for ValidationTab {
                 ui.label(RichText::new(message).color(theme::error_color(ui)));
             }
             Outcome::Errors(errors) => {
-                ui.label(RichText::new("Fix these errors before you save the CPA.").weak());
-                ui.add_space(4.0);
                 egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                     for problem in errors {
                         error_card(ui, problem);

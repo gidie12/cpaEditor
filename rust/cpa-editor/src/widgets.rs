@@ -6,7 +6,7 @@ use eframe::egui::{self, RichText, Ui};
 pub fn combo(ui: &mut Ui, id: impl egui::AsIdSalt, value: &mut String, options: &[String], enabled: bool) -> bool {
     let mut changed = false;
     ui.add_enabled_ui(enabled, |ui| {
-        egui::ComboBox::from_id_salt(id).width(ui.available_width()).selected_text(value.as_str()).show_ui(ui, |ui| {
+        egui::ComboBox::from_id_salt(id).width(ui.available_width()).truncate().selected_text(value.as_str()).show_ui(ui, |ui| {
             for option in options {
                 if ui.selectable_label(value == option, option).clicked() && value != option {
                     *value = option.clone();

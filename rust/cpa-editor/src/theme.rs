@@ -28,6 +28,8 @@ pub fn apply(ctx: &egui::Context) {
         spacing.button_padding = vec2(10.0, 5.0);
         spacing.interact_size.y = 26.0;
         spacing.combo_height = 300.0;
+        // Solid scroll bars: a floating bar is hidden until hovered, so a cut-off form would not show it scrolls
+        spacing.scroll = egui::style::ScrollStyle::solid();
 
         let visuals = &mut style.visuals;
         let dark = visuals.dark_mode;
@@ -78,6 +80,16 @@ pub fn primary_button(text: &str) -> egui::Button<'static> {
     egui::Button::new(RichText::new(text.to_string()).strong().color(Color32::WHITE))
         .fill(ACCENT)
         .min_size(vec2(96.0, 28.0))
+}
+
+/// Adds a delete button: red text when enabled, the normal disabled look otherwise (red would read as active).
+pub fn danger(ui: &mut Ui, text: &str, enabled: bool) -> egui::Response {
+    if enabled {
+        let button = danger_button(ui, text);
+        ui.add(button)
+    } else {
+        ui.add_enabled(false, egui::Button::new(text.to_string()))
+    }
 }
 
 /// A delete action: red text.

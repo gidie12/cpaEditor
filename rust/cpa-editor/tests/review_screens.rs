@@ -53,6 +53,21 @@ fn review_screens() {
         }
         save(&mut h, &format!("collaboration-role-selected-{suffix}"));
 
+        // Collaboration Role with a problem: the first Send action refers to a channel that does not exist
+        let xml = std::fs::read_to_string(resource("full_test_cpa.xml")).unwrap();
+        let broken = xml.replacen("<tns:ChannelId>", "<tns:ChannelId>MISSING_", 1);
+        assert_ne!(xml, broken, "the test CPA has a ChannelId");
+        let path = std::env::temp_dir().join(format!("cpa_editor_review_problem_{suffix}.xml"));
+        std::fs::write(&path, broken).unwrap();
+        let mut h = harness(Some(path), theme);
+        h.state_mut().select_tab(1);
+        h.run_steps(2);
+        for _ in 0..3 {
+            h.key_press(egui::Key::ArrowDown);
+            h.run_steps(2);
+        }
+        save(&mut h, &format!("collaboration-role-problem-{suffix}"));
+
         // CPA Validation: before, with errors, and valid
         let mut h = harness(Some(resource("full_test_cpa.xml")), theme);
         h.state_mut().select_tab(6);

@@ -86,6 +86,8 @@ pub struct TreeTable {
     scroll_to_selected: bool,
     /// The widths used in this frame: the stored widths fitted into the available width.
     widths: Vec<f32>,
+    /// Columns whose text is shortened in the middle ("BROKER_DC…3PT10M"): ids that differ at the end.
+    pub middle_truncate: Vec<usize>,
 }
 
 const ROW_HEIGHT: f32 = 26.0;
@@ -101,6 +103,7 @@ impl TreeTable {
             selected: None,
             scroll_to_selected: false,
             widths: Vec::new(),
+            middle_truncate: Vec::new(),
         }
     }
 
@@ -258,7 +261,11 @@ impl TreeTable {
                             let painter = ui.painter().with_clip_rect(clip.intersect(ui.clip_rect()));
                             let font = if row.header_bar.is_some() && column == 0 { header_font.clone() } else { font.clone() };
                             // Only the first line: values can be multi-line (a KeyInfo)
-                            let line = text.lines().next().unwrap_or("");
+                            let mut line = text.lines().next().unwrap_or("").to_string();
+                            if self.middle_truncate.contains(&column) {
+                                line = shorten_middle(&painter, &line, &font, clip.width());
+                            }
+                            let line = line.as_str();
                             let mut job = egui::text::LayoutJob::default();
                             let mut format = egui::TextFormat { font_id: font.clone(), color: text_color, ..Default::default() };
                             if row.strong && column == 0 {
@@ -275,7 +282,12 @@ impl TreeTable {
                             // Text that does not fit ends with an ellipsis; the tooltip has all of it
                             job.wrap = egui::text::TextWrapping::truncate_at_width((clip.width()).max(0.0));
                             let galley = painter.layout_job(job);
-                            painter.galley(pos2(start, rect.center().y - galley.size().y / 2.0), galley, text_color);
+                            let position = pos2(start, rect.center().y - galley.size().y / 2.0);
+                            // The default fonts have no bold face: a header row is drawn twice, half a pixel apart
+                            if row.header_bar.is_some() && column == 0 {
+                                painter.galley(position + vec2(0.6, 0.0), galley.clone(), text_color);
+                            }
+                            painter.galley(position, galley, text_color);
                             column_left += width;
                         }
 
@@ -371,6 +383,26 @@ fn full_text(row: &TreeRow) -> String {
         first.push_str(secondary);
     }
     cells.join("\n")
+}
+
+/// Shortens text that is wider than `width` in the middle, keeping the start and the end.
+fn shorten_middle(painter: &egui::Painter, text: &str, font: &FontId, width: f32) -> String {
+    let measure = |s: &str| painter.layout_no_wrap(s.to_string(), font.clone(), Color32::WHITE).size().x;
+    if measure(text) <= width {
+        return text.to_string();
+    }
+    let chars: Vec<char> = text.chars().collect();
+    let mut keep = chars.len().saturating_sub(1);
+    while keep > 2 {
+        let head: String = chars[..keep.div_ceil(2)].iter().collect();
+        let tail: String = chars[chars.len() - keep / 2..].iter().collect();
+        let candidate = format!("{head}…{tail}");
+        if measure(&candidate) <= width {
+            return candidate;
+        }
+        keep -= 1;
+    }
+    "…".to_string()
 }
 
 /// Fits the column widths into the available width: the last column takes what is left (at least
