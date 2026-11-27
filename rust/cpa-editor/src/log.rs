@@ -1,4 +1,4 @@
-//! The log output at the bottom of the window (the Python version uses a logging handler on a Text widget).
+//! The messages of the application; the bottom bar shows the last one.
 
 use chrono::Local;
 
@@ -21,24 +21,24 @@ impl Level {
     }
 }
 
-/// The messages shown in the log output. Debug messages are only kept while "Show debug messages" is on.
+/// The messages of the application. The window shows only the last one (in the bottom bar); debug messages are not
+/// kept.
 #[derive(Default)]
 pub struct Log {
     lines: Vec<(Level, String)>,
-    pub show_debug: bool,
-    /// Set when a line was added, so the output scrolls to the end once.
-    pub scroll_to_end: bool,
+    /// The last info, warning or error message and when it came.
+    last: Option<(Level, String, std::time::Instant)>,
 }
 
 impl Log {
     pub fn add(&mut self, level: Level, message: impl AsRef<str>) {
-        if level == Level::Debug && !self.show_debug {
+        if level == Level::Debug {
             return;
         }
         // The format of Python's logging: '%(asctime)s - %(levelname)s - %(message)s'
         let time = Local::now().format("%Y-%m-%d %H:%M:%S,%3f");
         self.lines.push((level, format!("{time} - {} - {}", level.name(), message.as_ref())));
-        self.scroll_to_end = true;
+        self.last = Some((level, message.as_ref().to_string(), std::time::Instant::now()));
     }
 
     pub fn debug(&mut self, message: impl AsRef<str>) {
@@ -59,6 +59,12 @@ impl Log {
 
     pub fn clear(&mut self) {
         self.lines.clear();
+        self.last = None;
+    }
+
+    /// The last info, warning or error message, with how long ago it came.
+    pub fn last(&self) -> Option<(Level, &str, std::time::Duration)> {
+        self.last.as_ref().map(|(level, text, time)| (*level, text.as_str(), time.elapsed()))
     }
 
     pub fn lines(&self) -> &[(Level, String)] {

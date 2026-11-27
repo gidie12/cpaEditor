@@ -73,3 +73,5 @@ Digikoppeling XSD or Schematron.
   CPA Validation error cards for a missing id (any IDREF): "Use <most similar id of that kind>", "Other…",
   "Remove the reference" where the schema allows it. Next: fixes for values not in the allowed set, formats,
   attributes, missing elements and element order; Undo first.
+  No log panel and no "Show debug messages": the bottom bar shows the last message on the right (info for 8
+  seconds, a warning or error until the next message; the whole text in the tooltip).

@@ -26,7 +26,6 @@ pub struct CpaEditorApp {
     current_tab: usize,
     help: HelpWindows,
     update_check: UpdateCheck,
-    log_open: bool,
     window_title: String,
     /// The CPA as indented text when it was loaded: the base of Show changes, also after saving.
     loaded_text: Option<String>,
@@ -58,7 +57,6 @@ impl CpaEditorApp {
             current_tab: 0,
             help: HelpWindows::default(),
             update_check: UpdateCheck::default(),
-            log_open: true,
             window_title: String::new(),
             loaded_text: None,
             diff: None,
@@ -280,13 +278,7 @@ impl CpaEditorApp {
     }
 
     fn bottom_panel(&mut self, ui: &mut egui::Ui) {
-        // A collapsed log has its own panel id, so the height of the open log is kept
-        let panel = if self.log_open && !self.shared.log.lines().is_empty() {
-            egui::Panel::bottom("log").resizable(true).default_size(150.0).min_size(90.0)
-        } else {
-            egui::Panel::bottom("log_closed").resizable(false)
-        };
-        panel.show(ui, |ui| {
+        egui::Panel::bottom("status").resizable(false).show(ui, |ui| {
             ui.add_space(6.0);
             ui.horizontal(|ui| {
                 if ui.button("Open CPA…").on_hover_text(ui.ctx().format_shortcut(&OPEN_SHORTCUT)).clicked() {
@@ -307,66 +299,42 @@ impl CpaEditorApp {
                     self.show_changes();
                 }
                 ui.add_space(8.0);
-                match self.file_name() {
-                    Some(name) => {
-                        ui.label(RichText::new(name).strong());
-                        if self.shared.is_dirty() {
-                            ui.label(RichText::new("• Unsaved changes").color(theme::warning_color(ui)));
-                        }
-                        self.validation_status(ui);
-                        if invalid > 0 {
-                            let text = if invalid == 1 { "1 invalid date".to_string() } else { format!("{invalid} invalid dates") };
-                            theme::badge(ui, &text, theme::error_color(ui));
-                            ui.label(RichText::new("on the General tab").weak());
-                        }
-                    }
-                    None => {}
+                if let Some(name) = self.file_name() {
+                ui.label(RichText::new(name).strong());
+                if self.shared.is_dirty() {
+                    ui.label(RichText::new("• Unsaved changes").color(theme::warning_color(ui)));
                 }
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    ui.checkbox(&mut self.shared.log.show_debug, "Show debug messages");
-                });
+                self.validation_status(ui);
+                if invalid > 0 {
+                    let text = if invalid == 1 { "1 invalid date".to_string() } else { format!("{invalid} invalid dates") };
+                    theme::badge(ui, &text, theme::error_color(ui));
+                    ui.label(RichText::new("on the General tab").weak());
+                }
+                }
+                self.last_message(ui);
             });
             ui.add_space(4.0);
-            let count = self.shared.log.lines().len();
-            // An empty log stays closed
-            let log_open = self.log_open && count > 0;
-            let header = ui
-                .horizontal(|ui| {
-                    let (icon, _) = ui.allocate_exact_size(egui::vec2(14.0, 18.0), egui::Sense::hover());
-                    let arrow = if log_open { theme::Arrow::Down } else { theme::Arrow::Right };
-                    theme::paint_arrow(ui.painter(), icon.center(), 8.0, arrow, ui.visuals().text_color());
-                    ui.add(egui::Button::new(RichText::new(format!("Log ({count})")).strong()).frame(false))
-                })
-                .inner;
-            if header.clicked() {
-                self.log_open = !self.log_open;
-            }
-            if !log_open {
-                return;
-            }
-            let scroll_to_end = std::mem::take(&mut self.shared.log.scroll_to_end);
-            egui::Frame::new()
-                .fill(ui.visuals().extreme_bg_color)
-                .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
-                .corner_radius(4)
-                .inner_margin(6)
-                .show(ui, |ui| {
-                    egui::ScrollArea::vertical().auto_shrink([false, false]).stick_to_bottom(true).show(ui, |ui| {
-                        for (level, line) in self.shared.log.lines() {
-                            let text = RichText::new(line).monospace();
-                            let text = match level {
-                                Level::Error => text.color(theme::error_color(ui)),
-                                Level::Warning => text.color(theme::warning_color(ui)),
-                                Level::Debug => text.weak(),
-                                Level::Info => text,
-                            };
-                            ui.add(egui::Label::new(text).wrap());
-                        }
-                        if scroll_to_end {
-                            ui.scroll_to_cursor(Some(egui::Align::BOTTOM));
-                        }
-                    });
-                });
+        });
+    }
+
+    /// The last message on the right of the bottom bar: an info message for a few seconds, a warning or error until
+    /// the next message. The whole text is in the tooltip.
+    fn last_message(&self, ui: &mut egui::Ui) {
+        const INFO_SECONDS: u64 = 8;
+        let Some((level, text, age)) = self.shared.log.last() else { return };
+        if level == Level::Info && age.as_secs() >= INFO_SECONDS {
+            return;
+        }
+        if level == Level::Info {
+            ui.ctx().request_repaint_after(std::time::Duration::from_secs(INFO_SECONDS).saturating_sub(age));
+        }
+        let color = match level {
+            Level::Error => theme::error_color(ui),
+            Level::Warning => theme::warning_color(ui),
+            _ => ui.visuals().weak_text_color(),
+        };
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            ui.add(egui::Label::new(RichText::new(text).color(color)).truncate()).on_hover_text(text);
         });
     }
 
@@ -512,19 +480,10 @@ impl CpaEditorApp {
             return;
         }
         let outcome = cpa_core::validation::validate_document(document);
-        let before = self.shared.validation.as_ref().map(|v| v.error_count());
         let validation = crate::tabs::Validation { revision: self.shared.revision, time: chrono::Local::now(), outcome };
-        let after = validation.error_count();
-        if before != Some(after) {
-            match (&validation.outcome, after) {
-                (Ok(_), Some(0)) => self.shared.log.info("Validation: the CPA is valid against the schema"),
-                (Ok(_), Some(count)) => self.shared.log.warning(format!(
-                    "Validation: {} (see the CPA Validation tab)",
-                    if count == 1 { "1 schema error".to_string() } else { format!("{count} schema errors") }
-                )),
-                (Err(e), _) => self.shared.log.error(format!("Validation failed: {e}")),
-                _ => {}
-            }
+        // The bottom bar shows the outcome; only a validation that could not run is a message
+        if let Err(e) = &validation.outcome {
+            self.shared.log.error(format!("Validation failed: {e}"));
         }
         self.shared.validation = Some(validation);
     }
