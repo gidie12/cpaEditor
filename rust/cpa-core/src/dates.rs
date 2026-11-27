@@ -30,7 +30,7 @@ pub fn now_cpa_date() -> String {
 ///
 /// `local` is the timezone for the local time; `None` takes the timezone set on this computer. A fixed offset is
 /// named like Python's `datetime.timezone(timedelta(...))` names it (`UTC+02:00`, `UTC` for offset zero); the
-/// computer's timezone gets its own abbreviation (`CEST`) on Unix.
+/// computer's timezone gets its own abbreviation (`CEST`) on 64-bit macOS and Linux, elsewhere `UTC+02:00`.
 ///
 /// Returns an empty string for an empty value, otherwise the reason why the date cannot be described.
 pub fn describe_cpa_date(value: &str, local: Option<FixedOffset>) -> String {
@@ -308,8 +308,8 @@ pub fn fixed_offset_name(offset: FixedOffset) -> String {
 }
 
 /// Offset and abbreviation of the computer's timezone at a moment, like Python's `astimezone()`, which reads them
-/// from the C library (`localtime`).
-#[cfg(unix)]
+/// from the C library (`localtime`). The `struct tm` below is the layout of 64-bit macOS and Linux.
+#[cfg(all(any(target_os = "macos", target_os = "linux"), target_pointer_width = "64"))]
 fn system_local_zone(moment: DateTime<Utc>) -> (FixedOffset, String) {
     use std::ffi::{c_char, c_int, c_long, CStr};
 
@@ -361,7 +361,7 @@ fn system_local_zone(moment: DateTime<Utc>) -> (FixedOffset, String) {
     (offset, name)
 }
 
-#[cfg(not(unix))]
+#[cfg(not(all(any(target_os = "macos", target_os = "linux"), target_pointer_width = "64")))]
 fn system_local_zone(moment: DateTime<Utc>) -> (FixedOffset, String) {
     fallback_local_zone(moment)
 }

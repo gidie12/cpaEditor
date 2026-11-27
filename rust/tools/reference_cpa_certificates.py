@@ -13,6 +13,9 @@ Output in cpa-core/tests/reference/cpa_certificates/:
   addressed by a path of element-child indexes from the root, computed right before each operation.
 - key_info_full_test_cpa.pem: key_info_to_pem of the first KeyInfo of full_test_cpa.xml.
 
+Every run generates the fixture certificates again with new random keys: commit fixtures.json, new_rsa.pem and
+the case files (key_info_new_cpa123.xml uses new_rsa.pem) of the same run together.
+
 Deviations applied to the Python side so the bytes are comparable (the Rust code fixes these on purpose):
 - add_comment writes xml:lang with the chosen language instead of the attribute {xml}type="nl-NL".
 - clone_element inserts copy.deepcopy(element) after the element; the Python tab inserted the element itself
