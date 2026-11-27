@@ -152,6 +152,17 @@ pub struct CertificatesTab {
     confirm: Option<Confirm<PendingUpload>>,
     /// The question before all certificates are stripped from the CPA.
     confirm_strip: Option<Confirm<()>>,
+    /// The question for a new Certificate element: partner and certId, then the PEM file.
+    add: Option<AddCertificate>,
+}
+
+/// Add certificate: the partner and certId of a new Certificate element.
+struct AddCertificate {
+    party: usize,
+    cert_id: String,
+    /// The certId was typed, so choosing another partner keeps it.
+    edited: bool,
+    party_names: Vec<String>,
 }
 
 impl Default for CertificatesTab {
@@ -169,6 +180,7 @@ impl Default for CertificatesTab {
             generation: 0,
             confirm: None,
             confirm_strip: None,
+            add: None,
         }
     }
 }
@@ -248,9 +260,10 @@ impl CertificatesTab {
     }
 
     /// The badges above the tree: how many certificates are expired or expire soon, and the next expiry.
-    /// Returns true when "Remove all certificates…" was clicked.
-    fn summary_bar(&self, ui: &mut Ui) -> bool {
+    /// Returns which of "Add certificate…" and "Remove all certificates…" was clicked.
+    fn summary_bar(&self, ui: &mut Ui) -> (bool, bool) {
         let mut strip = false;
+        let mut add = false;
         let mut expired = 0;
         let mut soon = 0;
         let mut total = 0;
@@ -294,9 +307,97 @@ impl CertificatesTab {
                 let button = theme::danger(ui, "Remove all certificates…", true);
                 let tip = "Remove every certificate and the settings that need one; endpoints change from https to http";
                 strip = button.on_hover_text(tip).clicked();
+                let tip = "Add a Certificate element to a partner, filled from a PEM file";
+                add = ui.add(egui::Button::new("Add certificate…").min_size(egui::vec2(96.0, 28.0))).on_hover_text(tip).clicked();
             });
         });
-        strip
+        (add, strip)
+    }
+
+    /// Opens the question for a new certificate, for the first partner.
+    fn ask_add(&mut self, shared: &Shared) {
+        let Some(document) = &shared.document else { return };
+        let party_names: Vec<String> =
+            party_infos(document).iter().map(|&party| party_name(document, party)).collect();
+        if party_names.is_empty() {
+            return;
+        }
+        let cert_id = cpa_core::certificates::new_cert_id(document, 0);
+        self.add = Some(AddCertificate { party: 0, cert_id, edited: false, party_names });
+    }
+
+    /// The question for a new certificate. "Choose PEM file…" adds it; the question stays open when that fails.
+    fn show_add(&mut self, ctx: &egui::Context, shared: &mut Shared) {
+        let Some(add) = &mut self.add else { return };
+        let Some(document) = &shared.document else { return };
+        let error = cpa_core::certificates::check_new_cert_id(document, &add.cert_id);
+        let (mut close, mut choose) = (false, false);
+        let modal = egui::Modal::new(egui::Id::unique("add_certificate")).show(ctx, |ui| {
+            ui.set_width(480.0);
+            ui.heading("Add certificate");
+            ui.add_space(4.0);
+            ui.label(
+                RichText::new(
+                    "Adds a Certificate element to the partner and fills its KeyInfo from a PEM file (leaf first). \
+                     Transports and security details refer to it by its certId.",
+                )
+                .weak(),
+            );
+            ui.add_space(10.0);
+            egui::Grid::new("add_certificate_fields").num_columns(2).spacing([12.0, 8.0]).show(ui, |ui| {
+                ui.label("Partner");
+                ui.horizontal(|ui| {
+                    for (index, name) in add.party_names.iter().enumerate() {
+                        if ui.radio_value(&mut add.party, index, name).clicked() && !add.edited {
+                            add.cert_id = cpa_core::certificates::new_cert_id(document, index);
+                        }
+                    }
+                });
+                ui.end_row();
+                let label = ui.label("certId");
+                ui.vertical(|ui| {
+                    let edit = egui::TextEdit::singleline(&mut add.cert_id).desired_width(320.0);
+                    let response = theme::with_error_border(ui, error.is_some(), |ui| ui.add(edit)).labelled_by(label.id);
+                    if response.changed() {
+                        add.edited = true;
+                    }
+                    if let Some(error) = &error {
+                        ui.label(RichText::new(error).color(theme::error_color(ui)).small());
+                    }
+                });
+                ui.end_row();
+            });
+            ui.add_space(12.0);
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                close = ui.add(egui::Button::new("Cancel").min_size(egui::vec2(96.0, 28.0))).clicked();
+                choose = ui.add_enabled(error.is_none(), theme::primary_button("Choose PEM file…")).clicked();
+            });
+        });
+        if close || modal.should_close() {
+            self.add = None;
+            return;
+        }
+        if choose {
+            let Some(path) =
+                rfd::FileDialog::new().add_filter("Certificate files", &["cer", "crt", "pem"]).pick_file()
+            else {
+                return;
+            };
+            let (party, cert_id, partner) = (add.party, add.cert_id.trim().to_string(), add.party_names[add.party].clone());
+            let result = read_text(&path).and_then(|pem| {
+                let document = shared.document.as_mut().ok_or("No CPA loaded")?;
+                cpa_core::certificates::add_certificate(document, party, &cert_id, &pem)
+            });
+            match result {
+                Ok(certificate) => {
+                    shared.changed();
+                    shared.log.info(format!("Certificate {cert_id} added to {partner} from {}", path.display()));
+                    self.tree.selected = Some(key(certificate));
+                    self.add = None;
+                }
+                Err(e) => shared.log.error(format!("Error while adding certificate: {e}")),
+            }
+        }
     }
 
     /// Asks before stripping, with what will be removed and changed.
@@ -596,12 +697,17 @@ impl Tab for CertificatesTab {
             self.built_for = Some(shared.revision);
         }
         if self.entries.is_empty() {
+            let mut add = false;
             theme::empty_state(
                 ui,
                 "No certificates in this CPA",
-                "Add a Certificate element with a certId to a party in the XML editor, then upload its PEM here.",
-                |_| {},
+                "Add a certificate to a partner from a PEM file.",
+                |ui| add = ui.add(theme::primary_button("Add certificate…")).clicked(),
             );
+            if add {
+                self.ask_add(shared);
+            }
+            self.show_add(ui.ctx(), shared);
             return;
         }
 
@@ -618,7 +724,11 @@ impl Tab for CertificatesTab {
         }
 
         ui.add_space(2.0);
-        if self.summary_bar(ui) {
+        let (add, strip) = self.summary_bar(ui);
+        if add {
+            self.ask_add(shared);
+        }
+        if strip {
             self.ask_strip();
         }
         ui.add_space(6.0);
@@ -661,6 +771,7 @@ impl Tab for CertificatesTab {
             self.run(action, ui, shared);
         }
 
+        self.show_add(ui.ctx(), shared);
         if let Some(confirm) = &self.confirm_strip {
             if let Some((answer, ())) = confirm.show(ui.ctx()) {
                 self.confirm_strip = None;

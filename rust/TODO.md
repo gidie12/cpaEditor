@@ -45,6 +45,10 @@ Digikoppeling XSD or Schematron.
 - Next: "New CPA…" from a built-in template with a wizard (parties, PartyId type, roles, endpoints), then a
   Digikoppeling profile choice that fills the messaging/security settings (shares rules with the check above).
 
+## Certificates
+- After Add certificate: option to use it for transport TLS (client/server security, https endpoint) and
+  signing/encryption, the reverse of Remove all certificates.
+
 ## Docs
 - README, EN/NL guides and schema reference pages for the Rust version.
   Include: General lists the other PartyIds of a partner (the first is edited, the others shown, change them in
@@ -54,3 +58,5 @@ Digikoppeling XSD or Schematron.
   Save CPA… first shows the same changes with Save…/Cancel. The loaded CPA stays the base after saving.
   File > New CPA from this one…: copy with a new CPA ID (version at the end +1), start now, same duration,
   status proposed, optionally without certificates; Show changes… lists the differences with the source CPA.
+  Certificates: "Add certificate…" (summary bar and empty state) adds a Certificate element with a certId to a
+  partner from a PEM chain, indented like the CPA; references (TLS, signing) are not added yet.

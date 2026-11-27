@@ -626,3 +626,36 @@ fn strip_certificates_removes_certificates_and_references() {
     // A second time changes nothing
     assert_eq!(cpa_core::certificates::strip_certificates(&mut doc), Default::default());
 }
+
+#[test]
+fn add_certificate_after_stripping() {
+    use cpa_core::certificates::{add_certificate, certificate_entries, check_new_cert_id, new_cert_id, strip_certificates};
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../application/tests/resources/cpas/full_test_cpa.xml");
+    let mut doc = cpa_core::xml::Document::parse_bytes(&std::fs::read(&path).unwrap()).unwrap();
+    // The PEM chain of a certId in the test CPA
+    let party = cpa_core::cpa::party_infos(&doc)[0];
+    let (entries, _) = certificate_entries(&doc, party);
+    let pem = cpa_core::certificates::key_info_to_pem(&doc, entries[0].key_info).unwrap();
+    assert!(check_new_cert_id(&doc, &entries[0].cert_id).is_some(), "a certId in use is refused");
+
+    strip_certificates(&mut doc);
+    let cert_id = new_cert_id(&doc, 0);
+    assert_eq!(cert_id, "Broker_Cert");
+    let before = doc.to_xml();
+    assert!(add_certificate(&mut doc, 0, "with space", &pem).is_err());
+    assert!(add_certificate(&mut doc, 0, &cert_id, "no pem").is_err());
+    assert_eq!(doc.to_xml(), before, "nothing changes on an error");
+
+    add_certificate(&mut doc, 0, &cert_id, &pem).unwrap();
+    let party = cpa_core::cpa::party_infos(&doc)[0];
+    let (entries, errors) = certificate_entries(&doc, party);
+    assert!(errors.is_empty());
+    assert_eq!(entries.len(), 1);
+    assert_eq!(entries[0].cert_id, "Broker_Cert");
+    assert_eq!(cpa_core::certificates::key_info_to_pem(&doc, entries[0].key_info).unwrap(), pem);
+    assert_eq!(new_cert_id(&doc, 0), "Broker_Cert2");
+    let xml = doc.to_xml();
+    assert!(xml.contains("</tns:CollaborationRole>\n        <tns:Certificate tns:certId=\"Broker_Cert\">\n            <ds:KeyInfo>\n                <ds:KeyValue>"));
+    assert!(xml.contains("</ds:KeyInfo>\n        </tns:Certificate>\n        <tns:SecurityDetails"));
+    assert!(cpa_core::validation::validate_document(&doc).unwrap().is_empty());
+}

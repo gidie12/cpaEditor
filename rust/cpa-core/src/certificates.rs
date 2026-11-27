@@ -586,6 +586,93 @@ pub fn replace_key_info(doc: &mut Document, certificate: NodeId, old: Option<Nod
     strip_redundant_namespaces(doc, new);
 }
 
+/// Attributes of type ID in a CPA: a new certId must not be one of their values.
+const ID_ATTRIBUTES: [&str; 7] = ["certId", "securityId", "channelId", "transportId", "docExchangeId", "packageId", "id"];
+
+/// Whether a value is already an id in the CPA (ID values are unique in the whole document).
+fn id_in_use(doc: &Document, value: &str) -> bool {
+    let Some(root) = doc.root() else { return false };
+    doc.descendants(root).any(|node| {
+        doc.element(node).is_some_and(|element| {
+            element.attributes.iter().any(|a| ID_ATTRIBUTES.contains(&a.name.local.as_str()) && a.value == value)
+        })
+    })
+}
+
+/// The proposed certId for a new certificate of a partner: `<partyName>_Cert` (only letters, digits, `_`, `-`
+/// and `.`), with a number when it is taken.
+pub fn new_cert_id(doc: &Document, party_index: usize) -> String {
+    let name = crate::cpa::party_infos(doc)
+        .get(party_index)
+        .and_then(|&party| doc.attribute(party, Some(CPA_NAMESPACE), "partyName").map(str::to_string))
+        .unwrap_or_default();
+    let mut stem: String =
+        name.chars().map(|c| if c.is_alphanumeric() || "_-.".contains(c) { c } else { '_' }).collect();
+    if !stem.starts_with(|c: char| c.is_alphabetic() || c == '_') {
+        stem = format!("Partner{}{stem}", party_index + 1);
+    }
+    let base = format!("{stem}_Cert");
+    let mut candidate = base.clone();
+    let mut number = 2;
+    while id_in_use(doc, &candidate) {
+        candidate = format!("{base}{number}");
+        number += 1;
+    }
+    candidate
+}
+
+/// What is wrong with a certId for a new certificate; None when it can be used.
+pub fn check_new_cert_id(doc: &Document, cert_id: &str) -> Option<String> {
+    let cert_id = cert_id.trim();
+    if cert_id.is_empty() {
+        Some("Enter a certId".to_string())
+    } else if !crate::cpa::is_ncname(cert_id) {
+        Some("A certId starts with a letter or _ and has no spaces or colons".to_string())
+    } else if id_in_use(doc, cert_id) {
+        Some(format!("{cert_id} is already an id in this CPA"))
+    } else {
+        None
+    }
+}
+
+/// Adds a Certificate element with the certId and a KeyInfo made from the PEM chain to a partner, after its last
+/// Certificate (or after its last CollaborationRole, where the schema puts the first one), with the same
+/// indentation. Nothing changes when the certId or the PEM cannot be used. Returns the new Certificate.
+pub fn add_certificate(doc: &mut Document, party_index: usize, cert_id: &str, pem: &str) -> Result<NodeId, String> {
+    if let Some(error) = check_new_cert_id(doc, cert_id) {
+        return Err(error);
+    }
+    let party = *crate::cpa::party_infos(doc).get(party_index).ok_or("This partner is not in the CPA")?;
+    let reference = doc
+        .find_all(party, Some(CPA_NAMESPACE), "Certificate")
+        .last()
+        .or_else(|| doc.find_all(party, Some(CPA_NAMESPACE), "CollaborationRole").last())
+        .ok_or("The partner has no CollaborationRole to put the certificate after")?;
+    let key_info = key_info_from_pem(doc, pem)?;
+    let certificate = doc.create_element(Some(CPA_NAMESPACE), "Certificate");
+    doc.set_attribute(certificate, Some(CPA_NAMESPACE), "certId", cert_id.trim());
+    let tail = doc.tail(reference);
+    crate::cpa::insert_after_tail(doc, party, reference, certificate);
+    if let Some(tail) = &tail {
+        doc.set_tail(certificate, Some(tail));
+    }
+    doc.append_child(certificate, key_info);
+    strip_redundant_namespaces(doc, key_info);
+    // Indented like its siblings: the whitespace before it, divided by its depth, is one level
+    let before = tail.as_deref().and_then(|t| t.rsplit('\n').next()).unwrap_or("").to_string();
+    let mut depth = 0;
+    let mut node = certificate;
+    while let Some(parent) = doc.parent_element(node) {
+        depth += 1;
+        node = parent;
+    }
+    let unit_length = if depth > 0 { before.chars().count() / depth } else { 0 };
+    let unit: String = before.chars().take(unit_length.max(1)).collect();
+    let unit = if unit.trim().is_empty() && !unit.is_empty() { unit } else { "  ".to_string() };
+    crate::diff::indent_with(doc, certificate, depth, &unit);
+    Ok(certificate)
+}
+
 /// The "Set from certificates" button: sets the end date of the CPA to the expiry date of the certificate that
 /// expires first (leaf, intermediate and root all count). Returns the date, that certificate and the debug lines
 /// that list every certificate in order of expiry.

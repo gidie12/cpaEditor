@@ -21,6 +21,11 @@ pub fn cpa_text(document: &Document) -> String {
 /// Gives every element with child elements (or comments) the whitespace of lxml's `indent`: a new line and two
 /// spaces per level before each child and before the closing tag. Text with content is left alone.
 fn indent(document: &mut Document, element: NodeId, level: usize) {
+    indent_with(document, element, level, "  ");
+}
+
+/// [`indent`] with another unit per level, for example the four spaces of a CPA that is indented that way.
+pub(crate) fn indent_with(document: &mut Document, element: NodeId, level: usize, unit: &str) {
     let children: Vec<NodeId> = document
         .children(element)
         .iter()
@@ -31,14 +36,14 @@ fn indent(document: &mut Document, element: NodeId, level: usize) {
         return;
     }
     let blank = |text: Option<String>| text.is_none_or(|t| t.trim().is_empty());
-    let inner = format!("\n{}", "  ".repeat(level + 1));
-    let outer = format!("\n{}", "  ".repeat(level));
+    let inner = format!("\n{}", unit.repeat(level + 1));
+    let outer = format!("\n{}", unit.repeat(level));
     if blank(document.text(element)) {
         document.set_text(element, Some(&inner));
     }
     for (position, &child) in children.iter().enumerate() {
         if document.is_element(child) {
-            indent(document, child, level + 1);
+            indent_with(document, child, level + 1, unit);
         }
         if blank(document.tail(child)) {
             let after = if position + 1 == children.len() { &outer } else { &inner };
