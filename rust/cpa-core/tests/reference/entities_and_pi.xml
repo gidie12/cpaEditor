@@ -1,0 +1,3 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<?xml-stylesheet href="a.xsl"?><a b="single &quot;q&quot;" c="'A">téxt<!-- c -->
+<b>&lt;raw&gt;</b></a><!-- after -->

@@ -124,9 +124,34 @@ impl Document {
     // Parsing
     // ----------------------------------------------------------------------------------------------------------
 
+    /// Parses the bytes of an XML file: a byte order mark and the encoding of the XML declaration are taken into
+    /// account (UTF-8 when there is none), like lxml does.
+    pub fn parse_bytes(bytes: &[u8]) -> Result<Document, XmlError> {
+        let (encoding, bom_length) = match encoding_rs::Encoding::for_bom(bytes) {
+            Some((encoding, length)) => (encoding, length),
+            None => (declared_encoding(bytes).unwrap_or(encoding_rs::UTF_8), 0),
+        };
+        let (text, _, had_errors) = encoding.decode(&bytes[bom_length..]);
+        if had_errors {
+            return Err(XmlError::Syntax(format!("the file is not valid {}", encoding.name())));
+        }
+        Document::parse(&text)
+    }
+
     /// Parses an XML document. External entities and DTDs are never loaded (CPA files come from other parties): a
     /// DOCTYPE is kept as text and written back, an unknown entity is an error.
+    ///
+    /// Line ends are normalised to `\n` and tabs and line ends in attribute values to spaces, as the XML
+    /// specification requires (and lxml does); character references such as `&#10;` keep their character.
     pub fn parse(xml: &str) -> Result<Document, XmlError> {
+        let xml = xml.strip_prefix('\u{feff}').unwrap_or(xml);
+        let normalised;
+        let xml = if xml.contains('\r') {
+            normalised = xml.replace("\r\n", "\n").replace('\r', "\n");
+            normalised.as_str()
+        } else {
+            xml
+        };
         let mut document = Document::default();
         let mut reader = NsReader::from_str(xml);
         let config = reader.config_mut();
@@ -210,10 +235,9 @@ impl Document {
         for attribute in start.attributes().with_checks(true) {
             let attribute = attribute?;
             let key = String::from_utf8_lossy(attribute.key.as_ref()).into_owned();
-            let value = attribute
-                .decode_and_unescape_value(reader.decoder())
-                .map_err(|e| XmlError::Syntax(e.to_string()))?
-                .into_owned();
+            // Attribute-value normalisation on the raw value: a literal tab or line end becomes a space
+            let raw = String::from_utf8_lossy(&attribute.value).replace(['\t', '\n'], " ");
+            let value = quick_xml::escape::unescape(&raw).map_err(|e| XmlError::Syntax(e.to_string()))?.into_owned();
             if key == "xmlns" {
                 namespaces.push(NamespaceDecl { prefix: None, uri: value });
                 continue;
@@ -239,15 +263,12 @@ impl Document {
     // Serialisation
     // ----------------------------------------------------------------------------------------------------------
 
-    /// Writes the document like lxml: an XML declaration with single quotes, the nodes before and after the root
-    /// element each on their own line, empty elements as `<a/>`.
+    /// Writes the document like lxml: an XML declaration with single quotes on its own line, then the nodes
+    /// before the root element, the root element and the nodes after it without whitespace in between, empty
+    /// elements as `<a/>`.
     pub fn to_xml(&self) -> String {
         let mut out = String::from("<?xml version='1.0' encoding='UTF-8'?>\n");
-        let children = &self.node(self.document_node()).children;
-        for (position, &child) in children.iter().enumerate() {
-            if position > 0 {
-                out.push('\n');
-            }
+        for &child in &self.node(self.document_node()).children {
             self.write_node(child, &mut out, &mut Vec::new());
         }
         out
@@ -854,6 +875,19 @@ impl Iterator for Descendants<'_> {
     }
 }
 
+/// The encoding named in the XML declaration (`<?xml version="1.0" encoding="ISO-8859-1"?>`), if any.
+fn declared_encoding(bytes: &[u8]) -> Option<&'static encoding_rs::Encoding> {
+    let head = &bytes[..bytes.len().min(200)];
+    let head = String::from_utf8_lossy(head);
+    let declaration = head.strip_prefix("<?xml")?;
+    let declaration = &declaration[..declaration.find("?>")?];
+    let start = declaration.find("encoding")? + "encoding".len();
+    let rest = declaration[start..].trim_start().strip_prefix('=')?.trim_start();
+    let quote = rest.chars().next()?;
+    let label = rest[1..].split(quote).next()?;
+    encoding_rs::Encoding::for_label(label.trim().as_bytes())
+}
+
 fn prefix_of(raw_name: &str) -> Option<String> {
     raw_name.split_once(':').map(|(prefix, _)| prefix.to_string())
 }
@@ -918,7 +952,7 @@ mod tests {
     #[test]
     fn parse_and_write_keeps_prefixes_comments_and_whitespace() {
         let xml = format!(
-            "{DECL}<!-- before -->\n<t:a xmlns:t=\"urn:test\" t:x=\"1\">\n  <t:b>text &amp; more</t:b>\n  <!-- c --><t:c/>\n</t:a>"
+            "{DECL}<!-- before --><t:a xmlns:t=\"urn:test\" t:x=\"1\">\n  <t:b>text &amp; more</t:b>\n  <!-- c --><t:c/>\n</t:a>"
         );
         let document = Document::parse(&xml).unwrap();
         assert_eq!(document.to_xml(), xml);

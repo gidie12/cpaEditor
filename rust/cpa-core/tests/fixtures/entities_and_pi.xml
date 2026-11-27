@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="a.xsl"?>
+<a b='single "q"' c="&apos;&#x41;">t&#xE9;xt<!-- c -->
+<b><![CDATA[<raw>]]></b></a>
+<!-- after -->

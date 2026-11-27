@@ -6,4 +6,8 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+chrono = "0.4.45"
 cpa-core = { path = "../cpa-core" }
+eframe = "0.31.1"
+log = "0.4.35"
+rfd = "0.17.2"

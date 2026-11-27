@@ -7,11 +7,11 @@ import pathlib
 
 from lxml import etree
 
-CPAS = pathlib.Path('../application/tests/resources/cpas')
+SOURCES = [pathlib.Path('../application/tests/resources/cpas'), pathlib.Path('cpa-core/tests/fixtures')]
 OUT = pathlib.Path('cpa-core/tests/reference')
 PARSER = etree.XMLParser(resolve_entities=False, no_network=True, load_dtd=False)
 
-for cpa in sorted(CPAS.glob('*.xml')):
+for cpa in sorted(path for source in SOURCES for path in source.glob('*.xml')):
     tree = etree.parse(str(cpa), PARSER)
     (OUT / cpa.name).write_bytes(etree.tostring(tree, encoding='UTF-8', xml_declaration=True))
     print(cpa.name)
