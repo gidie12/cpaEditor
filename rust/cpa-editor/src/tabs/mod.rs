@@ -10,7 +10,9 @@ use eframe::egui::Ui;
 use crate::log::Log;
 
 pub mod collaboration_role;
+pub mod transport;
 pub mod validation;
+pub mod xml_editor;
 
 /// State shared by all tabs.
 #[derive(Default)]
