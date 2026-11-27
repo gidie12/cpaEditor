@@ -294,6 +294,42 @@ impl TransportTab {
         clone
     }
 
+    /// The field for the value: a drop-down list of the partner's ids for a reference, else a text field. Returns
+    /// true when Enter was pressed in the text field.
+    fn value_field(&mut self, ui: &mut Ui) -> bool {
+        let mut save = false;
+        match &self.detail.options {
+            Some(options) if options.is_empty() => {
+                ui.label(RichText::new(format!("No {}s available", self.detail.name)).weak());
+            }
+            Some(options) => {
+                let options = options.clone();
+                if combo(ui, "transport_value", &mut self.detail.value, &options, true) {
+                    self.detail.error = None;
+                }
+            }
+            None => {
+                let field =
+                    egui::TextEdit::singleline(&mut self.detail.value).desired_width(ui.available_width());
+                let response = ui.add(field);
+                if std::mem::take(&mut self.focus_value) {
+                    response.request_focus();
+                }
+                if response.changed() {
+                    self.detail.error = None;
+                }
+                if response.lost_focus() {
+                    if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                        save = true;
+                    } else if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+                        self.detail.value = self.detail.original.clone();
+                    }
+                }
+            }
+        }
+        save
+    }
+
     /// The detail panel; returns true when the user asks to clone the transport.
     fn detail_panel(&mut self, ui: &mut Ui, shared: &mut Shared) -> bool {
         let mut clone = false;
@@ -357,36 +393,9 @@ impl TransportTab {
                 ui.label("Element");
                 ui.label(&self.detail.element_name);
                 ui.end_row();
-                ui.label(&self.detail.name);
-                match &self.detail.options {
-                    Some(options) if options.is_empty() => {
-                        ui.label(RichText::new(format!("No {}s available", self.detail.name)).weak());
-                    }
-                    Some(options) => {
-                        let options = options.clone();
-                        if combo(ui, "transport_value", &mut self.detail.value, &options, true) {
-                            self.detail.error = None;
-                        }
-                    }
-                    None => {
-                        let field =
-                            egui::TextEdit::singleline(&mut self.detail.value).desired_width(ui.available_width());
-                        let response = ui.add(field);
-                        if std::mem::take(&mut self.focus_value) {
-                            response.request_focus();
-                        }
-                        if response.changed() {
-                            self.detail.error = None;
-                        }
-                        if response.lost_focus() {
-                            if ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                                save = true;
-                            } else if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
-                                self.detail.value = self.detail.original.clone();
-                            }
-                        }
-                    }
-                }
+                // Not the name of the value: a long name would widen the label column and with it the panel
+                ui.label("Value");
+                save = self.value_field(ui);
                 ui.end_row();
             },
         );

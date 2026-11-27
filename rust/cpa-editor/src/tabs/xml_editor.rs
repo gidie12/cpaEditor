@@ -389,7 +389,17 @@ impl XmlEditorTab {
         let name = row.cells[0].trim_start_matches('@').to_string();
         let value = row.cells.get(1).cloned().unwrap_or_default();
         ctx.copy_text(format!("{name} {value}"));
-        self.add_name = name;
+        // The Add form needs the name in Clark notation: a prefixed name is not a valid attribute name there
+        match self.kinds.get(&key) {
+            Some(RowKind::Attribute(_, clark, _)) => {
+                self.add_type = ADD_TYPES[1].to_string();
+                self.add_name = clark.clone();
+            }
+            _ => {
+                self.add_type = ADD_TYPES[0].to_string();
+                self.add_name = name;
+            }
+        }
         self.add_value = value;
     }
 
