@@ -76,5 +76,5 @@ Digikoppeling XSD or Schematron.
   attributes, missing elements and element order; Undo first.
   No log panel and no "Show debug messages": the bottom bar shows the last message on the right (info for 8
   seconds, a warning or error until the next message; the whole text in the tooltip).
-  Save with changes and an unchanged CPA ID: a yellow warning in the question with "Increase the CPA ID to Y" (on by
+  Save with changes and an unchanged CPA ID: a yellow warning in the question with "Increase the CPA ID to Y" (off by
   default); the file name follows the new CPA ID, and cancelling the file dialog puts the CPA ID back.

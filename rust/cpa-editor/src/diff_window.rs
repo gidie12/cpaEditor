@@ -34,7 +34,7 @@ pub struct DiffWindow {
 impl DiffWindow {
     pub fn new(hunks: Vec<Hunk>, confirm: bool) -> Self {
         let changed = changed_line_count(&hunks);
-        DiffWindow { hunks, changed, confirm, cpa_id: None, increase: true }
+        DiffWindow { hunks, changed, confirm, cpa_id: None, increase: false }
     }
 
     /// Before saving: offers to increase the CPA ID, which was not changed.
