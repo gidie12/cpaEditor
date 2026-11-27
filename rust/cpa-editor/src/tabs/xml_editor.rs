@@ -427,7 +427,7 @@ impl XmlEditorTab {
                     Some(RowKind::Element(_)) => ("Delete element…", true, ""),
                     None => ("Delete…", false, "Select an element or an attribute first"),
                 };
-                let response = ui.add_enabled(can_delete, theme::danger_button(ui, label));
+                let response = ui.add(theme::danger_button_state(ui, label, can_delete));
                 if response.on_disabled_hover_text(why).clicked() {
                     action = Some(MenuAction::Delete);
                 }

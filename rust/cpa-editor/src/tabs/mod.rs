@@ -33,6 +33,8 @@ pub struct Shared {
     pub request_open: bool,
     /// Set by a tab to ask the main window for the Save dialog.
     pub request_save: bool,
+    /// Set by the General tab: a date is not valid, so saving is not the next step.
+    pub invalid_dates: usize,
 }
 
 impl Shared {

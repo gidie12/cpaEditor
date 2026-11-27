@@ -236,7 +236,7 @@ impl CommentTab {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 let can_delete = matches!(self.mode, Mode::Edit(_));
                 delete = ui
-                    .add_enabled(can_delete, theme::danger_button(ui, "Delete comment…"))
+                    .add(theme::danger_button_state(ui, "Delete comment…", can_delete))
                     .on_disabled_hover_text("Select a comment first")
                     .clicked();
             });
@@ -255,7 +255,7 @@ impl CommentTab {
             let response = ui.add(
                 egui::TextEdit::multiline(&mut self.text)
                     .id_salt("comment_text")
-                    .desired_rows(6)
+                    .desired_rows(10)
                     .desired_width(ui.available_width())
                     .hint_text("Free text for the readers of the CPA"),
             )
@@ -319,6 +319,8 @@ impl CommentTab {
                         ui.label(RichText::new("No changes").weak());
                     } else if empty {
                         ui.label(RichText::new("A comment cannot be empty").color(theme::error_color(ui)));
+                    } else {
+                        ui.label(RichText::new("Unsaved changes").color(theme::warning_color(ui)));
                     }
                 });
             }

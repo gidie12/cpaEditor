@@ -47,8 +47,9 @@ pub fn apply(ctx: &egui::Context) {
         visuals.widgets.inactive.bg_fill = if dark { gray(52) } else { gray(236) };
         visuals.widgets.inactive.weak_bg_fill = visuals.widgets.inactive.bg_fill;
         // Fields and buttons always have a visible border
-        visuals.widgets.inactive.bg_stroke = Stroke::new(1.0, if dark { gray(84) } else { gray(190) });
-        visuals.widgets.hovered.bg_stroke = Stroke::new(1.0, if dark { gray(130) } else { gray(140) });
+        // at least 3:1 against the panel (WCAG 1.4.11)
+        visuals.widgets.inactive.bg_stroke = Stroke::new(1.0, if dark { gray(112) } else { gray(138) });
+        visuals.widgets.hovered.bg_stroke = Stroke::new(1.0, if dark { gray(150) } else { gray(100) });
         // Disabled text keeps at least 3:1 contrast
         visuals.disabled_alpha = 0.72;
         // Weak text (hints, paths, secondary text) still reaches 4.5:1
@@ -92,6 +93,12 @@ pub fn danger(ui: &mut Ui, text: &str, enabled: bool) -> egui::Response {
     }
 }
 
+/// A delete button for `ui.add`: red when enabled, the normal disabled look otherwise.
+pub fn danger_button_state(ui: &Ui, text: &str, enabled: bool) -> impl egui::Widget + 'static {
+    let button = if enabled { danger_button(ui, text) } else { egui::Button::new(text.to_string()) };
+    move |ui: &mut Ui| ui.add_enabled(enabled, button)
+}
+
 /// A delete action: red text.
 pub fn danger_button(ui: &Ui, text: &str) -> egui::Button<'static> {
     egui::Button::new(RichText::new(text.to_string()).color(error_color(ui)))
@@ -107,6 +114,23 @@ pub fn error_color(ui: &Ui) -> Color32 {
 
 pub fn warning_color(ui: &Ui) -> Color32 {
     if ui.visuals().dark_mode { Color32::from_rgb(0xfb, 0xbf, 0x24) } else { Color32::from_rgb(0x92, 0x40, 0x0e) }
+}
+
+/// Draws a field (or any widget) with a red border: the value in it is not valid.
+pub fn with_error_border<R>(ui: &mut Ui, invalid: bool, add: impl FnOnce(&mut Ui) -> R) -> R {
+    if !invalid {
+        return add(ui);
+    }
+    ui.scope(|ui| {
+        let stroke = Stroke::new(1.5, error_color(ui));
+        let widgets = &mut ui.visuals_mut().widgets;
+        widgets.inactive.bg_stroke = stroke;
+        widgets.hovered.bg_stroke = stroke;
+        widgets.active.bg_stroke = stroke;
+        ui.visuals_mut().selection.stroke = stroke;
+        add(ui)
+    })
+    .inner
 }
 
 /// A short status text on a coloured background, e.g. "Valid" or "3 errors".

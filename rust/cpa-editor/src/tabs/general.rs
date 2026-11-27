@@ -195,11 +195,14 @@ impl GeneralTab {
     /// A text field in the second column of a form grid, named by its label for screen readers.
     fn text_field(&mut self, ui: &mut Ui, index: usize, label: egui::Id, width: f32, shared: &mut Shared) {
         let field = &mut self.fields[index];
+        let invalid = matches!(field.field, GeneralField::StartDate | GeneralField::EndDate)
+            && !field.value.trim().is_empty()
+            && moment(&field.value).is_none();
         let mut edit = egui::TextEdit::singleline(&mut field.value).id_salt(field.log_name).desired_width(width);
         if matches!(field.field, GeneralField::StartDate | GeneralField::EndDate) {
             edit = edit.hint_text(DATE_HINT);
         }
-        let response = ui.add(edit).labelled_by(label);
+        let response = theme::with_error_border(ui, invalid, |ui| ui.add(edit)).labelled_by(label);
         if response.changed() {
             field.edited = true;
             self.write(index, shared);
@@ -292,6 +295,23 @@ impl GeneralTab {
         };
         ui.label(rich);
         ui.end_row();
+        // An end date in the past is the mistake to see here, not only in the log
+        if index == END_DATE {
+            if let Some(end) = moment(&self.fields[index].value).filter(|end| *end < Utc::now()) {
+                let days = (Utc::now() - end).num_days();
+                let ago = match days {
+                    0 => "today".to_string(),
+                    1 => "1 day ago".to_string(),
+                    2..=59 => format!("{days} days ago"),
+                    60..=729 => format!("{} months ago", days / 30),
+                    _ => format!("{} years ago", days / 365),
+                };
+                ui.label("");
+                let text = format!("The CPA expired {ago}. Set a later end date, or renew the certificates first.");
+                ui.add(egui::Label::new(RichText::new(text).color(theme::warning_color(ui))).wrap());
+                ui.end_row();
+            }
+        }
         Self::field_error(ui, &self.fields[index].error);
         action
     }
@@ -328,6 +348,14 @@ impl GeneralTab {
         }
     }
 
+    /// The number of start and end dates that are filled in but not valid.
+    fn invalid_dates(&self) -> usize {
+        [START_DATE, END_DATE]
+            .iter()
+            .filter(|&&i| !self.fields[i].value.trim().is_empty() && moment(&self.fields[i].value).is_none())
+            .count()
+    }
+
     /// The CPA id, the partner names and the status and validity badges above the form.
     fn header(&self, ui: &mut Ui) {
         let cpa_id = self.fields[CPA_ID].value.trim();
@@ -340,6 +368,8 @@ impl GeneralTab {
             }
             if let Some((text, color)) = validity(ui, &self.fields[START_DATE].value, &self.fields[END_DATE].value) {
                 theme::badge(ui, &text, color);
+            } else if self.invalid_dates() > 0 {
+                theme::badge(ui, "Invalid dates", theme::error_color(ui));
             }
         });
         let names: Vec<&str> =
@@ -362,8 +392,9 @@ fn capitalise(text: &str) -> String {
 fn status_color(ui: &Ui, status: &str) -> Color32 {
     match status {
         "signed" => theme::ok_color(ui),
-        "agreed" if ui.visuals().dark_mode => theme::ACCENT_LIGHT,
-        "agreed" => theme::ACCENT,
+        // Lighter / darker than the accent, so the badge text reaches 4.5:1
+        "agreed" if ui.visuals().dark_mode => Color32::from_rgb(0x93, 0xb4, 0xfb),
+        "agreed" => Color32::from_rgb(0x1e, 0x40, 0xaf),
         _ => theme::warning_color(ui),
     }
 }
@@ -437,6 +468,7 @@ impl Tab for GeneralTab {
             self.load(document);
             self.built_for = Some(shared.revision);
         }
+        shared.invalid_dates = self.invalid_dates();
 
         let mut action = None;
         egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {

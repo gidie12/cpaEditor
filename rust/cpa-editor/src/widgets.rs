@@ -67,19 +67,38 @@ impl<T: Clone> Confirm<T> {
         let mut answer = None;
         let modal = egui::Modal::new(egui::Id::unique(("confirm", &self.title))).show(ctx, |ui| {
             ui.set_max_width(480.0);
+            ui.set_min_width(360.0);
             ui.heading(&self.title);
             ui.add_space(6.0);
             ui.label(&self.text);
             ui.add_space(10.0);
-            ui.horizontal(|ui| {
-                if ui.button("Yes").clicked() {
-                    answer = Some(Answer::Yes);
+            // A delete or replace is confirmed with a red button named after the action, next to Cancel
+            let destructive = !self.with_cancel
+                && ["Delete", "Remove", "Replace"].iter().any(|verb| self.title.starts_with(verb));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if destructive {
+                    let label = self.title.trim_end_matches('?').to_string();
+                    if ui.add(crate::theme::danger_button(ui, &label).min_size(egui::vec2(96.0, 28.0))).clicked() {
+                        answer = Some(Answer::Yes);
+                    }
+                    let cancel = ui.add(egui::Button::new("Cancel").min_size(egui::vec2(96.0, 28.0)));
+                    if cancel.clicked() {
+                        answer = Some(Answer::No);
+                    }
+                    if !ui.memory(|m| m.focused().is_some()) {
+                        cancel.request_focus();
+                    }
+                    return;
+                }
+                // Right to left: the last button is drawn first
+                if self.with_cancel && ui.button("Cancel").clicked() {
+                    answer = Some(Answer::Cancel);
                 }
                 if ui.button("No").clicked() {
                     answer = Some(Answer::No);
                 }
-                if self.with_cancel && ui.button("Cancel").clicked() {
-                    answer = Some(Answer::Cancel);
+                if ui.button("Yes").clicked() {
+                    answer = Some(Answer::Yes);
                 }
             });
         });

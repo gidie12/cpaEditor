@@ -104,7 +104,7 @@ fn xml_editor_deletes_an_attribute_after_confirmation() {
     arrow_down(&mut h, 3);
     h.get_by_label("Delete attribute…").click();
     h.run_steps(2);
-    h.get_by_label("Yes").click();
+    h.get_by_role_and_label(egui::accesskit::Role::Button, "Delete attribute").click();
     h.run_steps(2);
     let document = h.state().shared.document.as_ref().unwrap();
     let root = document.root().unwrap();

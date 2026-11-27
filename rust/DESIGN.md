@@ -14,7 +14,7 @@ helpers there instead of their own colours and sizes.
 
 ## Buttons
 - At most one **primary** button in view (`theme::primary_button`, or `theme::action_button` with `primary`):
-  accent fill, white bold text, minimum 96×28. The primary button is the next step: Save CPA… only with unsaved
+  accent fill, white strong text (the default fonts have no bold face), minimum 96×28. The primary button is the next step: Save CPA… only with unsaved
   changes, Save changes only when the form differs from the CPA, Validate CPA before the first run. Otherwise these
   are standard buttons. A disabled button is never primary.
 - **Danger** buttons (`theme::danger_button`) for delete actions: red text, disabled without a selection, separated

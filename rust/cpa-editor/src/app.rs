@@ -95,6 +95,7 @@ impl CpaEditorApp {
                 self.shared.revision += 1;
                 self.shared.generation += 1;
                 self.shared.saved_revision = self.shared.revision;
+        self.shared.invalid_dates = 0;
                 self.shared.log.info("CPA data loaded successfully.");
             }
             Err(e) => self.shared.log.error(format!("Error while loading CPA data: {e}")),
@@ -168,7 +169,10 @@ impl CpaEditorApp {
                 }
                 // Primary only with unsaved changes: then saving is the next step
                 let can_save = self.shared.document.is_some();
-                let save = theme::action_button(ui, "Save CPA…", self.shared.is_dirty(), can_save)
+                // Not the next step while the General tab has an invalid date
+                let invalid = self.shared.invalid_dates;
+                let primary = self.shared.is_dirty() && invalid == 0;
+                let save = theme::action_button(ui, "Save CPA…", primary, can_save)
                     .on_hover_text(ui.ctx().format_shortcut(&SAVE_SHORTCUT));
                 if save.clicked() {
                     self.save_cpa_dialog();
@@ -179,6 +183,11 @@ impl CpaEditorApp {
                         ui.label(RichText::new(name).strong());
                         if self.shared.is_dirty() {
                             ui.label(RichText::new("• Unsaved changes").color(theme::warning_color(ui)));
+                        }
+                        if invalid > 0 {
+                            let text = if invalid == 1 { "1 invalid date".to_string() } else { format!("{invalid} invalid dates") };
+                            theme::badge(ui, &text, theme::error_color(ui));
+                            ui.label(RichText::new("on the General tab").weak());
                         }
                     }
                     None => {}
