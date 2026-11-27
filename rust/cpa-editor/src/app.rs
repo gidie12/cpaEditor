@@ -29,6 +29,8 @@ pub struct CpaEditorApp {
     window_title: String,
     /// The CPA as indented text when it was loaded: the base of Show changes, also after saving.
     loaded_text: Option<String>,
+    /// The CPA ID when the CPA was loaded.
+    loaded_cpa_id: Option<String>,
     /// Show changes, or the question before saving.
     diff: Option<crate::diff_window::DiffWindow>,
     /// New CPA from this one.
@@ -59,6 +61,7 @@ impl CpaEditorApp {
             update_check: UpdateCheck::default(),
             window_title: String::new(),
             loaded_text: None,
+            loaded_cpa_id: None,
             diff: None,
             new_cpa: None,
         };
@@ -98,6 +101,7 @@ impl CpaEditorApp {
             Ok(document) => {
                 self.shared.log.clear();
                 self.loaded_text = Some(cpa_core::diff::cpa_text(&document));
+                self.loaded_cpa_id = Some(cpa_core::cpa::read_general(&document).cpa_id);
                 self.diff = None;
                 self.new_cpa = None;
                 self.shared.document = Some(document);
@@ -198,13 +202,23 @@ impl CpaEditorApp {
         let hunks = self.changes();
         if hunks.is_empty() {
             self.shared.log.info("No changes since the CPA was loaded");
-            self.save_cpa_file_dialog();
+            self.save_cpa_file_dialog(None);
             return;
         }
-        self.diff = Some(crate::diff_window::DiffWindow::new(hunks, true));
+        let mut window = crate::diff_window::DiffWindow::new(hunks, true);
+        // The CPA ID was not changed: offer the next version
+        if let Some(document) = &self.shared.document {
+            let current = cpa_core::cpa::read_general(document).cpa_id;
+            let increased = cpa_core::cpa::next_cpa_id(current.trim());
+            if self.loaded_cpa_id.as_deref() == Some(current.as_str()) && !increased.is_empty() {
+                window = window.offer_new_cpa_id(current, increased);
+            }
+        }
+        self.diff = Some(window);
     }
 
-    fn save_cpa_file_dialog(&mut self) {
+    /// Asks where to save the CPA, with the loaded file name or `file_name`; returns false when cancelled.
+    fn save_cpa_file_dialog(&mut self, file_name: Option<String>) -> bool {
         let mut dialog = rfd::FileDialog::new().add_filter("xml files", &["xml"]);
         if let Some(path) = &self.shared.file_path {
             if let Some(directory) = path.parent() {
@@ -214,11 +228,38 @@ impl CpaEditorApp {
                 dialog = dialog.set_file_name(name.to_string_lossy());
             }
         }
-        if let Some(mut path) = dialog.save_file() {
-            if path.extension().is_none() {
-                path.set_extension("xml");
-            }
-            self.save_cpa(&path);
+        if let Some(name) = file_name {
+            dialog = dialog.set_file_name(name);
+        }
+        let Some(mut path) = dialog.save_file() else { return false };
+        if path.extension().is_none() {
+            path.set_extension("xml");
+        }
+        self.save_cpa(&path);
+        true
+    }
+
+    /// Saves after the question with the changes, with the increased CPA ID when chosen. Cancelling the file dialog
+    /// puts the CPA ID back.
+    fn save_with_cpa_id(&mut self, new_cpa_id: Option<String>) {
+        let Some(id) = new_cpa_id else {
+            self.save_cpa_file_dialog(None);
+            return;
+        };
+        let Some(document) = self.shared.document.as_mut() else { return };
+        let old = cpa_core::cpa::read_general(document).cpa_id;
+        if let Err(e) = cpa_core::cpa::set_general(document, cpa_core::cpa::GeneralField::CpaId, &id) {
+            self.shared.log.error(e);
+            return;
+        }
+        self.shared.changed();
+        if self.save_cpa_file_dialog(Some(cpa_core::cpa::cpa_file_name(&id))) {
+            self.shared.log.info(format!("CPA ID increased to {id}"));
+        } else if let Some(document) = self.shared.document.as_mut() {
+            let _ = cpa_core::cpa::set_general(document, cpa_core::cpa::GeneralField::CpaId, &old);
+            // There were changes already, so the CPA stays unsaved
+            self.shared.changed();
+            self.shared.log.info("Saving cancelled");
         }
     }
 
@@ -450,12 +491,12 @@ impl CpaEditorApp {
                 }
             }
         }
-        if let Some(diff) = &self.diff {
+        if let Some(diff) = &mut self.diff {
             if let Some(answer) = diff.show(&ctx) {
                 let confirm = diff.is_confirm();
                 self.diff = None;
                 match answer {
-                    crate::diff_window::DiffAnswer::Save => self.save_cpa_file_dialog(),
+                    crate::diff_window::DiffAnswer::Save { new_cpa_id } => self.save_with_cpa_id(new_cpa_id),
                     crate::diff_window::DiffAnswer::Close if confirm => self.shared.log.info("Saving cancelled"),
                     crate::diff_window::DiffAnswer::Close => {}
                 }

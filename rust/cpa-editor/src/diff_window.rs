@@ -12,10 +12,10 @@ const ADDED_PART: Color32 = Color32::from_rgb(0x8f, 0xdc, 0x8f);
 const CONTEXT: Color32 = Color32::from_rgb(0x88, 0x88, 0x88);
 
 /// What the user chose in the window.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum DiffAnswer {
-    /// Save the CPA with these changes (only when asked before saving).
-    Save,
+    /// Save the CPA with these changes (only when asked before saving); with the increased CPA ID when chosen.
+    Save { new_cpa_id: Option<String> },
     /// Closed, or Cancel before saving.
     Close,
 }
@@ -25,12 +25,22 @@ pub struct DiffWindow {
     changed: usize,
     /// Asked before saving: Save… and Cancel instead of a window to look at.
     confirm: bool,
+    /// Before saving, when the CPA ID is still the loaded one: the current and the increased CPA ID.
+    cpa_id: Option<(String, String)>,
+    /// Save with the increased CPA ID.
+    increase: bool,
 }
 
 impl DiffWindow {
     pub fn new(hunks: Vec<Hunk>, confirm: bool) -> Self {
         let changed = changed_line_count(&hunks);
-        DiffWindow { hunks, changed, confirm }
+        DiffWindow { hunks, changed, confirm, cpa_id: None, increase: true }
+    }
+
+    /// Before saving: offers to increase the CPA ID, which was not changed.
+    pub fn offer_new_cpa_id(mut self, current: String, increased: String) -> Self {
+        self.cpa_id = Some((current, increased));
+        self
     }
 
     /// Asked before saving.
@@ -39,7 +49,7 @@ impl DiffWindow {
     }
 
     /// Shows the window; returns the answer once it is closed.
-    pub fn show(&self, ctx: &egui::Context) -> Option<DiffAnswer> {
+    pub fn show(&mut self, ctx: &egui::Context) -> Option<DiffAnswer> {
         let screen = ctx.content_rect().size();
         let size = egui::vec2((screen.x - 80.0).clamp(400.0, 1100.0), (screen.y - 80.0).clamp(300.0, 700.0));
         let mut answer = None;
@@ -49,15 +59,22 @@ impl DiffWindow {
                 ui.set_width(size.x);
                 ui.heading("Save CPA with these changes?");
                 ui.add_space(6.0);
-                self.contents(ui, size.y - 130.0);
+                let extra = if self.cpa_id.is_some() { 40.0 } else { 0.0 };
+                self.contents(ui, size.y - 130.0 - extra);
                 ui.add_space(8.0);
+                if let Some((current, increased)) = &self.cpa_id {
+                    ui.checkbox(&mut self.increase, format!("Increase the CPA ID: {current} becomes {increased}"));
+                    ui.label(RichText::new("The CPA ID was not changed since the CPA was loaded.").small().weak());
+                    ui.add_space(6.0);
+                }
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if ui.add(egui::Button::new("Cancel").min_size(egui::vec2(96.0, 28.0))).clicked() {
                         answer = Some(DiffAnswer::Close);
                     }
                     let save = ui.add(crate::theme::primary_button("Save…"));
                     if save.clicked() {
-                        answer = Some(DiffAnswer::Save);
+                        let new_cpa_id = self.cpa_id.as_ref().filter(|_| self.increase).map(|(_, increased)| increased.clone());
+                        answer = Some(DiffAnswer::Save { new_cpa_id });
                     }
                 });
             });
