@@ -43,3 +43,5 @@ Digikoppeling XSD or Schematron.
 
 ## Docs
 - README, EN/NL guides and schema reference pages for the Rust version.
+  Include: General lists the other PartyIds of a partner (the first is edited, the others shown, change them in
+  the XML editor).

@@ -68,11 +68,20 @@ pub struct GeneralTab {
     status_error: Option<String>,
     built_for: Option<u64>,
     generation: u64,
+    /// Per partner the PartyIds after the first one (id, type); listed, not edited here.
+    other_party_ids: [Vec<(String, String)>; 2],
 }
 
 impl Default for GeneralTab {
     fn default() -> Self {
-        GeneralTab { fields: fields(), status: String::new(), status_error: None, built_for: None, generation: 0 }
+        GeneralTab {
+            fields: fields(),
+            status: String::new(),
+            status_error: None,
+            built_for: None,
+            generation: 0,
+            other_party_ids: Default::default(),
+        }
     }
 }
 
@@ -87,6 +96,7 @@ impl GeneralTab {
     /// Fills the fields from the CPA.
     fn load(&mut self, document: &Document) {
         let general = read_general(document);
+        self.other_party_ids = [0, 1].map(|partner| cpa_core::cpa::other_party_ids(document, partner));
         for field in &mut self.fields {
             field.value = match field.field {
                 GeneralField::CpaId => general.cpa_id.clone(),
@@ -343,6 +353,25 @@ impl GeneralTab {
             form_grid(&format!("general_partner_{partner}")).show(ui, |ui| {
                 for index in first..first + 3 {
                     self.text_row(ui, index, shared);
+                }
+                // A party with more PartyIds: the fields above are the first, the others are listed here
+                let others = &self.other_party_ids[partner];
+                if !others.is_empty() {
+                    // On the line of the first id, not centred next to the list
+                    ui.with_layout(egui::Layout::top_down(egui::Align::Min), |ui| {
+                        ui.label(format!("Other party IDs ({})", others.len()));
+                    });
+                    ui.vertical(|ui| {
+                        for (id, kind) in others {
+                            ui.horizontal(|ui| {
+                                ui.add(egui::Label::new(RichText::new(id).monospace()).selectable(true));
+                                let kind = if kind.is_empty() { "no type" } else { kind.as_str() };
+                                ui.add(egui::Label::new(RichText::new(kind).weak()).truncate().selectable(true));
+                            });
+                        }
+                        ui.label(RichText::new("Change these in the XML editor.").small().weak());
+                    });
+                    ui.end_row();
                 }
             });
         }

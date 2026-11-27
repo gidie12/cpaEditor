@@ -88,6 +88,20 @@ pub fn read_general(doc: &Document) -> GeneralFields {
     fields
 }
 
+/// The PartyId elements of a partner after the first one, as (id, type). The General tab edits the first
+/// PartyId; a party can be known under more ids (e.g. an OIN and a KvK number), which are listed below it.
+pub fn other_party_ids(doc: &Document, party_index: usize) -> Vec<(String, String)> {
+    let Some(&party_info) = party_infos(doc).get(party_index) else { return Vec::new() };
+    doc.find_all(party_info, Some(CPA_NAMESPACE), "PartyId")
+        .skip(1)
+        .map(|party_id| {
+            let id = doc.text(party_id).unwrap_or_default().trim().to_string();
+            let kind = doc.attribute(party_id, Some(CPA_NAMESPACE), "type").unwrap_or_default().to_string();
+            (id, kind)
+        })
+        .collect()
+}
+
 /// Changes a general field like `CPACreator.apply_changes` does.
 ///
 /// Errors (the Python version printed them and left the CPA unchanged): fewer than two PartyInfo elements

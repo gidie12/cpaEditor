@@ -31,6 +31,26 @@ fn minimal_cpa(party_infos: &str) -> Document {
 const PARTIES: &str = "<tns:PartyInfo tns:partyName=\"PartnerA\"><tns:PartyId tns:type=\"TypeA\">PartnerA_ID</tns:PartyId></tns:PartyInfo>\n  \
                        <tns:PartyInfo tns:partyName=\"PartnerB\"><tns:PartyId tns:type=\"TypeB\">PartnerB_ID</tns:PartyId></tns:PartyInfo>";
 
+/// A partner with more PartyIds: the first is edited on the General tab, the others are listed.
+#[test]
+fn other_party_ids_lists_the_party_ids_after_the_first() {
+    let doc = minimal_cpa(
+        "<tns:PartyInfo tns:partyName=\"PartnerA\">\
+           <tns:PartyId tns:type=\"urn:osb:oin\">00000001234567890000</tns:PartyId>\
+           <tns:PartyId tns:type=\"urn:example:kvk\"> 12345678 </tns:PartyId>\
+           <tns:PartyId>NO_TYPE</tns:PartyId>\
+         </tns:PartyInfo>\n  \
+         <tns:PartyInfo tns:partyName=\"PartnerB\"><tns:PartyId tns:type=\"TypeB\">PartnerB_ID</tns:PartyId></tns:PartyInfo>",
+    );
+    assert_eq!(read_general(&doc).party_ids[0], "00000001234567890000");
+    assert_eq!(
+        cpa::other_party_ids(&doc, 0),
+        vec![("12345678".to_string(), "urn:example:kvk".to_string()), ("NO_TYPE".to_string(), String::new())]
+    );
+    assert!(cpa::other_party_ids(&doc, 1).is_empty());
+    assert!(cpa::other_party_ids(&doc, 2).is_empty());
+}
+
 fn element_text(doc: &Document, local: &str) -> String {
     doc.text(doc.find(doc.root().unwrap(), Some(CPA_NAMESPACE), local).unwrap()).unwrap_or_default()
 }

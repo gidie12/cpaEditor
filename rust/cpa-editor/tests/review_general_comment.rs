@@ -20,7 +20,10 @@ fn resource(name: &str) -> PathBuf {
 }
 
 fn harness(theme: egui::Theme, tab: usize) -> Harness<'static, CpaEditorApp> {
-    let file = resource("full_test_cpa.xml");
+    harness_with(theme, tab, resource("full_test_cpa.xml"))
+}
+
+fn harness_with(theme: egui::Theme, tab: usize, file: PathBuf) -> Harness<'static, CpaEditorApp> {
     let mut harness = Harness::builder()
         .with_size([1500.0, 900.0])
         .with_pixels_per_point(1.0)
@@ -59,6 +62,19 @@ fn review_general_comment() {
         save(&mut h, &format!("general-{suffix}"));
         h.get_by_label("Set from certificates").click();
         save(&mut h, &format!("general-from-certificates-{suffix}"));
+
+        // General: partner A known under more PartyIds (an OIN and a KvK number)
+        let xml = std::fs::read_to_string(resource("full_test_cpa.xml")).unwrap();
+        let first = "<tns:PartyId tns:type=\"urn:example:partyid\">PARTNER_A</tns:PartyId>";
+        let more = format!(
+            "{first}\n        <tns:PartyId tns:type=\"urn:osb:oin\">00000001234567890000</tns:PartyId>\n        \
+             <tns:PartyId tns:type=\"urn:example:kvk\">12345678</tns:PartyId>"
+        );
+        assert!(xml.contains(first), "the test CPA has the PartyId of partner A");
+        let path = std::env::temp_dir().join(format!("cpa_editor_review_party_ids_{suffix}.xml"));
+        std::fs::write(&path, xml.replacen(first, &more, 1)).unwrap();
+        let mut h = harness_with(theme, GENERAL, path);
+        save(&mut h, &format!("general-party-ids-{suffix}"));
 
         // General: a start date without timezone and an end date that is not a date
         let mut h = harness(theme, GENERAL);
