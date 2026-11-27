@@ -128,7 +128,7 @@ jobs:
           version="$(IFS=.; echo "${parts[*]}")$suffix"
           echo "Version $version"
           # The only version line of rust/Cargo.toml is the one of [workspace.package]
-          perl -pi -e 's/^version = "[^"]*"/version = "'"$version"'"/' rust/Cargo.toml
+          sed -i "s/^version = \"[^\"]*\"/version = \"$version\"/" rust/Cargo.toml
           grep -q "^version = \"$version\"" rust/Cargo.toml
         env:
           NIGHTLY: ${{ github.event_name == 'schedule' || inputs.nightly == true }}
@@ -199,9 +199,9 @@ jobs:
         run: |
           for attempt in $(seq 1 60); do
             nightly_sha="$(gh api "repos/$GH_REPO/git/ref/tags/nightly" --jq .object.sha 2>/dev/null || true)"
-            created="$(gh release view nightly --json createdAt --jq .createdAt 2>/dev/null || true)"
-            if [ "$nightly_sha" = "$SHA" ] && [ -n "$created" ] \
-                && { [ "$EXISTING" = true ] || ! [[ "$created" < "$STARTED" ]]; }; then
+            published="$(gh release view nightly --json publishedAt --jq .publishedAt 2>/dev/null || true)"
+            if [ "$nightly_sha" = "$SHA" ] && [ -n "$published" ] \
+                && { [ "$EXISTING" = true ] || ! [[ "$published" < "$STARTED" ]]; }; then
               gh release upload nightly "dist/$ASSET" --clobber
               exit 0
             fi
