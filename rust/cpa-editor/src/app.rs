@@ -6,6 +6,7 @@ use cpa_core::xml::Document;
 use eframe::egui::{self, RichText};
 
 use crate::log::Level;
+use crate::tabs::collaboration_role::CollaborationRoleTab;
 use crate::tabs::validation::ValidationTab;
 use crate::tabs::{Placeholder, Shared, Tab};
 
@@ -21,7 +22,7 @@ impl CpaEditorApp {
             shared: Shared::default(),
             tabs: vec![
                 Box::new(Placeholder("General")),
-                Box::new(Placeholder("Collaboration Role (experimental)")),
+                Box::new(CollaborationRoleTab::default()),
                 Box::new(Placeholder("Transport")),
                 Box::new(Placeholder("Comment")),
                 Box::new(Placeholder("XML editor")),

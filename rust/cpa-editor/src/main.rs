@@ -7,6 +7,7 @@ mod app;
 mod log;
 mod tabs;
 mod tree_table;
+mod widgets;
 
 use eframe::egui;
 
