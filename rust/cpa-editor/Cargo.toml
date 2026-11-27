@@ -1,0 +1,9 @@
+[package]
+name = "cpa-editor"
+description = "Desktop application for viewing and editing ebXML CPA files"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+cpa-core = { path = "../cpa-core" }
