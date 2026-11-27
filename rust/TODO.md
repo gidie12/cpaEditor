@@ -70,3 +70,6 @@ Digikoppeling XSD or Schematron.
   errors", a link to the CPA Validation tab); the log only reports a change of the outcome.
   Certificates tab warns about references to a certId that is not in the CPA, with "Use <certId>", "Other
   certId…" and "Remove reference" (trust anchor or ClientCertificateRef).
+  CPA Validation error cards for a missing id (any IDREF): "Use <most similar id of that kind>", "Other…",
+  "Remove the reference" where the schema allows it. Next: fixes for values not in the allowed set, formats,
+  attributes, missing elements and element order; Undo first.

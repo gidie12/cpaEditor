@@ -1,5 +1,6 @@
 //! CPA Validation tab: validates the CPA against the schema (validator_tab.py).
 
+use cpa_core::fixes::BrokenIdref;
 use cpa_core::xml::Document;
 use eframe::egui::{self, RichText, Ui};
 
@@ -12,18 +13,77 @@ struct Problem {
     location: Option<String>,
     /// What to do about it, when the kind of error is known.
     advice: Option<&'static str>,
+    /// For a reference to an id that does not exist: the references and the ids it could point at.
+    broken: Option<BrokenIdref>,
+}
+
+/// A fix chosen on an error card.
+enum Fix {
+    Repoint(BrokenIdref, String),
+    Remove(BrokenIdref),
 }
 
 /// The schema errors of a validation, with where they are and what to do about them.
 fn problems(document: &Document, errors: &[cpa_core::validation::ValidationError]) -> Vec<Problem> {
+    let broken = cpa_core::fixes::broken_idrefs(document);
     errors
         .iter()
-        .map(|e| Problem {
-            location: if e.line > 0 { Some(format!("Line {}", e.line)) } else { idref_location(document, &e.message) },
-            advice: advice(&e.message),
-            message: e.message.clone(),
+        .map(|e| {
+            let missing = e.message.strip_prefix("IDREF '").and_then(|rest| rest.split('\'').next());
+            let broken = missing.and_then(|value| broken.iter().find(|b| b.value == value).cloned());
+            Problem {
+                location: if e.line > 0 { Some(format!("Line {}", e.line)) } else { idref_location(document, &e.message) },
+                advice: if broken.is_some() { None } else { advice(&e.message) },
+                message: e.message.clone(),
+                broken,
+            }
         })
         .collect()
+}
+
+/// The fixes for a reference to an id that does not exist: the most similar id of the same kind, another one, or
+/// removing the references when the schema allows it.
+fn idref_fixes(ui: &mut Ui, broken: &BrokenIdref) -> Option<Fix> {
+    let mut fix = None;
+    if broken.references.len() > 1 {
+        ui.label(RichText::new(format!("{} references use this id:", broken.references.len())).weak());
+        for reference in broken.references.iter().take(5) {
+            ui.label(RichText::new(format!("•  {}", reference.description)).weak());
+        }
+    }
+    ui.add_space(4.0);
+    ui.horizontal_wrapped(|ui| {
+        match broken.candidates.first() {
+            Some(best) => {
+                ui.label(format!("Point {} at the {}:", if broken.references.len() > 1 { "them" } else { "it" }, broken.kind));
+                if ui.button(format!("Use {best}")).on_hover_text("The most similar existing id").clicked() {
+                    fix = Some(Fix::Repoint(broken.clone(), best.clone()));
+                }
+                if broken.candidates.len() > 1 {
+                    ui.menu_button("Other…", |ui| {
+                        egui::ScrollArea::vertical().max_height(300.0).show(ui, |ui| {
+                            for candidate in &broken.candidates[1..] {
+                                if ui.button(candidate).clicked() {
+                                    fix = Some(Fix::Repoint(broken.clone(), candidate.clone()));
+                                    ui.close();
+                                }
+                            }
+                        });
+                    });
+                }
+            }
+            None => {
+                ui.label(RichText::new(format!("There is no {} in the CPA yet; add one first.", broken.kind)).weak());
+            }
+        }
+        if broken.removable {
+            let text = if broken.references.len() > 1 { "Remove the references" } else { "Remove the reference" };
+            if ui.button(text).on_hover_text("The schema does not require this reference").clicked() {
+                fix = Some(Fix::Remove(broken.clone()));
+            }
+        }
+    });
+    fix
 }
 
 /// Shows the automatic validation that the main window runs after every change.
@@ -85,12 +145,18 @@ impl Tab for ValidationTab {
             }
             Ok(errors) => {
                 let problems = problems(document, errors);
+                let mut fix = None;
                 egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
                     for problem in &problems {
-                        error_card(ui, problem);
+                        if let Some(chosen) = error_card(ui, problem) {
+                            fix = Some(chosen);
+                        }
                         ui.add_space(6.0);
                     }
                 });
+                if let Some(fix) = fix {
+                    apply_fix(fix, shared);
+                }
             }
         }
     }
@@ -105,7 +171,33 @@ fn count_text(count: usize) -> String {
 }
 
 /// One error as a card: a red bar, the message in normal text and the location in weak monospace.
-fn error_card(ui: &mut Ui, problem: &Problem) {
+/// Applies a fix; the automatic validation shows the result.
+fn apply_fix(fix: Fix, shared: &mut Shared) {
+    let Some(document) = shared.document.as_mut() else { return };
+    match fix {
+        Fix::Repoint(broken, id) => {
+            cpa_core::fixes::repoint(document, &broken, &id);
+            shared.changed();
+            let count = broken.references.len();
+            shared.log.info(format!(
+                "{} to {} now {} to {id}",
+                if count == 1 { "1 reference".to_string() } else { format!("{count} references") },
+                broken.value,
+                if count == 1 { "refers" } else { "refer" }
+            ));
+        }
+        Fix::Remove(broken) => match cpa_core::fixes::remove(document, &broken) {
+            Ok(()) => {
+                shared.changed();
+                shared.log.info(format!("Removed the references to {}", broken.value));
+            }
+            Err(e) => shared.log.error(e),
+        },
+    }
+}
+
+fn error_card(ui: &mut Ui, problem: &Problem) -> Option<Fix> {
+    let mut fix = None;
     let error = theme::error_color(ui);
     let response = egui::Frame::new()
         .fill(ui.visuals().extreme_bg_color)
@@ -123,11 +215,15 @@ fn error_card(ui: &mut Ui, problem: &Problem) {
                 ui.add_space(2.0);
                 ui.label(RichText::new(advice));
             }
+            if let Some(broken) = &problem.broken {
+                fix = idref_fixes(ui, broken);
+            }
         })
         .response;
     let rect = response.rect;
     let bar = egui::Rect::from_min_size(rect.min, egui::vec2(3.0, rect.height()));
     ui.painter().rect_filled(bar, egui::CornerRadius { nw: 4, sw: 4, ne: 0, se: 0 }, error);
+    fix
 }
 
 /// Where a dangling IDREF is used: the path of the element whose attribute holds the missing id.

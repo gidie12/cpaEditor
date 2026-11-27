@@ -5,6 +5,7 @@ pub mod collaboration_roles;
 pub mod cpa;
 pub mod dates;
 pub mod diff;
+pub mod fixes;
 pub mod help;
 pub mod update_check;
 pub mod validation;

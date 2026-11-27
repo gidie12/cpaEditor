@@ -1093,6 +1093,11 @@ const CERTIFICATE_HOLDERS: [&str; 8] = [
 /// Removes an element with the whitespace before it and keeps the whitespace after it, so the next sibling or the
 /// closing tag of the parent keeps its indentation (lxml's `parent.remove` takes the whitespace after it instead,
 /// which leaves the closing tag of the parent indented one level too deep when the last child goes).
+/// Removes an element with the whitespace before it, so the lines around it keep their indentation.
+pub fn remove_element_with_indentation(doc: &mut Document, element: NodeId) {
+    remove_with_indentation(doc, element);
+}
+
 fn remove_with_indentation(doc: &mut Document, element: NodeId) {
     if let Some(parent) = doc.parent(element) {
         let siblings = doc.children(parent).to_vec();

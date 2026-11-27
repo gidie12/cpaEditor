@@ -781,3 +781,35 @@ fn broken_certificate_reference_is_found_and_fixed() {
     assert!(cpa_core::validation::validate_document(&repointed).unwrap().is_empty());
     assert!(broken_certificate_references(&repointed).is_empty());
 }
+
+#[test]
+fn broken_idrefs_offer_similar_ids_of_the_same_kind() {
+    use cpa_core::fixes::{broken_idrefs, remove, repoint};
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../application/tests/resources/cpas/full_test_cpa.xml");
+    let doc = cpa_core::xml::Document::parse_bytes(&std::fs::read(path).unwrap()).unwrap();
+    let broken = broken_idrefs(&doc);
+    assert_eq!(broken.len(), 1);
+    assert_eq!(broken[0].value, "BROKER_ClientCerts");
+    // BROKER_ClientCert and BROKER_ServerCert are trust anchors already
+    assert_eq!(broken[0].candidates, vec!["Ketenpartner_ClientCert".to_string(), "Ketenpartner_ServerCert".to_string()]);
+    assert!(broken[0].removable);
+
+    // A ChannelId (element text) to a channel that does not exist: required, so only repointing
+    let xml = doc.to_xml().replace(
+        "<tns:ChannelId>BROKER_DC_T_Reliable_S_Transport_R_3PT10M</tns:ChannelId>",
+        "<tns:ChannelId>BROKER_DC_T_Reliable_S_Transport_R_3PT10</tns:ChannelId>",
+    );
+    let mut changed = cpa_core::xml::Document::parse(&xml).unwrap();
+    let broken = broken_idrefs(&changed);
+    let channel = broken.iter().find(|b| b.value.ends_with("3PT10")).unwrap().clone();
+    assert_eq!(channel.kind, "channelId of a DeliveryChannel");
+    assert_eq!(channel.references.len(), 4);
+    assert_eq!(channel.candidates[0], "BROKER_DC_T_Reliable_S_Transport_R_3PT10M");
+    assert!(!channel.removable);
+    assert!(remove(&mut changed, &channel).is_err());
+    repoint(&mut changed, &channel, &channel.candidates[0]);
+    let anchors = broken_idrefs(&changed);
+    assert_eq!(anchors.len(), 1, "only the trust anchor is left");
+    remove(&mut changed, &anchors[0]).unwrap();
+    assert!(cpa_core::validation::validate_document(&changed).unwrap().is_empty());
+}
