@@ -12,3 +12,6 @@ eframe = "0.31.1"
 log = "0.4.35"
 rfd = "0.17.2"
 uuid = { version = "1.20.0", features = ["v4"] }
+
+[dev-dependencies]
+egui_kittest = { version = "0.31", features = ["snapshot", "wgpu", "eframe"] }
